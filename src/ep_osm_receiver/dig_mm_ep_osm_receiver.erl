@@ -13,7 +13,7 @@ main() ->
 	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
 
 title() ->
-	?LN("dig_mm_ep_osm_receiver").
+	?LN("Profile - OSM Receiver").
 
 heading() ->
 	title().
@@ -46,7 +46,7 @@ form() ->
 %------------------------------------------------------------------------------
 
 fields(ep_osm_receiver, _Fs) ->
-	ep_osm_receiver:fs(basic).
+	ep_osm_receiver:fs(form).
 
 
 
@@ -64,8 +64,9 @@ access(_, Role) -> ?D(Role), false.
 
 get() ->
 	#dig {
+		mode=?VIEW,
 		module=?MODULE,
-		filters=ep_osm_receiver:fs(basic),
+		filters=ep_osm_receiver:fs(search),
 		size=25
 	}.
 
@@ -74,7 +75,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("dig_mm_ep_osm_receiver").
+	?LN("Profile - OSM Receiver").
 
 
 

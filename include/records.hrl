@@ -7,6 +7,7 @@
 
 -define(APPOSM, ep_osm).
 -define(APPOSM_ADMIN, "admin").
+-define(APPOSM_RECEIVER, "osmreceiver").
 
 
 %------------------------------------------------------------------------------

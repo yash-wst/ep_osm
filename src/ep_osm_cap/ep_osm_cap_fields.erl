@@ -12,6 +12,19 @@ f(code = I) ->
 f(name = I) ->
 	itf:textbox(?F(I, "CAP Centre Name"));
 
+f(osm_cap_fk = I) ->
+	F = itf:textbox_picker(?F(I, "CAP Centre")),
+	F#field {
+		options=#search {
+			title=?LN("Select CAP Centre"),
+			db=ep_osm_cap:db(),
+			displayfs=ep_osm_cap:fs(search),
+			filterfs=ep_osm_cap:fs(search),
+			size=10
+		}
+	};
+
+
 f(O) -> throw(O).
 
 %------------------------------------------------------------------------------

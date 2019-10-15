@@ -13,7 +13,7 @@ heading() ->
 	?LN("ep_osm_receiver").
 
 db() ->
-	"ep_osm_receiver".
+	ep_osm_receiver_api:db().
 
 %------------------------------------------------------------------------------
 % access
@@ -25,8 +25,13 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 fs(basic) -> [
-	?OSMREC(name),
-	?OSMREC(gender)
+	itf:build(?ITXPRF(profiletype), ?APPOSM_RECEIVER),
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email),
+	?OSMCAP(osm_cap_fk),
+	?ITXPRF(password_bcrypt)
 ];
 
 fs(view) ->
@@ -41,8 +46,21 @@ fs(edit) ->
 fs(update) ->
 	fs(basic);
 
-fs(search) ->
-	fs(basic);
+fs(search) -> [
+	itf:build(?ITXPRF(profiletype), ?APPOSM_RECEIVER),
+	?ITXPRF(username),
+	?ITXPRF(mobile),
+	?ITXPRF(email)
+];
+
+fs(form) -> [
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email),
+	?OSMCAP(osm_cap_fk)
+];
+
 
 fs(grid) ->
 	fs(basic);
