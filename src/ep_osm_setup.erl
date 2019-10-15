@@ -3,9 +3,10 @@
 -include("records.hrl").
 
 
-init() ->
+init() -> [
 	dbs(),
-	views().
+	db2indices()
+].
 
 
 %
@@ -21,6 +22,16 @@ dbs(delete) ->
 	lists:map(fun(Db) ->
 		db:delete_db(Db)
 	end, dblist()).
+
+
+%
+% db2indices
+%
+db2indices() ->
+	lists:map(fun({Db, Fs}) ->
+		db2_index:create(Db, Fs)
+	end, db2indiceslist()).
+
 
 
 %
@@ -44,4 +55,16 @@ views(delete) ->
 %
 dblist() ->
 	[
+		"ep_osm_cap",
+		"ep_osm_bundle"
 	].
+
+
+
+%
+% list db2 indices
+%
+db2indiceslist() -> [
+	{"ep_osm_cap", ep_osm_cap:fs(index)},
+	{"ep_osm_bundle", ep_osm_bundle:fs(index)}
+].
