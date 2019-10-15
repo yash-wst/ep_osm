@@ -6,7 +6,7 @@
 menu(?APPOSM_RECEIVER) ->
 	[
 		{?LN("OSM Exams"), [
-			{dig_ep_osm_exam, ?VIEW, ?LN("Search Exams")}
+			{dig_ep_osm_exam, ?VIEW, ?LN("Find Exams")}
 		]}
 	];
 

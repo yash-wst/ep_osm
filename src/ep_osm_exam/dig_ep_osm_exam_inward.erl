@@ -1,5 +1,5 @@
 
--module(dig_ep_osm_exam).
+-module(dig_ep_osm_exam_inward).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -13,7 +13,7 @@ main() ->
 	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
 
 title() ->
-	?LN("OSM Exams").
+	?LN("OSM Inward").
 
 heading() ->
 	title().
@@ -41,7 +41,8 @@ access(_, _) -> false.
 get() ->
 	#dig {
 		module=?MODULE,
-		filters=anptest:fs(search)
+		filters=[
+		]
 	}.
 
 
@@ -49,7 +50,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("OSM Exams").
+	?LN("OSM Inward").
 
 
 
@@ -69,54 +70,8 @@ init() ->
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, Fs) ->
-
-	%
-	% fetch documents from db
-	%
-	Rec = db2_find:getrecord_by_fs(anptests:getdb(), Fs),
-	#db2_find_response {docs=Docs}  = db2_find:find(
-		Rec#db2_find {sort=anptest:fs(search)}
-	),
-
-	%
-	% layout results
-	%
-	Results = lists:map(fun(Doc) ->
-
-		%
-		% layout cells
-		%
-		FsDoc = itf:d2f(Doc, anptest:fs(search)),
-		lists:map(fun(F) ->
-			#dcell {val=itl:render(F)}
-		end, FsDoc) ++ [
-			#dcell {val=itl:btn_group([
-				#link {
-					text="Inward",
-					new=true,
-					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [itf:idval(Doc)])
-				}
-			])}
-		]
-
-	end, Docs),
-
-
-	%
-	% header
-	%
-	Header = lists:map(fun(#field {label=Label}) ->
-		#dcell {type=header, val=Label}
-	end, anptest:fs(search)) ++ [
-		#dcell {type=header, val="Actions"}
-	],
-
-	{
-		D#dig {
-		},
-		[Header] ++ Results
-	}.
+fetch(D, _From, _Size, _Fs) ->
+	{D, []}.
 
 
 %------------------------------------------------------------------------------
