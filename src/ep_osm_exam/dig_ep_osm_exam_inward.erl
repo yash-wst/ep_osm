@@ -33,7 +33,10 @@ f(osm_exam_fk = I) ->
 	F = itf:textbox(?F(I, "OSM Exam")),
 	F#field {
 		renderer=fun(_Mode, _Event, #field {label=L, uivalue=Id}) ->
-				{L, layout_osm_exam_name(Id)}
+				{L, [
+					#hidden {id=I, text=Id},
+					layout_osm_exam_name(Id)
+				]}
 		end
 	}.
 
@@ -97,9 +100,31 @@ fetch(D, _From, _Size, [
 ]) ->
 
 	%
+	% init
+	%
+
+
+	%
+	% results
+	%
+	Results = [],
+
+
+	%
+	% actions
+	%
+	Actions = [
+		{create_bundle, "Create New Bundle", "Create New Bundle"}
+	],
+
+
+
+	%
 	% return
 	%
-	{D#dig {}, []};
+	{D#dig {
+		actions=Actions
+	}, Results};
 
 
 
@@ -132,6 +157,21 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, create_bundle}) ->
+	handle_create_bundle(wf:q(osm_exam_fk));
+
+
+event(create_bundle) ->
+	itl:confirmation(
+		#panel {class="mycenter", body=[
+			#p {text="Are you sure you want to create a new bundle?"},
+			#p {text="Please create new bundle only after previous bundle is full"}
+		]},
+		create_bundle
+	);
+
+
 event({itx, E}) ->
 	ite:event(E).
 
@@ -141,6 +181,34 @@ event({itx, E}) ->
 % handler
 %------------------------------------------------------------------------------
 
+
+%..............................................................................
+%
+% handle - create bundle
+%
+%..............................................................................
+
+handle_create_bundle(ExamId) ->
+
+	%
+	% init
+	%
+	FsToSave = [
+		itf:build(?OSMBDL(osm_exam_fk), ExamId),
+		itf:build(?OSMBDL(createdby), itxauth:user()),
+		itf:build(?OSMBDL(createdon), helper:epochtimestr())
+	],
+
+
+	%
+	% save
+	%
+	case ep_osm_bundle_api:create(FsToSave) of
+		{ok, _BundleDoc} ->
+			dig:refresh();
+		_ ->
+			helper_ui:flash(error, "Sorry, could not create bundle!")
+	end.
 
 
 %------------------------------------------------------------------------------
