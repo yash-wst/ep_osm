@@ -282,6 +282,10 @@ layout_inward_form() ->
 % events
 %------------------------------------------------------------------------------
 
+event(print_bundle_cover) ->
+	handle_print_bundle_cover(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+
+
 event(textbox_enterkey) ->
 	handle_inward(wf:q(anp_paper_uid), wf:q(anpseatnumber));
 
@@ -312,6 +316,88 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - print bundle cover
+%
+%..............................................................................
+
+handle_print_bundle_cover(ExamId, BundleId) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, ExamDoc} = anptests:getdoc(ExamId),
+	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+	SeasonName = ep_core_exam_season_api:getname(itf:val(ExamDoc, season_fk)),
+
+
+	%
+	% prepare cover header
+	%
+	Es1 = #panel {
+		class="font-weight-bold mycenter text-uppercase",
+		body=[
+			#p {style="margin: 0px;", text="Exam Season: " ++ SeasonName},
+			#p {style="font-size: 2em; margin: 0px;", text="Paper Code: " ++ itf:val(ExamDoc, anptestcourseid)},
+			#p {style="font-size: 2em; margin: 0px;", text="Bundle No.: " ++ itf:val(BundleDoc, number)},
+			#hr {}
+		]
+	},
+
+
+	%
+	% prepare cover uids
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY
+	),
+	ListOfCandidateDocs = helper:list_split(CandidateDocs, 5),
+	Results = lists:map(fun(CDocs) ->
+		lists:map(fun(CDoc) ->
+			UId = itf:val(CDoc, anp_paper_uid),
+			SNo = itf:val(CDoc, anpseatnumber),
+			#dcell {val=?CASE_IF_THEN_ELSE(UId, [], SNo, UId)}
+		end, CDocs)
+	end, ListOfCandidateDocs),
+	Table = dig:layout_table(#dig{show_slno=false}, Results),
+	Es2 = Table#table {class="table table-sm table-bordered"},
+
+
+
+
+
+	%
+	% combine es
+	%
+	Es = [
+		Es1,
+		Es2
+	],
+
+	%
+	% create pdf
+	%
+	{ok, Filepath} = helper_topdf:create_from_elements(
+		"/tmp/", BundleId, [], Es, "portrait", "5", "5", "5", "5"
+	),
+
+
+
+	%
+	% download
+	%
+	Filename = BundleId ++ ".pdf",
+	itxdownload:stream_and_delete_file(Filename, Filepath).
+
+
+
 
 %..............................................................................
 %
