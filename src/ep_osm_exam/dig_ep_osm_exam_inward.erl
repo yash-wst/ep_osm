@@ -26,6 +26,20 @@ heading() ->
 
 
 %------------------------------------------------------------------------------
+% fields
+%------------------------------------------------------------------------------
+
+f(osm_exam_fk = I) ->
+	F = itf:textbox(?F(I, "OSM Exam")),
+	F#field {
+		renderer=fun(_Mode, _Event, #field {label=L, uivalue=Id}) ->
+				{L, layout_osm_exam_name(Id)}
+		end
+	}.
+
+
+
+%------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
@@ -39,9 +53,17 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 get() ->
+	%
+	% init
+	%
+	OsmExamId = wf:q(id),
+
+
 	#dig {
 		module=?MODULE,
 		filters=[
+			itf:build(f(osm_exam_fk), OsmExamId),
+			?OSMBDL({osm_bundle_fk, OsmExamId})
 		]
 	}.
 
@@ -67,10 +89,27 @@ init() ->
 
 %..............................................................................
 %
+% [osm_exam_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=OsmExamId}
+]) ->
+
+	%
+	% return
+	%
+	{D#dig {}, []};
+
+
+
+%..............................................................................
+%
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, _Fs) ->
+fetch(D, _From, _Size, Fs) ->
+	?D(Fs),
 	{D, []}.
 
 
@@ -107,6 +146,22 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
+
+
+layout_osm_exam_name(undefined) ->
+	[];
+layout_osm_exam_name(OsmExamId) ->
+	%
+	% init
+	%
+	{ok, ExamDoc} = anptests:getdoc(OsmExamId),
+	itl:blockquote([
+		ep_core_exam_season_api:getname(itf:val(ExamDoc, season_fk)),
+		itf:val(ExamDoc, anptestcourseid),
+		itf:val(ExamDoc, testname),
+		?LN(?L2A(itf:val(ExamDoc, teststatus))),
+		itf:val(ExamDoc, exam_pattern)
+	]).
 
 
 

@@ -28,6 +28,41 @@ f(createdby = I) ->
 f(createdon = I) ->
 	itf:createdon(?F(I, "Created On"));
 
+f({osm_bundle_fk = I, OsmExamId}) ->
+
+
+	%
+	% init
+	%
+	Fs = [
+		itf:build(?OSMBDL(osm_exam_fk), OsmExamId)
+	],
+
+
+	%
+	% get bundles for the specified exam season
+	%
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY
+	),
+
+
+	%
+	% build options
+	%
+	Options = itf:options(lists:map(fun(D) ->
+		{
+			itf:idval(D),
+			io_lib:format("~s - ~s", [itf:val(D, number), itf:val(D, createdby)])
+		}
+	end, Docs)),
+
+
+	%
+	% return dropdown
+	%
+	itf:dropdown(?F(I, "Bundle"), Options);
+
 
 
 f(O) -> throw(O).

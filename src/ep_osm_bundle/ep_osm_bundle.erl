@@ -32,7 +32,7 @@ fs(basic) -> [
 ];
 
 fs(index) -> [
-	?OSMBDL(test_fk),
+	?OSMBDL(osm_exam_fk),
 	?OSMBDL(number),
 	?OSMBDL(createdby),
 	?OSMBDL(createdon)
