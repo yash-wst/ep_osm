@@ -109,6 +109,15 @@ fetch(D, _From, _Size, [
 
 
 	%
+	% sort bundles by number
+	%
+	BundleDocsSorted = lists:sort(fun(A, B) ->
+		itf:val(A, number) < itf:val(B, number)
+	end, BundleDocs),
+
+
+
+	%
 	% results
 	%
 	Results = lists:map(fun(BDoc) ->
@@ -124,7 +133,7 @@ fetch(D, _From, _Size, [
 				postback={filter, itf:build(FBundle, itf:idval(BDoc))}
 			}
 		]
-	end, BundleDocs),
+	end, BundleDocsSorted),
 
 
 	%
@@ -155,12 +164,64 @@ fetch(D, _From, _Size, [
 
 
 
+
+%..............................................................................
+%
+% [osm_exam_fk, osm_bundle_fk]
+%
+%..............................................................................
+
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=OsmExamId},
+	#field {id=osm_bundle_fk, uivalue=OsmBundleId}
+]) ->
+
+
+	%
+	% get student docs from osm exam db with the specified bundle id
+	%
+
+
+	%
+	% results
+	%
+	Results = [],
+
+
+	%
+	% actions
+	%
+	Actions = [
+		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"}
+	],
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Barcode / UID"},
+		#dcell {type=header, val="Seat No."},
+		#dcell {type=header, val="Student Name"}
+	],
+
+
+	%
+	% return
+	%
+	{D#dig {
+		actions=Actions
+	}, [Header] ++ Results};
+
+
+
+
 %..............................................................................
 %
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, Fs) ->
+fetch(D, _From, _Size, _Fs) ->
 	{D, []}.
 
 
@@ -176,7 +237,9 @@ exports() -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	dig:dig(?MODULE:get()).
+	[
+		dig:dig(?MODULE:get())
+	].
 
 
 
