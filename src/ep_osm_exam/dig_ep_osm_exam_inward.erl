@@ -202,7 +202,8 @@ fetch(D, _From, _Size, [
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
-			#dcell {val=itf:val(CDoc, anpfullname)}
+			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
+			#dcell {val=[]}
 		]
 	end, CandidateDocs),
 
@@ -223,7 +224,8 @@ fetch(D, _From, _Size, [
 	Header = [
 		#dcell {type=header, val="Barcode / UID"},
 		#dcell {type=header, val="Seat No."},
-		#dcell {type=header, val="Student Name"}
+		#dcell {type=header, val="State"},
+		#dcell {type=header, val="Upload"}
 	],
 
 
@@ -484,7 +486,13 @@ handle_inward(UId, SNo) ->
 	],
 	case anpcandidates:save(ExamDb, FsToSave) of
 		{ok, _} ->
-			helper_ui:flash(success, io_lib:format("saved: ~s, ~s", [UId, SNo]));
+			wf:wire("
+				obj('anp_paper_uid').value = '';
+				obj('anpseatnumber').value = '';
+				obj('anp_paper_uid').focus();
+				obj('anp_paper_uid').select();
+			"),
+			helper_ui:flash(success, io_lib:format("saved: ~s, ~s", [UId, SNo]), 5);
 		_ ->
 			helper_ui:flash(error, io_lib:format("error: ~s, ~s", [UId, SNo]))
 	end.
