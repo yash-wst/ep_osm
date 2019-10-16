@@ -97,17 +97,34 @@ init() ->
 %..............................................................................
 fetch(D, _From, _Size, [
 	#field {id=osm_exam_fk, uivalue=OsmExamId}
-]) ->
+] = Fs) ->
 
 	%
 	% init
 	%
+	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
+		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY
+	),
+	FBundle = ?OSMBDL({osm_bundle_fk, OsmExamId}),
 
 
 	%
 	% results
 	%
-	Results = [],
+	Results = lists:map(fun(BDoc) ->
+		[
+			#dcell {val=itf:val(BDoc, number)},
+			#dcell {val=itf:val(BDoc, createdby)},
+			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
+			#dcell {
+				val=#span {
+					class="btn btn-sm btn-primary-outline",
+					body="Bundle #" ++ itf:val(BDoc, number)
+				},
+				postback={filter, itf:build(FBundle, itf:idval(BDoc))}
+			}
+		]
+	end, BundleDocs),
 
 
 	%
@@ -118,13 +135,23 @@ fetch(D, _From, _Size, [
 	],
 
 
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Bundle Number"},
+		#dcell {type=header, val="Created By"},
+		#dcell {type=header, val="Created On"},
+		#dcell {type=header, val="Select"}
+	],
+
 
 	%
 	% return
 	%
 	{D#dig {
 		actions=Actions
-	}, Results};
+	}, [Header] ++ Results};
 
 
 
@@ -134,7 +161,6 @@ fetch(D, _From, _Size, [
 %
 %..............................................................................
 fetch(D, _From, _Size, Fs) ->
-	?D(Fs),
 	{D, []}.
 
 
