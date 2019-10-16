@@ -332,6 +332,8 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 	ExamDb = anpcandidates:db(ExamId),
 	{ok, ExamDoc} = anptests:getdoc(ExamId),
 	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+	{ok, ReceiverDoc} = itxprofiles:get_by(username, itf:val(BundleDoc, createdby), false),
+	{ok, CapDoc} = ep_osm_cap_api:get(itf:val(ReceiverDoc, osm_cap_fk)),
 	SeasonName = ep_core_exam_season_api:getname(itf:val(ExamDoc, season_fk)),
 
 
@@ -341,9 +343,22 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 	Es1 = #panel {
 		class="font-weight-bold mycenter text-uppercase",
 		body=[
-			#p {style="margin: 0px;", text="Exam Season: " ++ SeasonName},
-			#p {style="font-size: 2em; margin: 0px;", text="Paper Code: " ++ itf:val(ExamDoc, anptestcourseid)},
-			#p {style="font-size: 2em; margin: 0px;", text="Bundle No.: " ++ itf:val(BundleDoc, number)},
+			#p {
+				style="margin: 0px;",
+				text=SeasonName
+			},
+			#p {
+				style="margin: 0px;",
+				text=io_lib:format("(~s) ~s", [itf:val(CapDoc, code), itf:val(CapDoc, name)])
+			},
+			#p {
+				style="font-size: 2em; margin: 0px;",
+				text="Paper Code: " ++ itf:val(ExamDoc, anptestcourseid)
+			},
+			#p {
+				style="font-size: 2em; margin: 0px;",
+				text="Bundle No.: " ++ itf:val(BundleDoc, number)
+			},
 			#hr {}
 		]
 	},
