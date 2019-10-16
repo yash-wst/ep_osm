@@ -202,8 +202,7 @@ fetch(D, _From, _Size, [
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
-			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
-			#dcell {val=[]}
+			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))}
 		]
 	end, CandidateDocs),
 
@@ -224,8 +223,7 @@ fetch(D, _From, _Size, [
 	Header = [
 		#dcell {type=header, val="Barcode / UID"},
 		#dcell {type=header, val="Seat No."},
-		#dcell {type=header, val="State"},
-		#dcell {type=header, val="Upload"}
+		#dcell {type=header, val="State"}
 	],
 
 
