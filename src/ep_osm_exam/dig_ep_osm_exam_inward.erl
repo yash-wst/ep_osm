@@ -176,23 +176,44 @@ fetch(D, _From, _Size, [
 	#field {id=osm_bundle_fk, uivalue=OsmBundleId}
 ]) ->
 
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(OsmExamId),
+
+
 
 	%
 	% get student docs from osm exam db with the specified bundle id
 	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId)
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY
+	),
+
 
 
 	%
 	% results
 	%
-	Results = [],
+	Results = lists:map(fun(CDoc) ->
+		[
+			#dcell {val=itf:val(CDoc, anp_paper_uid)},
+			#dcell {val=itf:val(CDoc, anpseatnumber)},
+			#dcell {val=itf:val(CDoc, anpfullname)}
+		]
+	end, CandidateDocs),
 
 
 	%
 	% actions
 	%
 	Actions = [
-		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"}
+		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
+		{refresh, "Refresh", "Refresh"},
+		{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
 	],
 
 
@@ -243,9 +264,31 @@ layout() ->
 
 
 
+%..............................................................................
+%
+% layout - inward form
+%
+%..............................................................................
+
+layout_inward_form() ->
+	Fs = [
+		itf:textbox(?F(anp_paper_uid, "Barcode / UID"), [], textbox_enterkey),
+		itf:textbox(?F(anpseatnumber, "Student Seat No."), [], textbox_enterkey)
+	],
+	itl:get(?CREATE, Fs, noevent, line).
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(textbox_enterkey) ->
+	handle_inward(wf:q(anp_paper_uid), wf:q(anpseatnumber));
+
+
+event(refresh) ->
+	dig:refresh();
+
 
 event({confirmation_yes, create_bundle}) ->
 	handle_create_bundle(wf:q(osm_exam_fk));
@@ -269,6 +312,82 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - inward
+%
+%..............................................................................
+
+handle_inward([], []) ->
+	helper_ui:flash(error, "Please enter either barcode or student seat number", 5);
+
+handle_inward(UId, SNo) ->
+
+	%
+	% init
+	%
+	ExamId = wf:q(id),
+	OsmBundleId = wf:q(osm_bundle_fk),
+	BundleNumber = OsmBundleId,
+	ExamDb = anpcandidates:db(ExamId),
+
+
+
+	%
+	% assert - bundle is not full
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId)
+	],
+	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY
+	),
+	?ASSERT(
+		length(BundleDocs) < 101,
+		"bundle full; create new bundle"
+	),
+
+
+
+
+	%
+	% assert -  a document in the osm exam db with same uid or seat number does
+	% not exist already
+	%
+	FsToSearchCandidate = [
+		itf:build(itf:textbox(?F(anp_paper_uid)), UId),
+		itf:build(itf:textbox(?F(anpseatnumber)), SNo)
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchCandidate, 0, ?INFINITY
+	),
+	?ASSERT(
+		CandidateDocs == [],
+		io_lib:format("~s, ~s: already exists in the exam database", [
+			UId, SNo
+		])
+	),
+
+
+	%
+	% create entry in exam db
+	%
+
+	FsToSave = [
+		itf:build(itf:textbox(?F(anp_paper_uid)), UId),
+		itf:build(itf:textbox(?F(anpseatnumber)), ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)),
+		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
+		itf:build(itf:textbox(?F(anpcentercode)), BundleNumber),
+		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
+	],
+	case anpcandidates:save(ExamDb, FsToSave) of
+		{ok, _} ->
+			helper_ui:flash(success, io_lib:format("saved: ~s, ~s", [UId, SNo]));
+		_ ->
+			helper_ui:flash(error, io_lib:format("error: ~s, ~s", [UId, SNo]))
+	end.
+
 
 
 %..............................................................................

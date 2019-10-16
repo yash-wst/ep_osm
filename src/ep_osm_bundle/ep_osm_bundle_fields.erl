@@ -28,6 +28,10 @@ f(createdby = I) ->
 f(createdon = I) ->
 	itf:createdon(?F(I, "Created On"));
 
+
+f(osm_bundle_fk = I) ->
+	itf:textbox(?F(I, "Bundle Id"));
+
 f({osm_bundle_fk = I, OsmExamId}) ->
 
 
