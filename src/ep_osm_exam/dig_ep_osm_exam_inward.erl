@@ -110,6 +110,7 @@ fetch(D, _From, _Size, [
 	% init
 	%
 	ExamDb = anpcandidates:db(OsmExamId),
+	{ok, BundleDoc} = ep_osm_bundle_api:get(OsmBundleId),
 
 
 
@@ -142,7 +143,8 @@ fetch(D, _From, _Size, [
 	%
 	Actions = [
 		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
-		{refresh, "Refresh", "Refresh"},
+		{refresh, "Refresh", "Refresh"}
+	] ++ layout_action_scanning(BundleDoc) ++ [
 		{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
 	],
 
@@ -307,9 +309,49 @@ layout_dtp_by(_Type, _BundleDoc, Val) ->
 	Val.
 
 
+
+
+%..............................................................................
+%
+% layout - action
+%
+%..............................................................................
+
+layout_action_scanning(BundleDoc) ->
+
+	%
+	% init
+	%
+	User = itxauth:user(),
+
+
+	%
+	% action
+	%
+	case {itf:val(BundleDoc, scannedby), itf:val(BundleDoc, scanningstate)} of
+		{User, "assigned"} -> [
+			{scanning_completed, "Scanning Completed", "Scanning Completed"}
+		];
+		_ -> [
+		]
+	end.
+
+
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, scanning_completed}) ->
+	handle_scanning_completed();
+
+event(scanning_completed) ->
+	itl:confirmation(
+		"Are you sure you want to mark this bundle as 'Scanning Completed'?",
+		scanning_completed
+	);
+
 
 event({confirmation_yes, {Type, BundleDoc}}) ->
 	handle_assign_bundle(Type, BundleDoc);
@@ -370,6 +412,41 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - scanning completed
+%
+%..............................................................................
+
+handle_scanning_completed() ->
+
+	%
+	% init
+	%
+	Id = wf:q(osm_bundle_fk),
+
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		itf:build(?OSMBDL(scanningstate), "completed")
+	],
+
+
+	%
+	% save
+	%
+	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), Id) of
+		{ok, _} ->
+			dig:refresh();
+		_ ->
+			helper_ui:flash(error, "Sorry, could not save!")
+	end.
+
+
 
 
 %..............................................................................

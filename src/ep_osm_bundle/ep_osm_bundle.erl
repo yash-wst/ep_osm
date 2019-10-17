@@ -28,7 +28,12 @@ fs(basic) -> [
 	?OSMBDL(osm_exam_fk),
 	?OSMBDL(number),
 	?OSMBDL(createdby),
-	?OSMBDL(createdon)
+	?OSMBDL(createdon),
+	?OSMBDL(scannedby),
+	?OSMBDL(qualityby),
+	?OSMBDL(scanningstate),
+	?OSMBDL(uploadstate)
+
 ];
 
 fs(index) -> [
