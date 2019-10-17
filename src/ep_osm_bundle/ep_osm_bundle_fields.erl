@@ -69,6 +69,22 @@ f({osm_bundle_fk = I, OsmExamId}) ->
 
 
 
+f(scannedby = I) ->
+	F = itf:textbox_picker(?F(I, "")),
+	F#field {options=options(I)};
+
+f(qualityby = I) ->
+	F = itf:textbox_picker(?F(I, "")),
+	F#field {options=options(I)};
+
+f(scanningstate = I) ->
+	itf:dropdown(?F(I, "Scanning State"), options(I));
+
+
+f(uploadstate = I) ->
+	itf:dropdown(?F(I, "Upload State"), options(I));
+
+
 f(O) -> throw(O).
 
 %------------------------------------------------------------------------------
@@ -80,11 +96,31 @@ validator(O) ->
 %------------------------------------------------------------------------------
 % options
 %------------------------------------------------------------------------------
-options(gender) ->
+
+options(Type) when Type == scannedby; Type == qualityby ->
+	#search {
+		title=?LN("Select User"),
+		db=itxprofiles:db(),
+		displayfs=[
+			?ITXPRF(username),
+			?ITXPRF(email),
+			?ITXPRF(mobile)
+		],
+		filterfs=[
+			itf:build(?ITXPRF(profiletype), ?APPOSM_SCANUPLOADER),
+			?ITXPRF(username),
+			?ITXPRF(email),
+			?ITXPRF(mobile)
+		],
+		size=10
+	};
+
+
+options(State) when State == scanningstate; State == uploadstate ->
 	itf:options([
-		?F(male),
-		?F(female),
-		?F(other)
+		?F(new, "New / Unassigned"),
+		?F(assigned, "Assigned"),
+		?F(completed, "Completed")
 	]).
 
 %------------------------------------------------------------------------------

@@ -125,6 +125,10 @@ fetch(D, _From, _Size, [
 			#dcell {val=itf:val(BDoc, number)},
 			#dcell {val=itf:val(BDoc, createdby)},
 			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
+			#dcell {val=itf:val(BDoc, scannedby)},
+			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, scanningstate)}),
+			#dcell {val=itf:val(BDoc, qualityby)},
+			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, uploadstate)}),
 			#dcell {
 				val=#span {
 					class="btn btn-sm btn-primary-outline",
@@ -151,6 +155,10 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Bundle Number"},
 		#dcell {type=header, val="Created By"},
 		#dcell {type=header, val="Created On"},
+		#dcell {type=header, val="Scanner"},
+		#dcell {type=header, val="Scanning State"},
+		#dcell {type=header, val="QC / Uploader"},
+		#dcell {type=header, val="Upload State"},
 		#dcell {type=header, val="Select"}
 	],
 

@@ -8,6 +8,7 @@
 -define(APPOSM, ep_osm).
 -define(APPOSM_ADMIN, "admin").
 -define(APPOSM_RECEIVER, "osmreceiver").
+-define(APPOSM_SCANUPLOADER, "osmscanuploader").
 
 
 %------------------------------------------------------------------------------
@@ -21,6 +22,8 @@
 -define(OSMREC(Id), itf:field(ep_osm_receiver_fields, Id)).
 -define(OSMREC(Id, Field), itf:field(ep_osm_receiver_fields, Id, Field)).
 
+-define(OSMSUP(Id), itf:field(ep_osm_scanuploader_fields, Id)).
+-define(OSMSUP(Id, Field), itf:field(ep_osm_scanuploader_fields, Id, Field)).
 
 
 %

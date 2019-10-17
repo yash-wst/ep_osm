@@ -1,4 +1,4 @@
--module(ep_osm_bundle).
+-module(ep_osm_scanuploader).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -7,13 +7,13 @@ main() ->
 	ita:auth(?MODULE, #template {file="lib/itx/priv/static/templates/html/entered.html"}).
 
 title() ->
-	?LN("ep_osm_bundle").
+	?LN("ep_osm_scanuploader").
 
 heading() ->
-	?LN("ep_osm_bundle").
+	?LN("ep_osm_scanuploader").
 
 db() ->
-	"ep_osm_bundle".
+	ep_osm_scanuploader_api:db().
 
 %------------------------------------------------------------------------------
 % access
@@ -25,21 +25,13 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 fs(basic) -> [
-	?OSMBDL(osm_exam_fk),
-	?OSMBDL(number),
-	?OSMBDL(createdby),
-	?OSMBDL(createdon)
-];
-
-fs(index) -> [
-	?OSMBDL(osm_exam_fk),
-	?OSMBDL(number),
-	?OSMBDL(createdby),
-	?OSMBDL(createdon),
-	?OSMBDL(scannedby),
-	?OSMBDL(qualityby),
-	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate)
+	itf:build(?ITXPRF(profiletype), ?APPOSM_SCANUPLOADER),
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email),
+	?OSMCAP(osm_cap_fk),
+	?ITXPRF(password_bcrypt)
 ];
 
 fs(view) ->
@@ -54,8 +46,21 @@ fs(edit) ->
 fs(update) ->
 	fs(basic);
 
-fs(search) ->
-	fs(basic);
+fs(search) -> [
+	itf:build(?ITXPRF(profiletype), ?APPOSM_SCANUPLOADER),
+	?ITXPRF(username),
+	?ITXPRF(mobile),
+	?ITXPRF(email)
+];
+
+fs(form) -> [
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email),
+	?OSMCAP(osm_cap_fk)
+];
+
 
 fs(grid) ->
 	fs(basic);
