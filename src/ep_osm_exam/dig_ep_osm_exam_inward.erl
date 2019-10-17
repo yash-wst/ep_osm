@@ -67,7 +67,9 @@ get() ->
 		module=?MODULE,
 		filters=[
 			itf:build(f(osm_exam_fk), OsmExamId),
-			?OSMBDL({osm_bundle_fk, OsmExamId})
+			?OSMBDL({osm_bundle_fk, OsmExamId}),
+			?OSMBDL(scanningstate),
+			?OSMBDL(uploadstate)
 		]
 	}.
 
@@ -90,87 +92,6 @@ init() ->
 %------------------------------------------------------------------------------
 % function - fetch
 %------------------------------------------------------------------------------
-
-%..............................................................................
-%
-% [osm_exam_fk]
-%
-%..............................................................................
-fetch(D, _From, _Size, [
-	#field {id=osm_exam_fk, uivalue=OsmExamId}
-] = Fs) ->
-
-	%
-	% init
-	%
-	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
-		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY
-	),
-	FBundle = ?OSMBDL({osm_bundle_fk, OsmExamId}),
-
-
-	%
-	% sort bundles by number
-	%
-	BundleDocsSorted = lists:sort(fun(A, B) ->
-		itf:val(A, number) < itf:val(B, number)
-	end, BundleDocs),
-
-
-
-	%
-	% results
-	%
-	Results = lists:map(fun(BDoc) ->
-		[
-			#dcell {val=itf:val(BDoc, number)},
-			#dcell {val=itf:val(BDoc, createdby)},
-			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
-			#dcell {val=layout_dtp_by(scannedby, BDoc)},
-			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, scanningstate)}),
-			#dcell {val=layout_dtp_by(qualityby, BDoc)},
-			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, uploadstate)}),
-			#dcell {
-				val=#span {
-					class="btn btn-sm btn-primary-outline",
-					body="Bundle #" ++ itf:val(BDoc, number)
-				},
-				postback={filter, itf:build(FBundle, itf:idval(BDoc))}
-			}
-		]
-	end, BundleDocsSorted),
-
-
-	%
-	% actions
-	%
-	Actions = [
-		{create_bundle, "Create New Bundle", "Create New Bundle"}
-	],
-
-
-	%
-	% header
-	%
-	Header = [
-		#dcell {type=header, val="Bundle Number"},
-		#dcell {type=header, val="Created By"},
-		#dcell {type=header, val="Created On"},
-		#dcell {type=header, val="Scanner"},
-		#dcell {type=header, val="Scanning State"},
-		#dcell {type=header, val="QC / Uploader"},
-		#dcell {type=header, val="Upload State"},
-		#dcell {type=header, val="Select"}
-	],
-
-
-	%
-	% return
-	%
-	{D#dig {
-		actions=Actions
-	}, [Header] ++ Results};
-
 
 
 
@@ -244,6 +165,86 @@ fetch(D, _From, _Size, [
 	}, [Header] ++ Results};
 
 
+
+%..............................................................................
+%
+% [osm_exam_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=OsmExamId} | _
+] = Fs) ->
+
+	%
+	% init
+	%
+	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
+		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY
+	),
+	FBundle = ?OSMBDL({osm_bundle_fk, OsmExamId}),
+
+
+	%
+	% sort bundles by number
+	%
+	BundleDocsSorted = lists:sort(fun(A, B) ->
+		itf:val(A, number) < itf:val(B, number)
+	end, BundleDocs),
+
+
+
+	%
+	% results
+	%
+	Results = lists:map(fun(BDoc) ->
+		[
+			#dcell {val=itf:val(BDoc, number)},
+			#dcell {val=itf:val(BDoc, createdby)},
+			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
+			#dcell {val=layout_dtp_by(scannedby, BDoc)},
+			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, scanningstate)}),
+			#dcell {val=layout_dtp_by(qualityby, BDoc)},
+			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, uploadstate)}),
+			#dcell {
+				val=#span {
+					class="btn btn-sm btn-primary-outline",
+					body="Bundle #" ++ itf:val(BDoc, number)
+				},
+				postback={filter, itf:build(FBundle, itf:idval(BDoc))}
+			}
+		]
+	end, BundleDocsSorted),
+
+
+	%
+	% actions
+	%
+	Actions = [
+		{create_bundle, "Create New Bundle", "Create New Bundle"}
+	],
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Bundle Number"},
+		#dcell {type=header, val="Created By"},
+		#dcell {type=header, val="Created On"},
+		#dcell {type=header, val="Scanner"},
+		#dcell {type=header, val="Scanning State"},
+		#dcell {type=header, val="QC / Uploader"},
+		#dcell {type=header, val="Upload State"},
+		#dcell {type=header, val="Select"}
+	],
+
+
+	%
+	% return
+	%
+	{D#dig {
+		actions=Actions
+	}, [Header] ++ Results};
 
 
 %..............................................................................
@@ -382,8 +383,15 @@ handle_assign_bundle(Type, BundleDoc) ->
 	%
 	% init
 	%
+	StateFId = case Type of
+		scannedby ->
+			scanningstate;
+		qualityby ->
+			uploadstate
+	end,
 	FsToSave = [
-		itf:build(?OSMBDL(Type), itxauth:user())
+		itf:build(?OSMBDL(Type), itxauth:user()),
+		itf:build(?OSMBDL(StateFId), "assigned")
 	],
 
 
@@ -401,6 +409,21 @@ handle_assign_bundle(Type, BundleDoc) ->
 		itf:val(Doc, Type) == [],
 		"error: this bundle is already assigned!"
 	),
+
+
+
+	%
+	% assert - cannot assign uplaod till bundle scanning is completed
+	%
+	case Type of
+		qualityby ->
+			?ASSERT(
+				itf:val(Doc, scanningstate) == "completed",
+				"error: cannot assign till scanning is completed!"
+			);
+		_ ->
+			ok
+	end,
 
 
 	%
