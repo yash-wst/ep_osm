@@ -445,7 +445,7 @@ handle_inward(UId, SNo) ->
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
 	),
 	?ASSERT(
-		length(BundleDocs) < 101,
+		length(BundleDocs) < 61,
 		"bundle full; create new bundle"
 	),
 
