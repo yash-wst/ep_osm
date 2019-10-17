@@ -3,13 +3,21 @@
 -include("records.hrl").
 
 
-menu(?APPOSM_RECEIVER) ->
+
+menu(?APPOSM_SCANUPLOADER) ->
 	[
 		{?LN("OSM Exams"), [
 			{dig_ep_osm_exam, ?VIEW, ?LN("Find Exams")}
 		]}
 	];
 
+
+menu(?APPOSM_RECEIVER) ->
+	[
+		{?LN("OSM Exams"), [
+			{dig_ep_osm_exam, ?VIEW, ?LN("Find Exams")}
+		]}
+	];
 
 menu(_) ->
 	[].

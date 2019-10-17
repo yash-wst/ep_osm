@@ -1,5 +1,5 @@
 
--module(dig_ep_osm_exam).
+-module(dig_mm_ep_osm_scanuploader).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -13,24 +13,47 @@ main() ->
 	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
 
 title() ->
-	?LN("OSM Exams").
+	?LN("Profile - Scanner/Uploader").
 
 heading() ->
 	title().
 
+form() ->
+	ep_osm_scanuploader.
 
 %------------------------------------------------------------------------------
 % records
 %------------------------------------------------------------------------------
 
 
+%------------------------------------------------------------------------------
+% fields
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% options
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% fs
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% fs - group
+%------------------------------------------------------------------------------
+
+fields(ep_osm_scanuploader, _Fs) ->
+	ep_osm_scanuploader:fs(form).
+
+
 
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
-access(_, ?APPOSM_ADMIN) -> true;
-access(_, ?APPOSM_RECEIVER) -> true;
-access(_, ?APPOSM_SCANUPLOADER) -> true;
+access(_, ?ADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -41,8 +64,10 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
+		mode=?VIEW,
 		module=?MODULE,
-		filters=anptest:fs(search)
+		filters=ep_osm_scanuploader:fs(search),
+		size=25
 	}.
 
 
@@ -50,7 +75,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("OSM Exams").
+	?LN("Profile - Scanner/Uploader").
 
 
 
@@ -70,61 +95,8 @@ init() ->
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, Fs) ->
-
-	%
-	% fetch documents from db
-	%
-	Rec = db2_find:getrecord_by_fs(anptests:getdb(), Fs),
-	#db2_find_response {docs=Docs}  = db2_find:find(
-		Rec#db2_find {sort=anptest:fs(search)}
-	),
-
-	%
-	% layout results
-	%
-	Results = lists:map(fun(Doc) ->
-
-		%
-		% layout cells
-		%
-		FsDoc = itf:d2f(Doc, anptest:fs(search)),
-		lists:map(fun(F) ->
-			#dcell {val=itl:render(F)}
-		end, FsDoc) ++ [
-			#dcell {val=itl:btn_group([
-				#link {
-					text="Inward",
-					new=true,
-					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [itf:idval(Doc)])
-				}
-			])}
-		]
-
-	end, Docs),
-
-
-	%
-	% header
-	%
-	Header = lists:map(fun(#field {label=Label}) ->
-		#dcell {type=header, val=Label}
-	end, anptest:fs(search)) ++ [
-		#dcell {type=header, val="Actions"}
-	],
-
-	{
-		D#dig {
-		},
-		[Header] ++ Results
-	}.
-
-
-%------------------------------------------------------------------------------
-% function - exports
-%------------------------------------------------------------------------------
-exports() -> [
-].
+fetch(D, From, Size, Fs) ->
+	dig_mm:fetch(D, From, Size, Fs).
 
 
 
@@ -132,16 +104,49 @@ exports() -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	dig:dig(?MODULE:get()).
+	dig_mm:layout(?MODULE).
 
 
 
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
-event({itx, E}) ->
-	ite:event(E).
+event(E) ->
+	dig_mm:event(E).
 
+start_upload_event(Event) ->
+	dig_mm:start_upload_event(Event).
+
+finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
+	dig_mm:finish_upload_event(Tag, AttachmentName, LocalFileData, Node).
+
+%------------------------------------------------------------------------------
+% assertions
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% save
+%------------------------------------------------------------------------------
+
+%
+% after create
+%
+after_create(Fs, {ok, Doc}) ->
+	itxprofile:handle_send_welcome_message_email(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
+	),
+	itxprofile:handle_send_welcome_message_sms(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
+	).
+
+
+
+%
+% override before save function
+%
+before_save(FsToSave, _FsAll, _Doc) ->
+	FsToSave.
 
 
 %------------------------------------------------------------------------------

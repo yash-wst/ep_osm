@@ -47,6 +47,7 @@ f(osm_exam_fk = I) ->
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_RECEIVER) -> true;
+access(_, ?APPOSM_SCANUPLOADER) -> true;
 access(_, _) -> false.
 
 
@@ -125,9 +126,9 @@ fetch(D, _From, _Size, [
 			#dcell {val=itf:val(BDoc, number)},
 			#dcell {val=itf:val(BDoc, createdby)},
 			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
-			#dcell {val=itf:val(BDoc, scannedby)},
+			#dcell {val=layout_dtp_by(scannedby, BDoc)},
 			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, scanningstate)}),
-			#dcell {val=itf:val(BDoc, qualityby)},
+			#dcell {val=layout_dtp_by(qualityby, BDoc)},
 			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, uploadstate)}),
 			#dcell {
 				val=#span {
@@ -286,9 +287,53 @@ layout_inward_form() ->
 	itl:get(?CREATE, Fs, noevent, line).
 
 
+
+%..............................................................................
+%
+% layout - dtp by
+%
+%..............................................................................
+
+layout_dtp_by(Type, BundleDoc) ->
+	layout_dtp_by(Type, BundleDoc, itf:val(BundleDoc, Type)).
+
+
+layout_dtp_by(Type, BundleDoc, []) ->
+	ite:button(
+		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}
+	);
+layout_dtp_by(_Type, _BundleDoc, Val) ->
+	Val.
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, {Type, BundleDoc}}) ->
+	handle_assign_bundle(Type, BundleDoc);
+
+
+event({assign_bundle, Type, BundleDoc}) ->
+
+	TypeLabel = case Type of
+		scannedby -> "Scanning";
+		qualityby -> "Uploading"
+	end,
+
+	itl:confirmation(
+		#panel {class="mycenter", body=[
+			#p {
+				class="lead font-weight-bold",
+				text=TypeLabel
+			},
+			#p {
+				text="Are you sure you want to assign this bundle to yourself?"
+			}
+		]},
+		{Type, BundleDoc}
+	);
+
 
 event(print_bundle_cover) ->
 	handle_print_bundle_cover(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
@@ -324,6 +369,53 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - assign bundle
+%
+%..............................................................................
+
+handle_assign_bundle(Type, BundleDoc) ->
+
+	%
+	% init
+	%
+	FsToSave = [
+		itf:build(?OSMBDL(Type), itxauth:user())
+	],
+
+
+	%
+	% save and sure doc not already assigned
+	%
+	Id = itf:idval(BundleDoc),
+	{ok, Doc} = ep_osm_bundle_api:get(Id),
+
+
+	%
+	% assert - not assigned
+	%
+	?ASSERT(
+		itf:val(Doc, Type) == [],
+		"error: this bundle is already assigned!"
+	),
+
+
+	%
+	% save
+	%
+	FsAll = ep_osm_bundle:fs(all),
+	FsAll1 = itf:d2f(Doc, FsAll),
+	FsAll2 = itf:fs_merge(FsAll1, FsToSave),
+	case ep_osm_bundle_api:save(FsAll2) of
+		{ok, _} ->
+			dig:refresh();
+		_ ->
+			helper_ui:flash(error, "Sorry, could not assign!")
+	end.
+
 
 
 %..............................................................................
