@@ -25,15 +25,22 @@ upload(S3Dir, DirNamesToUpload, Filename, Filepath) ->
 
 
 	%
+	% create a working directory and unzip the zip file
+	%
+	WorkDir = "/tmp/" ++ helper:uidintstr(),
+	helper:cmd("mkdir -p ~s", [WorkDir]),
+
+
+	%
 	% upload to s3
 	%
-	handle_upload_to_s3(),
+	handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filepath),
 
 
 	%
 	% cleanup
 	%
-	handle_cleanup(),
+	handle_cleanup(WorkDir, Filepath),
 
 
 	%
@@ -118,9 +125,27 @@ handle_verify_zip_file(Filepath) ->
 % handle - upload to s3
 %------------------------------------------------------------------------------
 
-handle_upload_to_s3() ->
+handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filepath) ->
 
 	dig:log("Uploading to S3"),
+
+
+	%
+	% unzip the file in workdir
+	%
+	{ok, Pwd} = file:get_cwd(),
+	helper:cmd("cd ~s; unzip ~s/~s", [WorkDir, Pwd, Filepath]),
+
+
+	%
+	% for each directory, check if exists and upload to s3
+	%
+	lists:foreach(fun(DirNameToUpload) ->
+
+		dig:log("Processing ... " ++ DirNameToUpload)
+
+	end, DirNamesToUpload),
+
 
 	dig:log("Uploading to S3 ... ok").
 
@@ -131,9 +156,16 @@ handle_upload_to_s3() ->
 % handle - cleanup
 %------------------------------------------------------------------------------
 
-handle_cleanup() ->
+handle_cleanup(WorkDir, Filepath) ->
 
 	dig:log("Cleaning up"),
+
+	%
+	% remove uploaded file
+	%
+	[] = helper:cmd("rm -rf ~s", [WorkDir]),
+	[] = helper:cmd("rm -f ~s", [Filepath]),
+
 
 	dig:log("Cleaning up ... ok").
 
