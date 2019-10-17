@@ -391,9 +391,30 @@ start_upload_event(_) ->
 	helper_ui:flash(warning, "Uploading. Please wait ...").
 
 finish_upload_event(_Id, Filename, Fileloc, _Node) ->
+
+	%
+	% init
+	%
 	helper_ui:flash_clear(),
 	dig:log("File received. File is being processed. Please wait ..."),
-	dig_ep_osm_exam_inward_uploadtos3:upload(Filename, Fileloc).
+
+
+	%
+	% get docs
+	%
+	ExamId = wf:q(osm_exam_fk),
+	{ok, ExamDoc} = anptests:getdoc(ExamId),
+	BundleDocs = get_bundle_docs(),
+
+
+	%
+	% upload
+	%
+	S3Dir = itf:val(ExamDoc, aws_s3_dir),
+	DirNamesToUpload = lists:map(fun(D) ->
+		itf:val(D, anpseatnumber)
+	end, BundleDocs),
+	dig_ep_osm_exam_inward_uploadtos3:upload(S3Dir, DirNamesToUpload, Filename, Fileloc).
 
 
 %------------------------------------------------------------------------------
@@ -695,17 +716,7 @@ handle_inward(UId, SNo) ->
 	%
 	% assert - bundle is not full
 	%
-	FsToSearchBundle = [
-		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId)
-	],
-	Db2FindRec = db2_find:getrecord_by_fs(
-		ExamDb, FsToSearchBundle, 0, ?INFINITY
-	),
-	#db2_find_response {docs=BundleDocs} = db2_find:find(Db2FindRec#db2_find {
-		fields=[
-			itf:textbox(?F(anp_paper_uid))
-		]
-	}),
+	BundleDocs = get_bundle_docs(),
 	?ASSERT(
 		length(BundleDocs) < 61,
 		"bundle full; create new bundle"
@@ -808,6 +819,39 @@ layout_osm_exam_name(OsmExamId) ->
 		itf:val(ExamDoc, exam_pattern)
 	]).
 
+
+
+get_bundle_docs() ->
+
+	%
+	% init
+	%
+	ExamId = wf:q(id),
+	OsmBundleId = wf:q(osm_bundle_fk),
+	ExamDb = anpcandidates:db(ExamId),
+
+
+	%
+	% find docs
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId)
+	],
+	Db2FindRec = db2_find:getrecord_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY
+	),
+	#db2_find_response {docs=BundleDocs} = db2_find:find(Db2FindRec#db2_find {
+		fields=[
+			itf:textbox(?F(anp_paper_uid)),
+			itf:textbox(?F(anpseatnumber))
+		]
+	}),
+
+
+	%
+	% return docs
+	%
+	BundleDocs.
 
 
 %------------------------------------------------------------------------------

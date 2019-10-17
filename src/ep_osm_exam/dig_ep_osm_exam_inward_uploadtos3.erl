@@ -10,12 +10,18 @@
 %------------------------------------------------------------------------------
 
 
-upload(Filename, Fileloc) ->
+upload(S3Dir, DirNamesToUpload, Filename, Filepath) ->
+
+	%
+	% verify inputs
+	%
+	handle_verify_inputs(S3Dir, DirNamesToUpload),
+
 
 	%
 	% verify file is zip
 	%
-	handle_verify_zip_file(),
+	handle_verify_zip_file(Filepath),
 
 
 	%
@@ -38,12 +44,72 @@ upload(Filename, Fileloc) ->
 
 
 %------------------------------------------------------------------------------
+% handle - verify inputs
+%------------------------------------------------------------------------------
+
+handle_verify_inputs(S3Dir, DirNamesToUpload) ->
+
+	%
+	% init
+	%
+	dig:log("Verifying inputs"),
+
+
+
+	?ASSERT(
+		S3Dir /= [],
+		"error: S3 directory not set!"
+	),
+
+
+
+	?ASSERT(
+		DirNamesToUpload /= [],
+		"error: nothing to upload!"
+	),
+
+
+
+	%
+	% ok
+	%
+	dig:log("Verifying inputs ... ok").
+
+
+
+
+
+%------------------------------------------------------------------------------
 % handle - verify zip file
 %------------------------------------------------------------------------------
 
-handle_verify_zip_file() ->
+handle_verify_zip_file(Filepath) ->
+
+	%
+	% init
+	%
 	dig:log("Verifying file is zip file"),
 
+
+	%
+	% find file type
+	%
+	CmdRes = helper:cmd("file -b ~s", [Filepath]),
+	Type = lists:nth(1, string:tokens(CmdRes, " ")),
+
+
+	%
+	% assert - file type should be zip
+	%
+	?ASSERT(
+		string:to_upper(Type) == "ZIP",
+		"error: uploaded file is not a zip file!"
+	),
+
+
+	%
+	% ok
+	%
 	dig:log("Verifying file is zip file ... ok").
 
 
