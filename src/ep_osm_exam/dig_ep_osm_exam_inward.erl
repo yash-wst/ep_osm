@@ -144,9 +144,7 @@ fetch(D, _From, _Size, [
 	Actions = [
 		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
 		{refresh, "Refresh", "Refresh"}
-	] ++ layout_action_scanning(BundleDoc) ++ [
-		{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
-	],
+	] ++ layout_action_scanning(BundleDoc),
 
 
 	%
@@ -330,7 +328,8 @@ layout_action_scanning(BundleDoc) ->
 	%
 	case {itf:val(BundleDoc, scannedby), itf:val(BundleDoc, scanningstate)} of
 		{User, "assigned"} -> [
-			{scanning_completed, "Scanning Completed", "Scanning Completed"}
+			{scanning_completed, "Scanning Completed", "Scanning Completed"},
+			{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
 		];
 		_ -> [
 		]
@@ -641,9 +640,14 @@ handle_inward(UId, SNo) ->
 	FsToSearchBundle = [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId)
 	],
-	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
+	Db2FindRec = db2_find:getrecord_by_fs(
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
 	),
+	#db2_find_response {docs=BundleDocs} = db2_find:find(Db2FindRec#db2_find {
+		fields=[
+			itf:textbox(?F(anp_paper_uid))
+		]
+	}),
 	?ASSERT(
 		length(BundleDocs) < 61,
 		"bundle full; create new bundle"
