@@ -144,7 +144,9 @@ fetch(D, _From, _Size, [
 	Actions = [
 		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
 		{refresh, "Refresh", "Refresh"}
-	] ++ layout_action_scanning(BundleDoc),
+	] ++
+		layout_action_scanning(BundleDoc) ++
+		layout_action_uploading(BundleDoc),
 
 
 	%
@@ -291,6 +293,22 @@ layout_inward_form() ->
 
 %..............................................................................
 %
+% layout - upload form
+%
+%..............................................................................
+
+layout_upload_form() ->
+	Fs = [
+		itf:attachment()
+	],
+	itl:get(?EDIT, Fs, noevent, line).
+
+
+
+
+
+%..............................................................................
+%
 % layout - dtp by
 %
 %..............................................................................
@@ -311,7 +329,7 @@ layout_dtp_by(_Type, _BundleDoc, Val) ->
 
 %..............................................................................
 %
-% layout - action
+% layout - action scanning
 %
 %..............................................................................
 
@@ -336,6 +354,46 @@ layout_action_scanning(BundleDoc) ->
 	end.
 
 
+
+%..............................................................................
+%
+% layout - action uploading
+%
+%..............................................................................
+
+layout_action_uploading(BundleDoc) ->
+
+	%
+	% init
+	%
+	User = itxauth:user(),
+
+
+	%
+	% action
+	%
+	case {itf:val(BundleDoc, qualityby), itf:val(BundleDoc, uploadstate)} of
+		{User, "assigned"} -> [
+			{upload_completed, "Uploading Completed", "Uploading Completed"},
+			{form, layout_upload_form(), "Upload: (zip bundle directory and upload)"}
+		];
+		_ -> [
+		]
+	end.
+
+
+
+%------------------------------------------------------------------------------
+% events - file
+%------------------------------------------------------------------------------
+
+start_upload_event(_) ->
+	helper_ui:flash(warning, "Uploading. Please wait ...").
+
+finish_upload_event(_Id, Filename, Fileloc, _Node) ->
+	helper_ui:flash_clear(),
+	dig:log("File received. File is being processed. Please wait ..."),
+	dig_ep_osm_exam_inward_uploadtos3:upload(Filename, Fileloc).
 
 
 %------------------------------------------------------------------------------
