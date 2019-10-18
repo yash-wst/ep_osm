@@ -302,7 +302,14 @@ layout_upload_form() ->
 	Fs = [
 		itf:attachment()
 	],
-	itl:get(?EDIT, Fs, noevent, line).
+	[
+		itl:instructions([
+			{danger, "Folder name and zip file name should be same. Ex: Folder: 200, Zip: 200.zip"},
+			{ok, "Zip file should contain folders of the current bundle only."},
+			{danger, "Please ensure you have reliable, high bandwidth, internet connection"}
+		]),
+		itl:get(?EDIT, Fs, noevent, line)
+	].
 
 
 

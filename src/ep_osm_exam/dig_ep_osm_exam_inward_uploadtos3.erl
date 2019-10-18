@@ -11,6 +11,21 @@
 
 
 upload(S3Dir, DirNamesToUpload, Filename, Filepath) ->
+	%
+	% upload in background as it is time consuming
+	%
+	Context = wf_context:context(),
+	PId = spawn(?MODULE, upload1, [Context, S3Dir, DirNamesToUpload, Filename, Filepath]),
+	dig:log(io_lib:format("spawned upload process ~p", [PId])).
+
+
+upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath) ->
+
+	%
+	% init
+	%
+	wf_context:context(Context),
+
 
 	%
 	% verify inputs
@@ -34,7 +49,7 @@ upload(S3Dir, DirNamesToUpload, Filename, Filepath) ->
 	%
 	% upload to s3
 	%
-	handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filepath),
+	handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filename, Filepath),
 
 
 	%
@@ -61,6 +76,11 @@ handle_verify_inputs(S3Dir, DirNamesToUpload) ->
 	%
 	dig:log("Verifying inputs"),
 
+
+	?ASSERT(
+		configs:get(aws_s3_bucket, []) /= [],
+		"error: aws s3 bucket not set"
+	),
 
 
 	?ASSERT(
@@ -125,9 +145,15 @@ handle_verify_zip_file(Filepath) ->
 % handle - upload to s3
 %------------------------------------------------------------------------------
 
-handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filepath) ->
+handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filename, Filepath) ->
 
+
+	%
+	% init
+	%
 	dig:log("Uploading to S3"),
+	ZipDir = io_lib:format("~s/~s", [WorkDir, filename:rootname(Filename)]),
+
 
 
 	%
@@ -141,14 +167,51 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filepath) ->
 	% for each directory, check if exists and upload to s3
 	%
 	lists:foreach(fun(DirNameToUpload) ->
-
-		dig:log("Processing ... " ++ DirNameToUpload)
-
+		case handle_upload_to_s3_check_directory_exists(ZipDir, DirNameToUpload) of
+			true ->
+				UploadRes = handle_upload_to_s3_upload(
+					ZipDir, S3Dir, DirNameToUpload
+				),
+				Log = io_lib:format("Processing ... ~s: ~s", [
+					DirNameToUpload, UploadRes
+				]),
+				dig:log(Log);
+			_ ->
+				Log = io_lib:format("Processing ... ~s: skipped! directory not found in zip", [
+					DirNameToUpload
+				]),
+				dig:log(Log)
+		end
 	end, DirNamesToUpload),
 
 
 	dig:log("Uploading to S3 ... ok").
 
+
+
+
+%------------------------------------------------------------------------------
+% handle - upload to s3: check dir exists
+%------------------------------------------------------------------------------
+
+handle_upload_to_s3_check_directory_exists(ZipDir, DirNameToUpload) ->
+	Dir = ?FLATTEN(ZipDir ++ "/" ++ DirNameToUpload),
+	filelib:is_dir(Dir).
+
+
+%------------------------------------------------------------------------------
+% handle - upload to s3: upload
+%------------------------------------------------------------------------------
+
+handle_upload_to_s3_upload(ZipDir, S3Dir, DirNameToUpload) ->
+
+	%
+	% exec
+	%
+	CmdRes = helper:cmd("cd ~s; aws s3 sync --only-show-errors ~s s3://~s/~s/~s", [
+		ZipDir, DirNameToUpload, configs:get(aws_s3_bucket), S3Dir, DirNameToUpload
+	]),
+	CmdRes.
 
 
 
