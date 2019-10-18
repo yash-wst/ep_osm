@@ -146,7 +146,8 @@ fetch(D, _From, _Size, [
 		{refresh, "Refresh", "Refresh"}
 	] ++
 		layout_action_scanning(BundleDoc) ++
-		layout_action_uploading(BundleDoc),
+		layout_action_uploading(BundleDoc) ++
+		layout_action_inward_form(itxauth:role()),
 
 
 	%
@@ -329,6 +330,20 @@ layout_dtp_by(_Type, _BundleDoc, Val) ->
 
 %..............................................................................
 %
+% layout - action inward form
+%
+%..............................................................................
+
+layout_action_inward_form(?APPOSM_RECEIVER) -> [
+	{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
+];
+layout_action_inward_form(_) -> [
+].
+
+
+
+%..............................................................................
+%
 % layout - action scanning
 %
 %..............................................................................
@@ -346,8 +361,7 @@ layout_action_scanning(BundleDoc) ->
 	%
 	case {itf:val(BundleDoc, scannedby), itf:val(BundleDoc, scanningstate)} of
 		{User, "assigned"} -> [
-			{scanning_completed, "Scanning Completed", "Scanning Completed"},
-			{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
+			{scanning_completed, "Scanning Completed", "Scanning Completed"}
 		];
 		_ -> [
 		]
