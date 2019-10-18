@@ -322,14 +322,14 @@ layout_upload_form() ->
 %..............................................................................
 
 layout_dtp_by(Type, BundleDoc) ->
-	layout_dtp_by(Type, BundleDoc, itf:val(BundleDoc, Type)).
+	layout_dtp_by(itxauth:role(), Type, BundleDoc, itf:val(BundleDoc, Type)).
 
 
-layout_dtp_by(Type, BundleDoc, []) ->
+layout_dtp_by(Role, Type, BundleDoc, []) when Role == ?APPOSM_SCANUPLOADER ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}
 	);
-layout_dtp_by(_Type, _BundleDoc, Val) ->
+layout_dtp_by(_Role, _Type, _BundleDoc, Val) ->
 	Val.
 
 
