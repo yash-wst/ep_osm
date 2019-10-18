@@ -16,52 +16,61 @@ upload(S3Dir, DirNamesToUpload, Filename, Filepath) ->
 	%
 	Context = wf_context:context(),
 	PId = spawn(?MODULE, upload1, [Context, S3Dir, DirNamesToUpload, Filename, Filepath]),
-	dig:log(io_lib:format("spawned upload process ~p", [PId])).
+	dig:log(io_lib:format("spawned upload process: ~p", [PId])).
 
 
 upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath) ->
 
-	%
-	% init
-	%
-	wf_context:context(Context),
+	try
+
+		%
+		% init
+		%
+		wf_context:context(Context),
 
 
-	%
-	% verify inputs
-	%
-	handle_verify_inputs(S3Dir, DirNamesToUpload),
+		%
+		% verify inputs
+		%
+		handle_verify_inputs(S3Dir, DirNamesToUpload),
 
 
-	%
-	% verify file is zip
-	%
-	handle_verify_zip_file(Filepath),
+		%
+		% verify file is zip
+		%
+		handle_verify_zip_file(Filepath),
 
 
-	%
-	% create a working directory and unzip the zip file
-	%
-	WorkDir = "/tmp/" ++ helper:uidintstr(),
-	helper:cmd("mkdir -p ~s", [WorkDir]),
+		%
+		% create a working directory and unzip the zip file
+		%
+		WorkDir = "/tmp/" ++ helper:uidintstr(),
+		helper:cmd("mkdir -p ~s", [WorkDir]),
 
 
-	%
-	% upload to s3
-	%
-	handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filename, Filepath),
+		%
+		% upload to s3
+		%
+		handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filename, Filepath),
 
 
-	%
-	% cleanup
-	%
-	handle_cleanup(WorkDir, Filepath),
+		%
+		% cleanup
+		%
+		handle_cleanup(WorkDir, Filepath),
 
 
-	%
-	% done
-	%
-	dig:log("Uploading done.").
+		%
+		% done
+		%
+		dig:log("Uploading done.")
+
+	catch
+		Error:Message ->
+			?D({Error, Message, erlang:get_stacktrace()}),
+			Log = io_lib:format("~p, ~p", [Error, Message]),
+			dig:log(error, Log)
+	end.
 
 
 
@@ -79,7 +88,23 @@ handle_verify_inputs(S3Dir, DirNamesToUpload) ->
 
 	?ASSERT(
 		configs:get(aws_s3_bucket, []) /= [],
-		"error: aws s3 bucket not set"
+		"error: aws_s3_bucket not set"
+	),
+
+	?ASSERT(
+		configs:get(aws_s3_access_key, []) /= [],
+		"error: aws_s3_access_key not set"
+	),
+
+
+	?ASSERT(
+		configs:get(aws_s3_secret, []) /= [],
+		"error: aws_s3_secret not set"
+	),
+
+	?ASSERT(
+		configs:get(aws_s3_default_region, []) /= [],
+		"error: aws_s3_default_region not set"
 	),
 
 
@@ -208,8 +233,10 @@ handle_upload_to_s3_upload(ZipDir, S3Dir, DirNameToUpload) ->
 	%
 	% exec
 	%
-	CmdRes = helper:cmd("cd ~s; aws s3 sync --only-show-errors ~s s3://~s/~s/~s", [
-		ZipDir, DirNameToUpload, configs:get(aws_s3_bucket), S3Dir, DirNameToUpload
+	CmdRes = helper:cmd("cd ~s; AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 sync --only-show-errors ~s s3://~s/~s/~s", [
+		ZipDir,
+		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
+		DirNameToUpload, configs:get(aws_s3_bucket), S3Dir, DirNameToUpload
 	]),
 	CmdRes.
 
