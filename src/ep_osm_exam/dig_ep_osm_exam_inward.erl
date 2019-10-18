@@ -395,8 +395,8 @@ layout_action_uploading(BundleDoc) ->
 	%
 	case {itf:val(BundleDoc, qualityby), itf:val(BundleDoc, uploadstate)} of
 		{User, "assigned"} -> [
-			{upload_completed, "Uploading Completed", "Uploading Completed"},
-			{form, layout_upload_form(), "Upload: (zip bundle directory and upload)"}
+			{form, layout_upload_form(), "Upload: (zip bundle directory and upload)"},
+			{upload_completed, "Uploading Completed", "Uploading Completed"}
 		];
 		_ -> [
 		]
@@ -441,6 +441,18 @@ finish_upload_event(_Id, Filename, Fileloc, _Node) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, upload_completed}) ->
+	itl:modal_close(),
+	handle_upload_completed(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+
+
+event(upload_completed) ->
+	itl:confirmation(
+		"Are you sure you want to mark this bundle as 'Upload Completed'?",
+		upload_completed
+	);
+
 
 event({confirmation_yes, scanning_completed}) ->
 	handle_scanning_completed();
@@ -511,6 +523,117 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - upload completed
+%
+%..............................................................................
+
+handle_upload_completed(ExamId, BundleId) ->
+
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, ExamDoc} = anptests:getdoc(ExamId),
+	S3Dir = itf:val(ExamDoc, aws_s3_dir),
+
+
+
+	%
+	% get all candidate docs of this bundle
+	%
+	FsToSearch = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearch, 0, ?INFINITY
+	),
+
+
+	%
+	% check their upload status on s3
+	%
+	lists:map(fun(CDoc) ->
+
+		%
+		%  get keys
+		%
+		UploadedDir = ?FLATTEN(S3Dir ++ "/" ++ itf:val(CDoc, anpseatnumber)),
+		Keys = helper_s3:get_keys(UploadedDir, ".jpg"),
+
+
+		%
+		% asset - ensure dir is not empty
+		%
+		?ASSERT(
+			length(Keys) > 0,
+			io_lib:format("error: ~s is empty!", [UploadedDir])
+		),
+
+
+		%
+		% log files in dir
+		%
+		dig:log(io_lib:format("~s: total files: ~p", [UploadedDir, length(Keys)]))
+
+	end, CandidateDocs),
+
+
+	%
+	% change candidate state to uploaded
+	%
+	ListOfFsDoc = lists:map(fun(CDoc) ->
+		FsDoc = helper_api:doc2fields({ok, CDoc}),
+		itf:fs_merge(FsDoc, [
+			fields:build(anpstate, "anpstate_yettostart")
+		])
+	end, CandidateDocs),
+	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
+
+
+
+	%
+	% update bundle state to completed
+	%
+	handle_uploading_completed().
+
+
+%..............................................................................
+%
+% handle - uploading completed
+%
+%..............................................................................
+
+handle_uploading_completed() ->
+
+	%
+	% init
+	%
+	Id = wf:q(osm_bundle_fk),
+
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		itf:build(?OSMBDL(uploadstate), "completed")
+	],
+
+
+	%
+	% save
+	%
+	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), Id) of
+		{ok, _} ->
+			dig:refresh();
+		_ ->
+			helper_ui:flash(error, "Sorry, could not save!")
+	end.
+
 
 
 %..............................................................................
