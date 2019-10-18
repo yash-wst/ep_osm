@@ -147,7 +147,7 @@ fetch(D, _From, _Size, [
 	] ++
 		layout_action_scanning(BundleDoc) ++
 		layout_action_uploading(BundleDoc) ++
-		layout_action_inward_form(itxauth:role()),
+		layout_action_inward_form(itxauth:role(), itf:val(BundleDoc, scanningstate)),
 
 
 	%
@@ -341,10 +341,10 @@ layout_dtp_by(_Role, _Type, _BundleDoc, Val) ->
 %
 %..............................................................................
 
-layout_action_inward_form(?APPOSM_RECEIVER) -> [
+layout_action_inward_form(?APPOSM_RECEIVER, []) -> [
 	{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
 ];
-layout_action_inward_form(_) -> [
+layout_action_inward_form(_, _) -> [
 ].
 
 
