@@ -134,7 +134,8 @@ fetch(D, _From, _Size, [
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
-			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))}
+			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
+			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
 	end, CandidateDocs),
 
@@ -159,7 +160,8 @@ fetch(D, _From, _Size, [
 	Header = [
 		#dcell {type=header, val="Barcode / UID"},
 		#dcell {type=header, val="Seat No."},
-		#dcell {type=header, val="State"}
+		#dcell {type=header, val="State"},
+		#dcell {type=header, val="Remove"}
 	],
 
 
@@ -283,6 +285,32 @@ layout() ->
 	[
 		dig:dig(?MODULE:get())
 	].
+
+
+
+%..............................................................................
+%
+% layout - inward form
+%
+%..............................................................................
+layout_candidate_remove(BundleDoc, CDoc)  ->
+
+	%
+	% init
+	%
+	User = itxauth:user(),
+
+	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
+		{User, []} ->
+			ite:button(
+				remove_candidate,
+				"x",
+				{remove_candidate, itf:idval(CDoc)},
+				"btn btn-sm btn-danger-outline"
+			);
+		_ ->
+			[]
+	end.
 
 
 
@@ -488,6 +516,16 @@ finish_upload_event(_Id, Filename, Fileloc, _Node) ->
 % events
 %------------------------------------------------------------------------------
 
+event({confirmation_yes, {remove_candidate, CId}}) ->
+	handle_remove_candidate(CId);
+
+event({remove_candidate, _CId} = E) ->
+	itl:confirmation(
+		"Are you sure you want to delete this entry?",
+		E
+	);
+
+
 event({confirmation_yes, inward_completed}) ->
 	handle_inward_completed();
 
@@ -583,6 +621,31 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - remove canddidate
+%
+%..............................................................................
+
+handle_remove_candidate(CId) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(wf:q(osm_exam_fk)),
+
+
+	%
+	% delete
+	%
+	case anpcandidates:delete(ExamDb, CId) of
+		{ok, _} ->
+			dig:refresh();
+		_ ->
+			helper_ui:flash(error, "Sorry, could not delete!")
+	end.
+
 
 %..............................................................................
 %
