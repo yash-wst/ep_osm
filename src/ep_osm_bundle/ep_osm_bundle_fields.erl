@@ -70,11 +70,11 @@ f({osm_bundle_fk = I, OsmExamId}) ->
 
 
 f(scannedby = I) ->
-	F = itf:textbox_picker(?F(I, "")),
+	F = itf:textbox_picker(?F(I, "Scanned By")),
 	F#field {options=options(I)};
 
 f(qualityby = I) ->
-	F = itf:textbox_picker(?F(I, "")),
+	F = itf:textbox_picker(?F(I, "QC/Uploaded By")),
 	F#field {options=options(I)};
 
 
