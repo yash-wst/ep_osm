@@ -88,36 +88,36 @@ handle_verify_inputs(S3Dir, DirNamesToUpload) ->
 
 	?ASSERT(
 		configs:get(aws_s3_bucket, []) /= [],
-		"error: aws_s3_bucket not set"
+		"ERROR: aws_s3_bucket not set"
 	),
 
 	?ASSERT(
 		configs:get(aws_s3_access_key, []) /= [],
-		"error: aws_s3_access_key not set"
+		"ERROR: aws_s3_access_key not set"
 	),
 
 
 	?ASSERT(
 		configs:get(aws_s3_secret, []) /= [],
-		"error: aws_s3_secret not set"
+		"ERROR: aws_s3_secret not set"
 	),
 
 	?ASSERT(
 		configs:get(aws_s3_default_region, []) /= [],
-		"error: aws_s3_default_region not set"
+		"ERROR: aws_s3_default_region not set"
 	),
 
 
 	?ASSERT(
 		S3Dir /= [],
-		"error: S3 directory not set!"
+		"ERROR: S3 directory not set!"
 	),
 
 
 
 	?ASSERT(
 		DirNamesToUpload /= [],
-		"error: nothing to upload!"
+		"ERROR: nothing to upload!"
 	),
 
 
@@ -155,7 +155,7 @@ handle_verify_zip_file(Filepath) ->
 	%
 	?ASSERT(
 		string:to_upper(Type) == "ZIP",
-		"error: uploaded file is not a zip file!"
+		"ERROR: uploaded file is not a zip file!"
 	),
 
 

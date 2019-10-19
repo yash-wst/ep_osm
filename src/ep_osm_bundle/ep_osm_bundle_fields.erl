@@ -77,6 +77,11 @@ f(qualityby = I) ->
 	F = itf:textbox_picker(?F(I, "")),
 	F#field {options=options(I)};
 
+
+f(inwardstate = I) ->
+	itf:dropdown(?F(I, "Inward State"), options(I));
+
+
 f(scanningstate = I) ->
 	itf:dropdown(?F(I, "Scanning State"), options(I));
 
@@ -116,7 +121,7 @@ options(Type) when Type == scannedby; Type == qualityby ->
 	};
 
 
-options(State) when State == scanningstate; State == uploadstate ->
+options(State) when State == inwardstate; State == scanningstate; State == uploadstate ->
 	itf:options([
 		?F(new, "New / Unassigned"),
 		?F(assigned, "Assigned"),

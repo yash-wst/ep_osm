@@ -31,6 +31,7 @@ fs(basic) -> [
 	?OSMBDL(createdon),
 	?OSMBDL(scannedby),
 	?OSMBDL(qualityby),
+	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
 	?OSMBDL(uploadstate)
 
@@ -43,6 +44,7 @@ fs(index) -> [
 	?OSMBDL(createdon),
 	?OSMBDL(scannedby),
 	?OSMBDL(qualityby),
+	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
 	?OSMBDL(uploadstate)
 ];

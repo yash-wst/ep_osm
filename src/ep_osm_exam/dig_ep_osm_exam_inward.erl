@@ -68,6 +68,7 @@ get() ->
 		filters=[
 			itf:build(f(osm_exam_fk), OsmExamId),
 			?OSMBDL({osm_bundle_fk, OsmExamId}),
+			?OSMBDL(inwardstate),
 			?OSMBDL(scanningstate),
 			?OSMBDL(uploadstate)
 		]
@@ -145,6 +146,7 @@ fetch(D, _From, _Size, [
 		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
 		{refresh, "Refresh", "Refresh"}
 	] ++
+		layout_action_inwarding(BundleDoc) ++
 		layout_action_scanning(BundleDoc) ++
 		layout_action_uploading(BundleDoc) ++
 		layout_action_inward_form(itxauth:role(), itf:val(BundleDoc, scanningstate)),
@@ -202,8 +204,9 @@ fetch(D, _From, _Size, [
 	Results = lists:map(fun(BDoc) ->
 		[
 			#dcell {val=itf:val(BDoc, number)},
-			#dcell {val=itf:val(BDoc, createdby)},
 			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
+			#dcell {val=itf:val(BDoc, createdby)},
+			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, inwardstate)}),
 			#dcell {val=layout_dtp_by(scannedby, BDoc)},
 			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, scanningstate)}),
 			#dcell {val=layout_dtp_by(qualityby, BDoc)},
@@ -232,8 +235,9 @@ fetch(D, _From, _Size, [
 	%
 	Header = [
 		#dcell {type=header, val="Bundle Number"},
-		#dcell {type=header, val="Created By"},
 		#dcell {type=header, val="Created On"},
+		#dcell {type=header, val="Created By"},
+		#dcell {type=header, val="Inward State"},
 		#dcell {type=header, val="Scanner"},
 		#dcell {type=header, val="Scanning State"},
 		#dcell {type=header, val="QC / Uploader"},
@@ -351,6 +355,32 @@ layout_action_inward_form(_, _) -> [
 
 %..............................................................................
 %
+% layout - action inwarding
+%
+%..............................................................................
+
+layout_action_inwarding(BundleDoc) ->
+
+	%
+	% init
+	%
+	User = itxauth:user(),
+
+
+	%
+	% action
+	%
+	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
+		{User, []} -> [
+			{inward_completed, "Inward Completed", "Inward Completed"}
+		];
+		_ -> [
+		]
+	end.
+
+
+%..............................................................................
+%
 % layout - action scanning
 %
 %..............................................................................
@@ -442,6 +472,16 @@ finish_upload_event(_Id, Filename, Fileloc, _Node) ->
 % events
 %------------------------------------------------------------------------------
 
+event({confirmation_yes, inward_completed}) ->
+	handle_inward_completed();
+
+event(inward_completed) ->
+	itl:confirmation(
+		"Are you sure you want to mark this bundle as 'Inward Completed'?",
+		inward_completed
+	);
+
+
 event({confirmation_yes, upload_completed}) ->
 	itl:modal_close(),
 	handle_upload_completed(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
@@ -524,6 +564,40 @@ event({itx, E}) ->
 % handler
 %------------------------------------------------------------------------------
 
+%..............................................................................
+%
+% handle - inward completed
+%
+%..............................................................................
+
+handle_inward_completed() ->
+
+	%
+	% init
+	%
+	Id = wf:q(osm_bundle_fk),
+
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		itf:build(?OSMBDL(inwardstate), "completed")
+	],
+
+
+	%
+	% save
+	%
+	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), Id) of
+		{ok, _} ->
+			dig:refresh();
+		_ ->
+			helper_ui:flash(error, "Sorry, could not save!")
+	end.
+
+
+
 
 %..............................................................................
 %
@@ -571,7 +645,7 @@ handle_upload_completed(ExamId, BundleId) ->
 		%
 		?ASSERT(
 			length(Keys) > 0,
-			io_lib:format("error: ~s is empty!", [UploadedDir])
+			io_lib:format("ERROR: ~s is empty!", [UploadedDir])
 		),
 
 
@@ -706,7 +780,7 @@ handle_assign_bundle(Type, BundleDoc) ->
 	%
 	?ASSERT(
 		itf:val(Doc, Type) == [],
-		"error: this bundle is already assigned!"
+		"ERROR: This bundle is already assigned!"
 	),
 
 
@@ -715,10 +789,15 @@ handle_assign_bundle(Type, BundleDoc) ->
 	% assert - cannot assign uplaod till bundle scanning is completed
 	%
 	case Type of
+		scannedby ->
+			?ASSERT(
+				itf:val(Doc, inwardstate) == "completed",
+				"ERROR: Cannot assign till inwarding has been completed!"
+			);
 		qualityby ->
 			?ASSERT(
 				itf:val(Doc, scanningstate) == "completed",
-				"error: cannot assign till scanning is completed!"
+				"ERROR: Cannot assign till scanning has been completed!"
 			);
 		_ ->
 			ok
