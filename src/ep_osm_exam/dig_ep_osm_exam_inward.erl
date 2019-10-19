@@ -150,7 +150,7 @@ fetch(D, _From, _Size, [
 		layout_action_inwarding(BundleDoc) ++
 		layout_action_scanning(BundleDoc) ++
 		layout_action_uploading(BundleDoc) ++
-		layout_action_inward_form(itxauth:role(), itf:val(BundleDoc, scanningstate)),
+		layout_action_inward_form(BundleDoc),
 
 
 	%
@@ -226,9 +226,13 @@ fetch(D, _From, _Size, [
 	%
 	% actions
 	%
-	Actions = [
-		{create_bundle, "Create New Bundle", "Create New Bundle"}
-	],
+	Actions = case itxauth:role() of
+		?APPOSM_RECEIVER -> [
+			{create_bundle, "Create New Bundle", "Create New Bundle"}
+		];
+		_ -> [
+		]
+	end,
 
 
 	%
@@ -346,12 +350,23 @@ layout_dtp_by(_Role, _Type, _BundleDoc, Val) ->
 %
 %..............................................................................
 
-layout_action_inward_form(?APPOSM_RECEIVER, []) -> [
-	{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
-];
-layout_action_inward_form(_, _) -> [
-].
+layout_action_inward_form(BundleDoc) ->
 
+	%
+	% init
+	%
+	User = itxauth:user(),
+
+	%
+	% action
+	%
+	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
+		{User, []} -> [
+			{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
+		];
+		_ -> [
+		]
+	end.
 
 
 %..............................................................................
