@@ -144,7 +144,8 @@ fetch(D, _From, _Size, [
 	%
 	Actions = [
 		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
-		{refresh, "Refresh", "Refresh"}
+		{refresh, "Refresh", "Refresh"},
+		{export_bundle_csv, "Export Bundle CSV", "Export Bundle CSV"}
 	] ++
 		layout_action_inwarding(BundleDoc) ++
 		layout_action_scanning(BundleDoc) ++
@@ -529,6 +530,10 @@ event({assign_bundle, Type, BundleDoc}) ->
 	);
 
 
+event(export_bundle_csv) ->
+	handle_export_bundle_csv(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+
+
 event(print_bundle_cover) ->
 	handle_print_bundle_cover(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
 
@@ -816,6 +821,62 @@ handle_assign_bundle(Type, BundleDoc) ->
 		_ ->
 			helper_ui:flash(error, "Sorry, could not assign!")
 	end.
+
+
+
+%..............................................................................
+%
+% handle - export bundle csv
+%
+%..............................................................................
+
+handle_export_bundle_csv(ExamId, BundleId) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, ExamDoc} = anptests:getdoc(ExamId),
+	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+	{ok, SubjectDoc} = ep_core_subject_api:get(itf:val(ExamDoc, subject_code_fk)),
+	SeasonName = ep_core_exam_season_api:getname(itf:val(ExamDoc, season_fk)),
+	SubjectCode = itf:val(SubjectDoc, subject_code),
+	BundleNumber = itf:val(BundleDoc, number),
+
+
+	%
+	% prepare cover uids
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY
+	),
+
+
+	%
+	% layout dig cells
+	%
+	Results = lists:map(fun(CDoc) ->
+		[
+			#dcell {val=SubjectCode},
+			#dcell {val=BundleNumber},
+			#dcell {val=itf:val(CDoc, anpseatnumber)}
+		]
+	end, CandidateDocs),
+
+
+	%
+	% export
+	%
+	{Name, FilePath} = dig:get_filename_path(
+		io_lib:format("~s_~s_bundle_~s", [SeasonName, SubjectCode, BundleNumber])
+	),
+	dig:write_data_to_file(FilePath, Results),
+	itxdownload:stream(Name, FilePath).
+
+
 
 
 
