@@ -76,25 +76,25 @@ fetch(D, From, Size, Fs) ->
 	% fetch documents from db
 	%
 	Rec = db2_find:getrecord_by_fs(anptests:getdb(), Fs, From, Size),
-	#db2_find_response {docs=Docs}  = db2_find:find(
+	#db2_find_response {docs=ExamDocs}  = db2_find:find(
 		Rec#db2_find {sort=anptest:fs(search)}
 	),
 
 	%
 	% layout results
 	%
-	Results = lists:map(fun(Doc) ->
+	Results = lists:map(fun(ExamDoc) ->
 
 		%
 		% get bundle docs
 		%
-		Bundles = get_bundles(),
+		Bundles = get_bundles(itf:idval(ExamDoc)),
 
 
 		%
 		% layout cells
 		%
-		FsDoc = itf:d2f(Doc, anptest:fs(search)),
+		FsDoc = itf:d2f(ExamDoc, anptest:fs(search)),
 		lists:map(fun(F) ->
 			#dcell {val=itl:render(F)}
 		end, FsDoc) ++ [
@@ -105,12 +105,12 @@ fetch(D, From, Size, Fs) ->
 				#link {
 					text="Inward",
 					new=true,
-					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [itf:idval(Doc)])
+					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [itf:idval(ExamDoc)])
 				}
 			])}
 		]
 
-	end, Docs),
+	end, ExamDocs),
 
 
 	%
@@ -168,13 +168,7 @@ event({itx, E}) ->
 
 
 
-get_bundles() ->
-
-	%
-	% init
-	%
-	ExamId = wf:q(id),
-
+get_bundles(ExamId) ->
 
 	%
 	% find docs
