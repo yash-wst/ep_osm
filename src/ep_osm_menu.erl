@@ -7,7 +7,7 @@
 menu(?APPOSM_SCANUPLOADER) ->
 	[
 		{?LN("OSM Exams"), [
-			{dig_ep_osm_exam, ?VIEW, ?LN("Find Exams")}
+			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")}
 		]}
 	];
 
@@ -15,7 +15,7 @@ menu(?APPOSM_SCANUPLOADER) ->
 menu(?APPOSM_RECEIVER) ->
 	[
 		{?LN("OSM Exams"), [
-			{dig_ep_osm_exam, ?VIEW, ?LN("Find Exams")}
+			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")}
 		]}
 	];
 
