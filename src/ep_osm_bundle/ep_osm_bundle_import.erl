@@ -24,7 +24,7 @@ savebulk(LoLofFields) ->
 
 handle_import_validate(List) ->
 	ok = handle_import_validate_csv_length(List),
-	ok = handle_import_validate_duplicates_uids(List),
+	ok = handle_import_validate_csv_non_empty(List),
 	ok = handle_import_validate_duplicates_seatnumbers(List),
 	ok.
 
@@ -43,7 +43,7 @@ handle_import_validate_csv_length(List) ->
 	%
 	{_Oks, Errors} = lists:foldl(fun(Csv, {AccOKs, AccErrors}) ->
 		case length(Csv) of
-			4 ->
+			3 ->
 				{AccOKs ++ [Csv], AccErrors};
 			_ ->
 				{AccOKs, AccErrors ++ [Csv]}
@@ -61,41 +61,26 @@ handle_import_validate_csv_length(List) ->
 	).
 
 
+
 %..............................................................................
 %
-% validate duplicates uids
+% validate csv non empty
 %
 %..............................................................................
 
-handle_import_validate_duplicates_uids(List) ->
-
+handle_import_validate_csv_non_empty(List) ->
 
 	%
 	% find out errors
 	%
-	DictPaperUID = lists:foldl(fun([
-		_SubjectCode, _BundleNumber, PaperUID, _SeatNumber
-	], Acc) ->
-		case PaperUID of
+	{_Oks, Errors} = lists:foldl(fun(Csv, {AccOKs, AccErrors}) ->
+		case lists:filter(fun(C) -> C == [] end, Csv) of
 			[] ->
-				Acc;
+				{AccOKs ++ [Csv], AccErrors};
 			_ ->
-				dict:update_counter(PaperUID, 1, Acc)
+				{AccOKs, AccErrors ++ [Csv]}
 		end
-	end, dict:new(), List),
-
-
-	%
-	% find duplicates
-	%
-	Errors = lists:foldl(fun({Key, Count}, Acc) ->
-		case Count > 1 of
-			true ->
-				Acc ++ [Key];
-			_ ->
-				Acc
-		end
-	end, [], dict:to_list(DictPaperUID)),
+	end, {[], []}, List),
 
 
 	%
@@ -104,9 +89,8 @@ handle_import_validate_duplicates_uids(List) ->
 	?ASSERT(
 		import_validation,
 		Errors == [],
-		{duplicates_found, Errors}
+		{csv_non_empty, Errors}
 	).
-
 
 
 
@@ -123,7 +107,7 @@ handle_import_validate_duplicates_seatnumbers(List) ->
 	% find out errors
 	%
 	DictSeatNumber = lists:foldl(fun([
-		_SubjectCode, _BundleNumber, _PaperUID, SeatNumber
+		_SubjectCode, _BundleNumber, SeatNumber
 	], Acc) ->
 		case SeatNumber of
 			[] ->
@@ -189,7 +173,7 @@ handle_import_validate_batch_anpseatnumber(List) ->
 	%
 	% get seat numbers
 	%
-	SeatNumbers = lists:map(fun([_SubjectCode, _BundleNumber, _PaperUID, SeatNumber]) ->
+	SeatNumbers = lists:map(fun([_SubjectCode, _BundleNumber, SeatNumber]) ->
 		SeatNumber
 	end, List),
 	SeatNumbersUnique = helper:unique(SeatNumbers),
@@ -233,7 +217,7 @@ handle_import_ensure_bundle_exists(List) ->
 	%
 	% get seat numbers
 	%
-	BundleNumbers = lists:map(fun([_SubjectCode, BundleNumber, _PaperUID, _SeatNumber]) ->
+	BundleNumbers = lists:map(fun([_SubjectCode, BundleNumber, _SeatNumber]) ->
 		BundleNumber
 	end, List),
 	BundleNumbersUnique = helper:unique(BundleNumbers),
@@ -331,7 +315,6 @@ handle_import_csv_to_fs(List) ->
 	FsList = lists:map(fun([
 		_SubjectCode,
 		BundleNumber,
-		PaperUID,
 		SeatNumber
 	]) ->
 
@@ -347,7 +330,7 @@ handle_import_csv_to_fs(List) ->
 		% fs
 		%
 		[
-			itf:build(itf:textbox(?F(anp_paper_uid)), PaperUID),
+			itf:build(itf:textbox(?F(anp_paper_uid)), []),
 			itf:build(itf:textbox(?F(anpseatnumber)), SeatNumber),
 			itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
 			itf:build(itf:textbox(?F(anpcentercode)), BundleId),
