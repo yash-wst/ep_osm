@@ -24,7 +24,8 @@ savebulk(LoLofFields) ->
 
 handle_import_validate(List) ->
 	ok = handle_import_validate_csv_length(List),
-	ok = handle_import_validate_duplicates(List),
+	ok = handle_import_validate_duplicates_uids(List),
+	ok = handle_import_validate_duplicates_seatnumbers(List),
 	ok.
 
 
@@ -62,20 +63,25 @@ handle_import_validate_csv_length(List) ->
 
 %..............................................................................
 %
-% validate duplicates
+% validate duplicates uids
 %
 %..............................................................................
 
-handle_import_validate_duplicates(List) ->
+handle_import_validate_duplicates_uids(List) ->
 
 
 	%
 	% find out errors
 	%
-	DictSubjectSeatNumber = lists:foldl(fun([
-		_SubjectCode, _BundleNumber, _PaperUID, SeatNumber
+	DictPaperUID = lists:foldl(fun([
+		_SubjectCode, _BundleNumber, PaperUID, _SeatNumber
 	], Acc) ->
-		dict:update_counter(SeatNumber, 1, Acc)
+		case PaperUID of
+			[] ->
+				Acc;
+			_ ->
+				dict:update_counter(PaperUID, 1, Acc)
+		end
 	end, dict:new(), List),
 
 
@@ -89,7 +95,56 @@ handle_import_validate_duplicates(List) ->
 			_ ->
 				Acc
 		end
-	end, [], dict:to_list(DictSubjectSeatNumber)),
+	end, [], dict:to_list(DictPaperUID)),
+
+
+	%
+	% assert validation
+	%
+	?ASSERT(
+		import_validation,
+		Errors == [],
+		{duplicates_found, Errors}
+	).
+
+
+
+
+%..............................................................................
+%
+% validate duplicates seatnumbers
+%
+%..............................................................................
+
+handle_import_validate_duplicates_seatnumbers(List) ->
+
+
+	%
+	% find out errors
+	%
+	DictSeatNumber = lists:foldl(fun([
+		_SubjectCode, _BundleNumber, _PaperUID, SeatNumber
+	], Acc) ->
+		case SeatNumber of
+			[] ->
+				Acc;
+			_ ->
+				dict:update_counter(SeatNumber, 1, Acc)
+		end
+	end, dict:new(), List),
+
+
+	%
+	% find duplicates
+	%
+	Errors = lists:foldl(fun({Key, Count}, Acc) ->
+		case Count > 1 of
+			true ->
+				Acc ++ [Key];
+			_ ->
+				Acc
+		end
+	end, [], dict:to_list(DictSeatNumber)),
 
 
 	%
