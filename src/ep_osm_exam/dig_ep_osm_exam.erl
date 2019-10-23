@@ -18,6 +18,9 @@ title() ->
 heading() ->
 	title().
 
+form() ->
+	ep_osm_exam.
+
 
 %------------------------------------------------------------------------------
 % records
@@ -87,17 +90,13 @@ fetch(D, _From, _Size, Fs) ->
 		% layout cells
 		%
 		FsDoc = itf:d2f(Doc, anptest:fs(search)),
-		lists:map(fun(F) ->
+		FsIndex = itf:d2f(Doc, anptest:fs(index)),
+ 		[
+			#dcell {val=helper_ui:layout_slinks(anptest, FsIndex)}
+
+		] ++ lists:map(fun(F) ->
 			#dcell {val=itl:render(F)}
-		end, FsDoc) ++ [
-			#dcell {val=itl:btn_group([
-				#link {
-					text="Inward",
-					new=true,
-					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [itf:idval(Doc)])
-				}
-			])}
-		]
+		end, FsDoc)
 
 	end, Docs),
 
@@ -105,14 +104,17 @@ fetch(D, _From, _Size, Fs) ->
 	%
 	% header
 	%
-	Header = lists:map(fun(#field {label=Label}) ->
-		#dcell {type=header, val=Label}
-	end, anptest:fs(search)) ++ [
+	Header = [
 		#dcell {type=header, val="Actions"}
-	],
+	] ++ lists:map(fun(#field {label=Label}) ->
+		#dcell {type=header, val=Label}
+	end, anptest:fs(search)),
 
 	{
 		D#dig {
+			actions=[
+				{action_import, "+ Import", "+ Import"}
+			]
 		},
 		[Header] ++ Results
 	}.
@@ -137,9 +139,15 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
-event({itx, E}) ->
-	ite:event(E).
 
+event(E) ->
+	dig_mm:event(E).
+
+start_upload_event(Event) ->
+	dig_mm:start_upload_event(Event).
+
+finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
+	dig_mm:finish_upload_event(Tag, AttachmentName, LocalFileData, Node).
 
 
 %------------------------------------------------------------------------------

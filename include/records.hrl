@@ -35,6 +35,8 @@
 -define(OSMBDL(Id), itf:field(ep_osm_bundle_fields, Id)).
 -define(OSMBDL(Id, Field), itf:field(ep_osm_bundle_fields, Id, Field)).
 
+-define(OSMEXM(Id), itf:field(ep_osm_exam_fields, Id)).
+-define(OSMEXM(Id, Field), itf:field(ep_osm_exam_fields, Id, Field)).
 
 %------------------------------------------------------------------------------
 % end
