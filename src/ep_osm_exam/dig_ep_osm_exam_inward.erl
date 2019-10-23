@@ -18,6 +18,8 @@ title() ->
 heading() ->
 	title().
 
+form() ->
+	ep_osm_bundle.
 
 %------------------------------------------------------------------------------
 % records
@@ -196,7 +198,7 @@ fetch(D, _From, _Size, [
 	% sort bundles by number
 	%
 	BundleDocsSorted = lists:sort(fun(A, B) ->
-		itf:val(A, number) < itf:val(B, number)
+		itf:val(A, createdon) < itf:val(B, createdon)
 	end, BundleDocs),
 
 
@@ -230,7 +232,8 @@ fetch(D, _From, _Size, [
 	%
 	Actions = case itxauth:role() of
 		?APPOSM_RECEIVER -> [
-			{create_bundle, "Create New Bundle", "Create New Bundle"}
+			{create_bundle, "Create New Bundle", "Create New Bundle"},
+			{action_import, "+ Import", "+ Import"}
 		];
 		_ -> [
 		]
@@ -485,7 +488,16 @@ layout_action_uploading(BundleDoc) ->
 start_upload_event(_) ->
 	helper_ui:flash(warning, "Uploading. Please wait ...").
 
-finish_upload_event(_Id, Filename, Fileloc, _Node) ->
+
+finish_upload_event(Tag, Filename, Fileloc, Node) ->
+	case string:to_lower(filename:extension(Filename)) of
+		".csv" ->
+			dig_mm:finish_upload_event(Tag, Filename, Fileloc, Node);
+		_ ->
+			finish_upload_event_inward(Tag, Filename, Fileloc, Node)
+	end.
+
+finish_upload_event_inward(_Id, Filename, Fileloc, _Node) ->
 
 	%
 	% init
@@ -515,6 +527,10 @@ finish_upload_event(_Id, Filename, Fileloc, _Node) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(action_import) ->
+	dig_mm:event(action_import);
+
 
 event({confirmation_yes, {remove_candidate, CId}}) ->
 	handle_remove_candidate(CId);

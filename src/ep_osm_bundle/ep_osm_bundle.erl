@@ -68,6 +68,7 @@ fs(grid) ->
 	fs(basic);
 
 fs(import) -> [
+	?ITXF({sep, #pre {text="subject_code,bundle_number,anp_paper_uid,anpseatnumber"}}),
 	itf:attachment()
 ];
 

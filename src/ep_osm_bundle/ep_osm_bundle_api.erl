@@ -55,23 +55,29 @@ create1(Fs) ->
 	% init
 	%
 	ExamId = itf:val2(Fs, osm_exam_fk),
+	BundleNumber = itf:val2(Fs, number),
 	FOsmExam = itf:build(?OSMBDL(osm_exam_fk), ExamId),
 
 
 	%
 	% get next bundle number
 	%
-	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
-		db(), [FOsmExam], 0, ?INFINITY
-	),
-	NextBundleNumber = length(Docs) + 1,
+	NextBundleNumber = case BundleNumber of
+		BundleNumber when BundleNumber == []; BundleNumber == undefined ->
+			#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+				db(), [FOsmExam], 0, ?INFINITY
+			),
+			?I2S(length(Docs) + 1);
+		_ ->
+			BundleNumber
+	end,
 
 
 	%
 	% merge fields
 	%
 	FsCreate = Fs ++ [
-		itf:build(?OSMBDL(number), ?I2S(NextBundleNumber))
+		itf:build(?OSMBDL(number), NextBundleNumber)
 	],
 
 

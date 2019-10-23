@@ -181,6 +181,8 @@ get_bundles(ExamId) ->
 	),
 	#db2_find_response {docs=Docs} = db2_find:find(Db2FindRec#db2_find {
 		fields=[
+			itf:id(),
+			?OSMBDL(number),
 			?OSMBDL(inwardstate),
 			?OSMBDL(scanningstate),
 			?OSMBDL(uploadstate)
