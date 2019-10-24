@@ -19,7 +19,7 @@ upload(S3Dir, DirNamesToUpload, Filename, Filepath) ->
 	dig:log(io_lib:format("spawned upload process: ~p", [PId])).
 
 
-upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath) ->
+upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath0) ->
 
 	try
 
@@ -27,6 +27,17 @@ upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath) ->
 		% init
 		%
 		wf_context:context(Context),
+
+
+		%
+		% download from s3
+		%
+		Filepath = case Filepath0 of
+			undefined ->
+				handle_download_from_s3(Filename);
+			_ ->
+				Filepath0
+		end,
 
 
 		%
@@ -58,6 +69,7 @@ upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath) ->
 		% cleanup
 		%
 		handle_cleanup(WorkDir, Filepath),
+		handle_remove_from_s3(Filename),
 
 
 		%
@@ -170,22 +182,26 @@ handle_verify_zip_file(Filepath) ->
 % handle - upload to s3
 %------------------------------------------------------------------------------
 
-handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filename, Filepath) ->
+handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath) ->
 
 
 	%
 	% init
 	%
 	dig:log("Uploading to S3"),
-	ZipDir = io_lib:format("~s/~s", [WorkDir, filename:rootname(Filename)]),
-
 
 
 	%
 	% unzip the file in workdir
 	%
-	{ok, Pwd} = file:get_cwd(),
-	helper:cmd("cd ~s; unzip ~s/~s", [WorkDir, Pwd, Filepath]),
+	helper:cmd("cd ~s; unzip ~s", [WorkDir, Filepath]),
+
+
+	%
+	% find the zip dir
+	%
+	{ok, [ZipDir0]} = file:list_dir(WorkDir),
+	ZipDir = io_lib:format("~s/~s", [WorkDir, ZipDir0]),
 
 
 	%
@@ -259,6 +275,55 @@ handle_cleanup(WorkDir, Filepath) ->
 
 	dig:log("Cleaning up ... ok").
 
+
+
+%------------------------------------------------------------------------------
+% handle - download from s3
+%------------------------------------------------------------------------------
+
+handle_download_from_s3(ObjectKey) ->
+
+	dig:log("Downloading zip from S3."),
+
+
+	{ok, Cwd} = file:get_cwd(),
+	Fileloc = ?FLATTEN(io_lib:format("~s/scratch/~s", [Cwd, ObjectKey])),
+
+	CmdRes = helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 cp --only-show-errors s3://~s/~s/~s ~s", [
+		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
+		configs:get(aws_s3_bucket), "browser_to_s3", ObjectKey,
+		Fileloc
+	]),
+
+	?ASSERT(
+		CmdRes == [],
+		"ERROR: download from s3 failed!"
+	),
+
+
+	dig:log("Downloading zip from S3 ... ok"),
+
+	Fileloc.
+
+
+
+%------------------------------------------------------------------------------
+% handle - remove from s3
+%------------------------------------------------------------------------------
+
+handle_remove_from_s3(ObjectKey) ->
+
+	CmdRes = helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 rm --only-show-errors s3://~s/~s/~s", [
+		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
+		configs:get(aws_s3_bucket), "browser_to_s3", ObjectKey
+	]),
+
+	?ASSERT(
+		CmdRes == [],
+		"ERROR: remove from s3 failed!"
+	),
+
+	CmdRes.
 
 
 %------------------------------------------------------------------------------

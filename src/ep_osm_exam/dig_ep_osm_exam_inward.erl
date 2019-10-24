@@ -338,9 +338,54 @@ layout_inward_form() ->
 %
 %..............................................................................
 
-layout_upload_form() ->
-	Fs = [
-		itf:attachment()
+layout_upload_form(BundleDoc, ObjectKey) when ObjectKey /= undefined, ObjectKey /= [] ->
+
+	%
+	% before processing check if object exists
+	%
+	try
+		_Infos = helper_s3:info_dir(
+			configs:get(aws_s3_bucket, []),
+			"browser_to_s3/" ++ ObjectKey
+		),
+
+		wf:wire(#event{type=timer, delay=100, postback={browser_to_s3_completed, BundleDoc, ObjectKey}}),
+		#span {text=[]}
+
+	catch
+		E:M ->
+			?D({E, M}),
+			layout_upload_form(BundleDoc, undefined)
+	end;
+
+
+layout_upload_form(BundleDoc, _) ->
+
+	%
+	% init
+	%
+	ObjectKey = ?FLATTEN(io_lib:format("~s_~s.zip", [
+		itf:idval(BundleDoc),
+		helper:uidintstr()
+	])),
+
+	RedirectUrl = ?FLATTEN(io_lib:format("~s/~p?id=~s&digx=~s&objectkey=~s", [
+		customer:get(mainserver_url),
+		?MODULE,
+		wf:q(id),
+		wf:q(digx),
+		ObjectKey
+	])),
+
+	Es = [
+		itxfile_s3_upload:form([
+			configs:get(aws_s3_bucket, []),
+			configs:get(aws_s3_access_key, []),
+			configs:get(aws_s3_secret, []),
+			configs:get(aws_s3_default_region, []),
+			ObjectKey,
+			RedirectUrl
+		])
 	],
 	[
 		itl:instructions([
@@ -348,7 +393,7 @@ layout_upload_form() ->
 			{ok, "Zip file should contain folders of the current bundle only."},
 			{danger, "Please ensure you have reliable, high bandwidth, internet connection"}
 		]),
-		itl:get(?EDIT, Fs, noevent, line)
+		Es
 	].
 
 
@@ -472,7 +517,7 @@ layout_action_uploading(BundleDoc) ->
 	%
 	case {itf:val(BundleDoc, qualityby), itf:val(BundleDoc, uploadstate)} of
 		{User, "assigned"} -> [
-			{form, layout_upload_form(), "Upload: (zip bundle directory and upload)"},
+			{form, layout_upload_form(BundleDoc, wf:q(objectkey)), "Upload: (zip bundle directory and upload)"},
 			{upload_completed, "Uploading Completed", "Uploading Completed"}
 		];
 		_ -> [
@@ -527,6 +572,10 @@ finish_upload_event_inward(_Id, Filename, Fileloc, _Node) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({browser_to_s3_completed, _BundleDoc, ObjectKey}) ->
+	finish_upload_event_inward(undefined, ObjectKey, undefined, undefined);
+
 
 event(action_import) ->
 	dig_mm:event(action_import);
