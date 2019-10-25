@@ -42,7 +42,8 @@ access(_, _) -> false.
 get() ->
 	#dig {
 		module=?MODULE,
-		filters=anptest:fs(search)
+		filters=anptest:fs(search),
+		size=25
 	}.
 
 
@@ -127,6 +128,7 @@ fetch(D, From, Size, Fs) ->
 
 	{
 		D#dig {
+			total=?INFINITY
 		},
 		[Header] ++ Results
 	}.

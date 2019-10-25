@@ -202,20 +202,60 @@ fetch(D, _From, _Size, [
 	end, BundleDocs),
 
 
+	%
+	% get profile ids
+	%
+	Usernames = lists:foldl(fun(BDoc, Acc) ->
+		Acc ++ [
+			itf:val(BDoc, createdby),
+			itf:val(BDoc, scannedby),
+			itf:val(BDoc, qualityby)
+		]
+	end, [], BundleDocsSorted),
+	UsernamesUnique = helper:unique(Usernames),
+
+
+	%
+	% get profile dict
+	%
+	ProfileDocs = itxprofiles:getdocs_by_usernames(UsernamesUnique),
+	ProfileDocsDict = helper:get_dict_from_docs(ProfileDocs, username),
+
+
 
 	%
 	% results
 	%
 	Results = lists:map(fun(BDoc) ->
+
+		InwardState = itf:val(BDoc, inwardstate),
+		ScanningState = itf:val(BDoc, scanningstate),
+		UploadState = itf:val(BDoc, uploadstate),
+
 		[
 			#dcell {val=itf:val(BDoc, number)},
 			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
-			#dcell {val=itf:val(BDoc, createdby)},
-			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, inwardstate)}),
-			#dcell {val=layout_dtp_by(scannedby, BDoc)},
-			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, scanningstate)}),
-			#dcell {val=layout_dtp_by(qualityby, BDoc)},
-			dig:if_this("completed", success, #dcell {val=itf:val(BDoc, uploadstate)}),
+			#dcell {
+				bgcolor=get_bgcolor(inwardstate, InwardState, ScanningState, UploadState),
+				val=[
+					itf:val(BDoc, inwardstate),
+					layout_user_info(dict:find(itf:val(BDoc, createdby), ProfileDocsDict))
+				]
+			},
+			#dcell {
+				bgcolor=get_bgcolor(scanningstate, InwardState, ScanningState, UploadState),
+				val=[
+					itf:val(BDoc, scanningstate),
+					layout_dtp_by(scannedby, BDoc, ProfileDocsDict)
+				]
+			},
+			#dcell {
+				bgcolor=get_bgcolor(uploadstate, InwardState, ScanningState, UploadState),
+				val=[
+					itf:val(BDoc, uploadstate),
+					layout_dtp_by(qualityby, BDoc, ProfileDocsDict)
+				]
+			},
 			#dcell {
 				val=#span {
 					class="btn btn-sm btn-primary-outline",
@@ -246,12 +286,9 @@ fetch(D, _From, _Size, [
 	Header = [
 		#dcell {type=header, val="Bundle Number"},
 		#dcell {type=header, val="Created On"},
-		#dcell {type=header, val="Created By"},
-		#dcell {type=header, val="Inward State"},
-		#dcell {type=header, val="Scanner"},
-		#dcell {type=header, val="Scanning State"},
+		#dcell {type=header, val="Inward"},
+		#dcell {type=header, val="Scan"},
 		#dcell {type=header, val="QC / Uploader"},
-		#dcell {type=header, val="Upload State"},
 		#dcell {type=header, val="Select"}
 	],
 
@@ -398,6 +435,21 @@ layout_upload_form(BundleDoc, _) ->
 
 
 
+%..............................................................................
+%
+% layout - user info
+%
+%..............................................................................
+
+layout_user_info({ok, ProfileDoc}) ->
+	itl:blockquote([
+		itf:val(ProfileDoc, fullname),
+		itf:val(ProfileDoc, mobile)
+	]);
+layout_user_info(_) ->
+	"ERROR!".
+
+
 
 
 %..............................................................................
@@ -406,16 +458,21 @@ layout_upload_form(BundleDoc, _) ->
 %
 %..............................................................................
 
-layout_dtp_by(Type, BundleDoc) ->
-	layout_dtp_by(itxauth:role(), Type, BundleDoc, itf:val(BundleDoc, Type)).
+layout_dtp_by(Type, BundleDoc, ProfileDocsDict) ->
+	layout_dtp_by(itxauth:role(), Type, BundleDoc, ProfileDocsDict, itf:val(BundleDoc, Type)).
 
 
-layout_dtp_by(Role, Type, BundleDoc, []) when Role == ?APPOSM_SCANUPLOADER ->
+layout_dtp_by(Role, Type, BundleDoc, _ProfileDocsDict, []) when Role == ?APPOSM_SCANUPLOADER ->
 	ite:button(
-		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}
+		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
 	);
-layout_dtp_by(_Role, _Type, _BundleDoc, Val) ->
-	Val.
+layout_dtp_by(_Role, _Type, _BundleDoc, ProfileDocsDict, Val) ->
+	case Val of
+		[] ->
+			[];
+		_ ->
+			layout_user_info(dict:find(Val, ProfileDocsDict))
+	end.
 
 
 
@@ -1279,6 +1336,25 @@ get_bundle_docs() ->
 	% return docs
 	%
 	BundleDocs.
+
+
+
+get_bgcolor(inwardstate, "completed", _, _) ->
+	"bg-success";
+get_bgcolor(scanningstate, "completed", [], _) ->
+	"bg-danger";
+get_bgcolor(scanningstate, "completed", "assigned", _) ->
+	"bg-warning";
+get_bgcolor(scanningstate, "completed", "completed", _) ->
+	"bg-success";
+get_bgcolor(uploadstate, "completed", "completed", []) ->
+	"bg-danger";
+get_bgcolor(uploadstate, "completed", "completed", "assigned") ->
+	"bg-warning";
+get_bgcolor(uploadstate, "completed", "completed", "completed") ->
+	"bg-success";
+get_bgcolor(_, _, _, _) ->
+	[].
 
 
 %------------------------------------------------------------------------------
