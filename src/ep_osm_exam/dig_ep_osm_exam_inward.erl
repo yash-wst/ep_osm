@@ -1110,16 +1110,16 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 				text=SeasonName
 			},
 			#p {
-				style="margin: 0px;",
+				style="font-size: 1.5em; margin: 0px;",
 				text=io_lib:format("(~s) ~s", [itf:val(CapDoc, code), itf:val(CapDoc, name)])
 			},
 			#p {
 				style="font-size: 2em; margin: 0px;",
-				text="Paper Code: " ++ itf:val(ExamDoc, anptestcourseid)
+				text=itf:val(ExamDoc, anptestcourseid)
 			},
 			#p {
 				style="font-size: 2em; margin: 0px;",
-				text="Bundle No.: " ++ itf:val(BundleDoc, number)
+				text="# " ++ itf:val(BundleDoc, number)
 			},
 			#hr {}
 		]
