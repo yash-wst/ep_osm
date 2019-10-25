@@ -25,6 +25,8 @@
 -define(OSMSUP(Id), itf:field(ep_osm_scanuploader_fields, Id)).
 -define(OSMSUP(Id, Field), itf:field(ep_osm_scanuploader_fields, Id, Field)).
 
+-define(OSMEMR(Id), itf:field(ep_osm_examiner_fields, Id)).
+-define(OSMEMR(Id, Field), itf:field(ep_osm_examiner_fields, Id, Field)).
 
 %
 % entities
