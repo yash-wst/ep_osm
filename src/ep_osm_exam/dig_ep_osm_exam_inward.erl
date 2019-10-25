@@ -1114,6 +1114,10 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 				text=io_lib:format("(~s) ~s", [itf:val(CapDoc, code), itf:val(CapDoc, name)])
 			},
 			#p {
+				style="font-size: 1.5em; margin: 0px;",
+				text=ep_core_subject_api:getname(itf:val(ExamDoc, subject_code_fk))
+			},
+			#p {
 				style="font-size: 2em; margin: 0px;",
 				text=itf:val(ExamDoc, anptestcourseid)
 			},
