@@ -40,6 +40,10 @@
 -define(OSMEXM(Id), itf:field(ep_osm_exam_fields, Id)).
 -define(OSMEXM(Id, Field), itf:field(ep_osm_exam_fields, Id, Field)).
 
+
+-define(OSMMSC(Id), itf:field(ep_osm_mscheme_fields, Id)).
+-define(OSMMSC(Id, Field), itf:field(ep_osm_mscheme_fields, Id, Field)).
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
