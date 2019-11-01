@@ -25,6 +25,7 @@ savebulk(LoLofFields) ->
 handle_import_validate(List) ->
 	ok = handle_import_validate_csv_length(List),
 	ok = handle_import_validate_csv_non_empty(List),
+	ok = handle_import_validate_bundles_not_completed(List),
 	ok = handle_import_validate_duplicates_seatnumbers(List),
 	ok.
 
@@ -90,6 +91,77 @@ handle_import_validate_csv_non_empty(List) ->
 		import_validation,
 		Errors == [],
 		{csv_non_empty, Errors}
+	).
+
+
+%..............................................................................
+%
+% validate bundles not completed
+%
+%..............................................................................
+
+handle_import_validate_bundles_not_completed(List) ->
+
+
+	%
+	% init
+	%
+	ExamId = wf:q(osm_exam_fk),
+
+
+	%
+	% get seat numbers
+	%
+	BundleNumbers = lists:map(fun([_SubjectCode, BundleNumber, _SeatNumber]) ->
+		BundleNumber
+	end, List),
+	BundleNumbersUnique = helper:unique(BundleNumbers),
+
+
+
+	%
+	% get bundle docs
+	%
+	BundleDocs = dig_ep_osm_exam_bundle:get_bundles(ExamId),
+	BundleDocsDict = helper:get_dict_from_docs(BundleDocs, number),
+
+
+	%
+	% check completed bundles
+	%
+	BundlesCompleted = lists:foldl(fun(BundleNumber, Acc) ->
+
+		%
+		% get bundle doc
+		%
+		BundleDoc = case dict:find(BundleNumber, BundleDocsDict) of
+			{ok, BundleDoc0} ->
+				BundleDoc0;
+			_ ->
+				{[]}
+		end,
+
+
+		%
+		% get bundle state
+		%
+		case itf:val(BundleDoc, inwardstate) of
+			"completed" ->
+				Acc ++ [itf:val(BundleDoc, number)];
+			_ ->
+				Acc
+		end
+
+	end, [], BundleNumbersUnique),
+
+
+	%
+	% assert validation
+	%
+	?ASSERT(
+		import_validation,
+		BundlesCompleted == [],
+		{bundles_completed, BundlesCompleted}
 	).
 
 
