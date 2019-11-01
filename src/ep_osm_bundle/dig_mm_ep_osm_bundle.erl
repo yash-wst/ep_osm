@@ -64,7 +64,7 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?CASE_IF_THEN_ELSE(wf:q(mode), undefined, ?VIEW, wf:q(mode)),
+		mode=?VIEW,
 		module=?MODULE,
 		filters=[
 			?OSMBDL(osm_exam_fk),
