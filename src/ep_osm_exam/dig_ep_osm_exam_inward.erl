@@ -826,7 +826,8 @@ handle_upload_completed(ExamId, BundleId) ->
 	% get all candidate docs of this bundle
 	%
 	FsToSearch = [
-		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
+		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
 	],
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearch, 0, ?INFINITY
