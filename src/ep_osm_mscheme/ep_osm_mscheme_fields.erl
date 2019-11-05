@@ -325,13 +325,21 @@ renderer({WUId, ?WTYPE_INSERT}) ->
 %..............................................................................
 
 renderer(_) ->
-	fun(Mode, _Event, #field {subfields=Subfields}) ->
+	fun(Mode, _Event, #field {subfields=Subfields} = F) ->
 
 		%
 		% render subfields
 		%
 		EsSubFields = #panel {
-			body=itl:render(Mode, Subfields)
+			body=[
+				#button {
+					class="btn btn-sm btn-danger-outline pull-sm-right",
+					text="x",
+					delegate=?MODULE,
+					postback={remove, F}
+				},
+				itl:render(Mode, Subfields)
+			]
 		},
 
 
@@ -348,6 +356,16 @@ renderer(_) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, {remove, F}}) ->
+	ep_osm_mscheme_handler:handle_remove_widget(F);
+
+event({remove, F}) ->
+	itl:confirmation(
+		"Are you sure you want to remove this widget?",
+		{remove, F},
+		?MODULE
+	);
 
 event({insert, WUId, #field {} = F}) ->
 	itl:modal_fs(ep_osm_mscheme_layout:insert_buttons(WUId, F)).

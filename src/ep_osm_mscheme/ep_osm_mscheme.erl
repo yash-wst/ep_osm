@@ -237,7 +237,18 @@ handle_add_widgets() ->
 	Id = wf:q(id),
 	{ok, Doc} = ep_osm_mscheme_api:get(Id),
 	#field {subfields=Subfields} = FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
-	SubfieldsLen = length(Subfields),
+
+
+	%
+	% get last subfield id
+	%
+	 LastSubfieldNumber = case Subfields of
+	 	[] ->
+	 		0;
+	 	_ ->
+	 		#field {id=LastSubfieldId} = lists:last(Subfields),
+	 		?S2I(?A2L(LastSubfieldId))
+	 end,
 
 
 	%
@@ -255,7 +266,7 @@ handle_add_widgets() ->
 	%
 	WidgetFields = lists:map(fun(I) ->
 		?OSMMSC({widget, ?I2A(I), ?WTYPE_INSERT, ?WID_INSERT})
-	end, lists:seq(SubfieldsLen + 1, SubfieldsLen + NumberOfWidgetsInt)),
+	end, lists:seq(LastSubfieldNumber + 1, LastSubfieldNumber + NumberOfWidgetsInt)),
 
 
 	%
