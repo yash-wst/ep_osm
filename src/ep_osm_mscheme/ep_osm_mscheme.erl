@@ -28,7 +28,7 @@ access(_, _) -> false.
 fs(basic) -> [
 	?OSMMSC(name),
 	?OSMMSC(state),
-	?OSMMSC(scheme)
+	?OSMMSC(list_of_widgets)
 ];
 
 fs(index) -> [
@@ -43,8 +43,9 @@ fs(create) -> [
 	?OSMMSC(name)
 ];
 
-fs(edit) ->
-	fs(basic);
+fs(edit) -> [
+	?OSMMSC(list_of_widgets)
+];
 
 fs(update) ->
 	fs(basic);
@@ -70,8 +71,7 @@ fs(all) -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	Es = layout(wf:q(mode), wf:q(id)),
-	layout:g(4, 4, Es).
+	layout(wf:q(mode), wf:q(id)).
 
 
 %..............................................................................
@@ -99,20 +99,26 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 	%
 	Id = wf:q(id),
 	{ok, Doc} = ep_osm_mscheme_api:get(Id),
-	SchemeStr = itf:val(Doc, scheme),
+
 
 
 	%
-	% init marking rules
+	% fs edit
 	%
-	ListofRules = helper:l2t(SchemeStr),
-	helper:state(anpcandidate_state_marking, ListofRules),
+	FsEdit = case itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})) of
+		#field {subfields=[]} -> [
+			?OSMMSC(list_of_widgets)
+		];
+		_ -> [
+			?OSMMSC({list_of_widgets, list_of_widgets})
+		]
+	end,
 
 
 	%
 	% layout
 	%
-	anp_marking:layout_marking_rules(anpmarking_anpevaluator, []);
+	itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), table);
 
 
 
@@ -133,6 +139,9 @@ layout(_, _) ->
 event(create) ->
 	handle_create();
 
+event(edit) ->
+	handle_edit();
+
 event(E) ->
 	itxdocument:event(E, ?MODULE, wf:q(id)).
 
@@ -140,6 +149,28 @@ event(E) ->
 %------------------------------------------------------------------------------
 % handlers
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - edit
+%
+%..............................................................................
+
+handle_edit() ->
+
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+	FsToSave = itf:uivalue(itf:d2f(Doc, fs(edit))),
+
+
+	%
+	% save
+	%
+	ep_osm_mscheme_handler:handle_save_and_reload(Id, FsToSave).
 
 
 %..............................................................................
@@ -156,7 +187,7 @@ handle_create() ->
 	FsUi = itf:uivalue(fs(create)),
 	FsCreate = FsUi ++ [
 		itf:build(?OSMMSC(state), "draft"),
-		itf:build(?OSMMSC(scheme), helper:t2l([]))
+		?OSMMSC(list_of_widgets)
 	],
 
 

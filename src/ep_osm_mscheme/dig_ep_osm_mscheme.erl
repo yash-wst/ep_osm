@@ -91,7 +91,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {val=itf:val(Doc, mscheme)},
 			#dcell {val=#link {
 				text="Edit",
-				url=io_lib:format("/ep_osm_mscheme?id=~s", [itf:idval(Doc)])
+				url=io_lib:format("/ep_osm_mscheme?mode=edit&id=~s", [itf:idval(Doc)])
 			}}
 		]
 	end, Docs),
