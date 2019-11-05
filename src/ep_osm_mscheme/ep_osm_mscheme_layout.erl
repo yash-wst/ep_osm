@@ -33,9 +33,11 @@ insert_buttons(WUId, F) ->
 		% rule
 		%
 		lists:map(fun(I) ->
-			Label = io_lib:format("Any ~p", [I]),
-			insert_button(Label, F, ?OSMMSC({widget, WUId, ?WTYPE_RULE, I}))
-		end, lists:seq(1, 10))
+			lists:map(fun(J) ->
+				Label = io_lib:format("Any ~p of ~p", [I, J]),
+				insert_button(Label, F, ?OSMMSC({widget, WUId, ?WTYPE_RULE, {I, J}}))
+			end, lists:seq(I + 1, 5))
+		end, lists:seq(1, 5))
 	].
 
 

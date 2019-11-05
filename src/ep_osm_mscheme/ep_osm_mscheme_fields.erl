@@ -132,24 +132,25 @@ f({widget, WUId, ?WTYPE_GROUP, ChildrenCount}) ->
 %
 %..............................................................................
 
-f({widget, WUId, ?WTYPE_RULE, ?WID_ANY ++ ChildrenCountStr}) when is_list(ChildrenCountStr) ->
-	f({widget, WUId, ?WTYPE_RULE, ?S2I(ChildrenCountStr)});
-f({widget, WUId, ?WTYPE_RULE, ChildrenCount}) ->
+f({widget, WUId, ?WTYPE_RULE, ?WID_ANY ++ ChildrenCountStr}) ->
+	f({widget, WUId, ?WTYPE_RULE, {?S2I(ChildrenCountStr), 0}});
+
+f({widget, WUId, ?WTYPE_RULE, {AnyI, OfJ}}) ->
 
 	%
 	% init
 	%
-	ChildrenCountStr = ?I2S(ChildrenCount),
-	WidgetId = ?WID_ANY ++ ChildrenCountStr,
-	WidgetName = ?WNAME_ANY ++ ChildrenCountStr,
+	AnyIStr = ?I2S(AnyI),
+	WidgetId = ?WID_ANY ++ AnyIStr,
+	WidgetName = io_lib:format("Any ~p of ~p", [AnyI, OfJ]),
 
 
 	%
 	% build child elements
 	%
-	GroupChildren = lists:map(fun(I) ->
-		f({widget, ?NID(WUId, ?I2A(I)), ?WTYPE_INSERT, ?WID_INSERT})
-	end, lists:seq(1, ChildrenCount)),
+	GroupChildren = lists:map(fun(Ji) ->
+		f({widget, ?NID(WUId, ?I2A(Ji)), ?WTYPE_INSERT, ?WID_INSERT})
+	end, lists:seq(1, OfJ)),
 
 
 	%
