@@ -118,7 +118,8 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 	%
 	% layout
 	%
-	itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), table);
+	Es = itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), table),
+	layout:g(4, 4, Es);
 
 
 

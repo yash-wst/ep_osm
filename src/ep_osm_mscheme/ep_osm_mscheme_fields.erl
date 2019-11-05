@@ -27,23 +27,35 @@ f(list_of_widgets = I) ->
 %------------------------------------------------------------------------------
 
 f({wtype, I}) ->
-	itf:textbox(?F(I, "Widget Type"));
+	itf:hidden(?F(I, "Widget Type"));
 
 f({wid, I}) ->
-	itf:textbox(?F(I, "Widget Id"));
+	itf:hidden(?F(I, "Widget Id"));
 
 f({wname, I}) ->
-	itf:textbox(?F(I, "Widget Name"));
+	f({wname, I, undefined});
+
+f({wname, I, WType}) when WType == ?WTYPE_QUESTION ->
+	itf:textbox(?F(I, "Name"));
+f({wname, I, _WType})  ->
+	itf:textbox_readonly(?F(I, "Name"));
+
 
 f({wmarks, I}) ->
-	itf:textbox(?F(I, "Widget Marks"));
+	f({wmarks, I, undefined});
+
+f({wmarks, I, WType}) when WType == ?WTYPE_QUESTION ->
+	itf:textbox(?F(I, "Marks"));
+f({wmarks, I, _WType}) ->
+	itf:hidden(?F(I, "Marks"));
+
 
 f({list_of_widgets, I}) ->
 
 	%
 	% init - field
 	%
-	F = itf:subfields(?F(I, "List of Widgets"), []),
+	F = itf:subfields(?F(I, "Marking Scheme"), []),
 
 
 	%
@@ -175,8 +187,8 @@ f({widget, WUId, WType, WId, WName, WMarks, WChildren}) ->
 	Subfields = [
 		itf:build(?OSMMSC({wtype, ?NID(WUId, wtype)}), WType),
 		itf:build(?OSMMSC({wid, ?NID(WUId, wid)}), WId),
-		itf:build(?OSMMSC({wname, ?NID(WUId, wname)}), WName),
-		itf:build(?OSMMSC({wmarks, ?NID(WUId, wmarks)}), WMarks),
+		itf:build(?OSMMSC({wname, ?NID(WUId, wname), WType}), WName),
+		itf:build(?OSMMSC({wmarks, ?NID(WUId, wmarks), WType}), WMarks),
 		itf:build(?OSMMSC({list_of_widgets, ?NID(WUId, list_of_widgets)}), WChildren)
 	],
 
@@ -188,7 +200,7 @@ f({widget, WUId, WType, WId, WName, WMarks, WChildren}) ->
 		id=WUId,
 		baseid=WUId,
 		type=subfields,
-		label="Widget",
+		label=WName,
 		subfields=Subfields,
 		renderer=renderer({WUId, WType}),
 		subfields_loadfn=fun(WidgetDoc) ->
@@ -227,6 +239,46 @@ options(state) ->
 % renderers
 %------------------------------------------------------------------------------
 
+%..............................................................................
+%
+% renderer - question
+%
+%..............................................................................
+
+renderer({_WUId, ?WTYPE_QUESTION}) ->
+	fun(Mode, _Event, #field {subfields=Subfields}) ->
+
+		%
+		% render button
+		%
+		[FWType, FWId, FWname, FWmarks, FWLow] = Subfields,
+		EsVisible = layout:grow([
+			layout:g(6, itl:render(Mode, FWname)),
+			layout:g(6, itl:render(Mode, FWmarks))
+		]),
+
+
+		%
+		% render hidden fields
+		%
+		EsHiddenFields = #panel {
+			style="display: none;",
+			body=lists:map(fun(Fi) ->
+				itl:render(Mode, Fi)
+			end, [FWType, FWId, FWLow])
+		},
+
+
+		%
+		% return
+		%
+		{
+			nolabel,
+			[EsVisible, EsHiddenFields]
+		}
+	end;
+
+
 
 %..............................................................................
 %
@@ -241,8 +293,8 @@ renderer({WUId, ?WTYPE_INSERT}) ->
 		% render button
 		%
 		EsButton = #button {
-			class="btn btn-sm btn-danger-outline",
-			text="+",
+			class="btn btn-danger",
+			text="Pick",
 			delegate=?MODULE,
 			postback={insert, WUId, F}
 		},
@@ -276,7 +328,24 @@ renderer({WUId, ?WTYPE_INSERT}) ->
 %..............................................................................
 
 renderer(_) ->
-	renderer_subfields_table:get().
+	fun(Mode, _Event, #field {subfields=Subfields}) ->
+
+		%
+		% render subfields
+		%
+		EsSubFields = #panel {
+			body=itl:render(Mode, Subfields)
+		},
+
+
+		%
+		% return
+		%
+		{
+			nolabel,
+			itl:section(EsSubFields)
+		}
+	end.
 
 
 %------------------------------------------------------------------------------
