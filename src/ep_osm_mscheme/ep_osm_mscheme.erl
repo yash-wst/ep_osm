@@ -45,7 +45,7 @@ fs(create) -> [
 ];
 
 fs(edit) -> [
-	?OSMMSC(list_of_widgets)
+	?OSMMSC({list_of_widgets, list_of_widgets})
 ];
 
 fs(update) ->
