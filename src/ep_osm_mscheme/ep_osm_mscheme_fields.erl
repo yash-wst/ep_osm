@@ -334,6 +334,14 @@ renderer(_) ->
 			body=[
 				#button {
 					class="btn btn-sm btn-danger-outline pull-sm-right",
+					style="margin: 5px;",
+					text="o",
+					delegate=?MODULE,
+					postback={replace, F}
+				},
+				#button {
+					class="btn btn-sm btn-danger-outline pull-sm-right",
+					style="margin: 5px;",
 					text="x",
 					delegate=?MODULE,
 					postback={remove, F}
@@ -356,6 +364,18 @@ renderer(_) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, {replace, #field {id=Id} = F}}) ->
+	ep_osm_mscheme_handler:handle_insert_widget(
+		F, ?OSMMSC({widget, Id, ?WTYPE_INSERT, ?WID_INSERT})
+	);
+
+event({replace, F}) ->
+	itl:confirmation(
+		"Are you sure you want to replace this widget with insert widget?",
+		{replace, F},
+		?MODULE
+	);
 
 event({confirmation_yes, {remove, F}}) ->
 	ep_osm_mscheme_handler:handle_remove_widget(F);
