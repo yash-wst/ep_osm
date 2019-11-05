@@ -15,10 +15,7 @@ f(state = I) ->
 	itf:dropdown(?F(I), options(I));
 
 f(list_of_widgets = I) ->
-	itf:subfields(?F(I, "Widget Children"), [
-		f({widget, '1', ?WTYPE_INSERT, ?WID_INSERT}),
-		f({widget, '2', ?WTYPE_INSERT, ?WID_INSERT}),
-		f({widget, '3', ?WTYPE_INSERT, ?WID_INSERT})
+	itf:subfields(?F(I, "Marking Scheme"), [
 	]);
 
 

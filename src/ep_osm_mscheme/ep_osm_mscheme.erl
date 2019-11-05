@@ -2,6 +2,7 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
+-include("records_ep_osm_mscheme.hrl").
 
 main() ->
 	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
@@ -118,7 +119,10 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 	%
 	% layout
 	%
-	Es = itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), table),
+	Es = [
+		layout_actions(),
+		itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), table)
+	],
 	layout:g(4, 4, Es);
 
 
@@ -133,9 +137,50 @@ layout(_, _) ->
 	[].
 
 
+
+
+%..............................................................................
+%
+% layout - actions
+%
+%..............................................................................
+
+layout_actions() -> [
+	#button {
+		class="btn btn-sm btn-primary-outline",
+		style="margin: 5px;",
+		text="Add +",
+		delegate=?MODULE,
+		postback={action, add}
+	},
+	#button {
+		class="btn btn-sm btn-primary-outline",
+		style="margin: 5px;",
+		text="Clear All x",
+		delegate=?MODULE,
+		postback={action, clearall}
+	}
+].
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, clearall}) ->
+	handle_clearall();
+
+event({action, clearall}) ->
+	itl:confirmation(
+		"Are you sure you want to clear this marking scheme?",
+		clearall
+	);
+
+event(add_widgets) ->
+	handle_add_widgets();
+
+event({action, add}) ->
+	handle_add();
 
 event(create) ->
 	handle_create();
@@ -150,6 +195,111 @@ event(E) ->
 %------------------------------------------------------------------------------
 % handlers
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - clearall
+%
+%..............................................................................
+
+handle_clearall() ->
+
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+	FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
+
+
+	%
+	% save
+	%
+	FsToSave = [
+		FList#field {subfields=[]}
+	],
+	ep_osm_mscheme_handler:handle_save_and_reload(Id, FsToSave).
+
+
+%..............................................................................
+%
+% handle - add widgets
+%
+%..............................................................................
+
+handle_add_widgets() ->
+
+	%
+	% init
+	%
+	NumberOfWidgets = wf:q(number_of_widgets),
+	NumberOfWidgetsInt = ?S2I(NumberOfWidgets),
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+	#field {subfields=Subfields} = FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
+	SubfieldsLen = length(Subfields),
+
+
+	%
+	% some gatekeeping
+	%
+	?ASSERT(
+		((NumberOfWidgetsInt /= error) and (NumberOfWidgetsInt < 25)),
+		"ERROR! too many widgets."
+	),
+
+
+
+	%
+	% widgets to add
+	%
+	WidgetFields = lists:map(fun(I) ->
+		?OSMMSC({widget, ?I2A(I), ?WTYPE_INSERT, ?WID_INSERT})
+	end, lists:seq(SubfieldsLen + 1, SubfieldsLen + NumberOfWidgetsInt)),
+
+
+	%
+	% save
+	%
+	FsToSave = [
+		FList#field {subfields=Subfields ++ WidgetFields}
+	],
+	ep_osm_mscheme_handler:handle_save_and_reload(Id, FsToSave).
+
+
+%..............................................................................
+%
+% handle - add
+%
+%..............................................................................
+
+handle_add() ->
+
+	%
+	% init
+	%
+	Fs = [
+		itf:textbox(?F(number_of_widgets, "Number of widgets"), [required, integer])
+	],
+
+
+	%
+	% layout
+	%
+	Es = [
+		#p {
+			class="",
+			text="Please specify the number of widgets/questions to add"
+		},
+		itl:get(?CREATE, Fs, ite:get(add_widgets, "Add"), table)
+	],
+	Es1 = itl:section(layout:grow(layout:g(6, 4, Es))),
+
+
+	%
+	% show
+	%
+	itl:modal_fs(Es1).
 
 
 %..............................................................................
