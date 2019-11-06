@@ -127,8 +127,34 @@ get_stats([
 		Acc ++ itxview:get_stats(
 			db(), "teststatus_season_fk_faculty_code_fk_program_code_fk_subject_code_fk", SK, EK, 3
 		)
-	end, [], states()).
+	end, [], states());
 
+
+get_stats([
+	#field {id=season_fk, uivalue=SeasonId},
+	#field {id=faculty_code_fk, uivalue=FacultyId}
+]) ->
+	lists:foldl(fun(State, Acc) ->
+		SK = [helper:l2b(State), helper:l2b(SeasonId), helper:l2b(FacultyId), <<"">>, <<"">>],
+		EK = [helper:l2b(State), helper:l2b(SeasonId), helper:l2b(FacultyId), <<"z\\ufff0">>, <<"z\\ufff0">>],
+		Acc ++ itxview:get_stats(
+			db(), "teststatus_season_fk_faculty_code_fk_program_code_fk_subject_code_fk", SK, EK, 4
+		)
+	end, [], states());
+
+
+get_stats([
+	#field {id=season_fk, uivalue=SeasonId},
+	#field {id=faculty_code_fk, uivalue=FacultyId},
+	#field {id=program_code_fk, uivalue=ProgramId}
+]) ->
+	lists:foldl(fun(State, Acc) ->
+		SK = [helper:l2b(State), helper:l2b(SeasonId), helper:l2b(FacultyId), helper:l2b(ProgramId), <<"">>],
+		EK = [helper:l2b(State), helper:l2b(SeasonId), helper:l2b(FacultyId), helper:l2b(ProgramId), <<"z\\ufff0">>],
+		Acc ++ itxview:get_stats(
+			db(), "teststatus_season_fk_faculty_code_fk_program_code_fk_subject_code_fk", SK, EK, 5
+		)
+	end, [], states()).
 
 %------------------------------------------------------------------------------
 % misc
