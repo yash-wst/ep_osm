@@ -107,6 +107,7 @@ delete_by_field(F = #field {}) ->
 % stats
 %------------------------------------------------------------------------------
 
+
 get_stats([]) ->
 	lists:foldl(fun(State, Acc) ->
 		SK = [helper:l2b(State), <<"">>, <<"">>, <<"">>, <<"">>],
@@ -114,8 +115,19 @@ get_stats([]) ->
 		Acc ++ itxview:get_stats(
 			db(), "teststatus_season_fk_faculty_code_fk_program_code_fk_subject_code_fk", SK, EK, 2
 		)
-	end, [], states()).
+	end, [], states());
 
+
+get_stats([
+	#field {id=season_fk, uivalue=SeasonId}
+]) ->
+	lists:foldl(fun(State, Acc) ->
+		SK = [helper:l2b(State), helper:l2b(SeasonId), <<"">>, <<"">>, <<"">>],
+		EK = [helper:l2b(State), helper:l2b(SeasonId), <<"z\\ufff0">>, <<"z\\ufff0">>, <<"z\\ufff0">>],
+		Acc ++ itxview:get_stats(
+			db(), "teststatus_season_fk_faculty_code_fk_program_code_fk_subject_code_fk", SK, EK, 3
+		)
+	end, [], states()).
 
 
 %------------------------------------------------------------------------------

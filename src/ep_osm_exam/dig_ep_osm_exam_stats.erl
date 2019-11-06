@@ -137,6 +137,90 @@ fetch(D, _From, _Size, [
 
 %..............................................................................
 %
+% [season_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=season_fk, uivalue=SeasonId}
+] = Fs) ->
+
+	%
+	% get stats
+	%
+	Stats = ep_osm_exam_api:get_stats(Fs),
+	StatsDict = dict:from_list(Stats),
+
+
+	%
+	% get faculty docs
+	%
+	FacultyIds = lists:map(fun({[_, _, FacultyId], _}) ->
+		FacultyId
+	end, Stats),
+	FacultyIdsUnique = helper:unique(FacultyIds),
+	FacultyDocs0 = ep_core_faculty_api:getdocs_by_ids(FacultyIdsUnique),
+	FacultyDocs = lists:map(fun(FacultyDoc) ->
+		case FacultyDoc of
+			undefined ->
+				{[]};
+			_ ->
+				FacultyDoc
+		end
+	end, FacultyDocs0),
+
+
+	%
+	% layout
+	%
+	Results = lists:map(fun(FacultyDoc) ->
+		FacultyId = itf:idval(FacultyDoc),
+		[
+			#dcell {
+				val=itl:blockquote([
+					itf:val(FacultyDoc, faculty_code),
+					itf:val(FacultyDoc, faculty_name)
+				]),
+				postback={filter, [
+					itf:build(?COREXS(season_fk), SeasonId),
+					itf:build(?CORFAC(faculty_code_fk), FacultyId)
+				]}
+			}
+		] ++ lists:map(fun(State) ->
+			Val = case dict:find([State, SeasonId, FacultyId], StatsDict) of
+				{ok, Count} ->
+					Count;
+				_ ->
+					0
+				end,
+			dig:if_not(0, primary, #dcell {val=Val})
+		end, ep_osm_exam_api:states())
+	end, FacultyDocs),
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Faculty"}
+	] ++ lists:map(fun(State) ->
+		#dcell {type=header, val=?LN(?L2A(State))}
+	end, ep_osm_exam_api:states()),
+
+
+	%
+	% return
+	%
+
+	{
+		D#dig {
+			total=length(Results)
+		},
+		[Header] ++ Results
+	};
+
+
+%..............................................................................
+%
 % [other]
 %
 %..............................................................................
