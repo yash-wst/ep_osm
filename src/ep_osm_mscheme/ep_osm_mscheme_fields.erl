@@ -18,6 +18,14 @@ f(list_of_widgets = I) ->
 	itf:subfields(?F(I, "Marking Scheme"), [
 	]);
 
+f(osm_mscheme_fk = I) ->
+	F = itf:textbox_picker(?F(I, "Marking Scheme")),
+	F#field {
+		validators=[],
+		options=options(I)
+	};
+
+
 
 %------------------------------------------------------------------------------
 % fields - widget
@@ -249,6 +257,18 @@ validator(O) ->
 %------------------------------------------------------------------------------
 % options
 %------------------------------------------------------------------------------
+
+options(osm_mscheme_fk) ->
+	#search {
+		title=?LN("Select Marking Scheme"),
+		db=ep_osm_mscheme_api:db(),
+		displayfs=ep_osm_mscheme:fs(grid),
+		filterfs=[
+			f(state)
+		],
+		size=10
+	};
+
 
 options(state) ->
 	itf:options([
