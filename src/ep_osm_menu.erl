@@ -3,6 +3,13 @@
 -include("records.hrl").
 
 
+menu(?APPOSM_CONTROLLER) ->
+	[
+		{?LN("OSM Exams"), [
+			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Statistics")}
+		]}
+	];
+
 
 menu(?APPOSM_SCANUPLOADER) ->
 	[
