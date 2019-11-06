@@ -9,6 +9,7 @@
 -define(APPOSM_ADMIN, "admin").
 -define(APPOSM_RECEIVER, "osmreceiver").
 -define(APPOSM_SCANUPLOADER, "osmscanuploader").
+-define(APPOSM_CONTROLLER, "osmcontroller").
 
 
 %------------------------------------------------------------------------------
@@ -27,6 +28,9 @@
 
 -define(OSMEMR(Id), itf:field(ep_osm_examiner_fields, Id)).
 -define(OSMEMR(Id, Field), itf:field(ep_osm_examiner_fields, Id, Field)).
+
+-define(OSMCON(Id), itf:field(ep_osm_controller_fields, Id)).
+-define(OSMCON(Id, Field), itf:field(ep_osm_controller_fields, Id, Field)).
 
 %
 % entities
