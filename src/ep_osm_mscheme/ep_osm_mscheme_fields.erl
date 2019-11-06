@@ -378,6 +378,7 @@ renderer({_WUId, ?WTYPE_RULE, ?WID_OR}) ->
 					delegate=?MODULE,
 					postback={remove, F}
 				},
+				#p {text="."},
 				itl:render(Mode, [F1]),
 				#p {
 					class="font-weight-bold mycenter",
