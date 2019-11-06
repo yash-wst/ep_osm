@@ -37,7 +37,14 @@ insert_buttons(WUId, F) ->
 				Label = io_lib:format("Any ~p of ~p", [I, J]),
 				insert_button(Label, F, ?OSMMSC({widget, WUId, ?WTYPE_RULE, {I, J}}))
 			end, lists:seq(I + 1, 5))
-		end, lists:seq(1, 5))
+		end, lists:seq(1, 5)),
+		#hr {},
+
+
+		%
+		% other
+		%
+		insert_button("Or", F, ?OSMMSC({widget, WUId, ?WTYPE_RULE, ?WID_OR}))
 	].
 
 

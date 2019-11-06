@@ -135,6 +135,31 @@ f({widget, WUId, ?WTYPE_GROUP, ChildrenCount}) ->
 
 
 
+
+%..............................................................................
+%
+% widget - rule: or
+%
+%..............................................................................
+
+f({widget, WUId, ?WTYPE_RULE, ?WID_OR}) ->
+
+	%
+	% build child elements
+	%
+	GroupChildren = [
+		f({widget, ?NID(WUId, '1'), ?WTYPE_INSERT, ?WID_INSERT}),
+		f({widget, ?NID(WUId, '2'), ?WTYPE_INSERT, ?WID_INSERT})
+	],
+
+
+	%
+	% return
+	%
+	f({widget, WUId, ?WTYPE_RULE, ?WID_OR, ?WNAME_OR, [], GroupChildren});
+
+
+
 %..............................................................................
 %
 % widget - rule
@@ -199,7 +224,7 @@ f({widget, WUId, WType, WId, WName, WMarks, WChildren}) ->
 		type=subfields,
 		label=WName,
 		subfields=Subfields,
-		renderer=renderer({WUId, WType}),
+		renderer=renderer({WUId, WType, WId}),
 		subfields_loadfn=fun(WidgetDoc) ->
 			case WidgetDoc of
 				undefined ->
@@ -242,7 +267,7 @@ options(state) ->
 %
 %..............................................................................
 
-renderer({_WUId, ?WTYPE_QUESTION}) ->
+renderer({_WUId, ?WTYPE_QUESTION, _}) ->
 	fun(Mode, _Event, #field {subfields=Subfields}) ->
 
 		%
@@ -283,7 +308,7 @@ renderer({_WUId, ?WTYPE_QUESTION}) ->
 %
 %..............................................................................
 
-renderer({WUId, ?WTYPE_INSERT}) ->
+renderer({WUId, ?WTYPE_INSERT, _}) ->
 	fun(Mode, _Event, #field {subfields=Subfields} = F) ->
 
 		%
@@ -317,6 +342,60 @@ renderer({WUId, ?WTYPE_INSERT}) ->
 	end;
 
 
+
+%..............................................................................
+%
+% renderer - rule: or
+%
+%..............................................................................
+
+renderer({_WUId, ?WTYPE_RULE, ?WID_OR}) ->
+	fun(Mode, _Event, #field {subfields=Subfields} = F) ->
+
+		%
+		% init
+		%
+		[_FWType, _FWId, _FWname, _FWmarks, FWLow] = Subfields,
+		[F1, F2] = FWLow#field.subfields,
+
+
+		%
+		% render subfields
+		%
+		EsSubFields = #panel {
+			body=[
+				#button {
+					class="btn btn-sm btn-danger-outline pull-sm-right",
+					style="margin: 5px;",
+					text="o",
+					delegate=?MODULE,
+					postback={replace, F}
+				},
+				#button {
+					class="btn btn-sm btn-danger-outline pull-sm-right",
+					style="margin: 5px;",
+					text="x",
+					delegate=?MODULE,
+					postback={remove, F}
+				},
+				itl:render(Mode, [F1]),
+				#p {
+					class="font-weight-bold mycenter",
+					text="(OR)"
+				},
+				itl:render(Mode, [F2])
+			]
+		},
+
+
+		%
+		% return
+		%
+		{
+			nolabel,
+			itl:section(EsSubFields)
+		}
+	end;
 
 %..............................................................................
 %
