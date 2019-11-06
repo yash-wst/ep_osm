@@ -159,6 +159,13 @@ layout_actions() -> [
 		text="Clear All x",
 		delegate=?MODULE,
 		postback={action, clearall}
+	},
+	#button {
+		class="btn btn-sm btn-primary-outline pull-sm-right",
+		style="margin: 5px;",
+		text="View",
+		delegate=?MODULE,
+		postback={action, view_marking_scheme_layout}
 	}
 ].
 
@@ -166,6 +173,9 @@ layout_actions() -> [
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({action, view_marking_scheme_layout}) ->
+	handle_view_marking_scheme_layout();
 
 event({confirmation_yes, clearall}) ->
 	handle_clearall();
@@ -195,6 +205,122 @@ event(E) ->
 %------------------------------------------------------------------------------
 % handlers
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - convert doc to rules
+%
+%..............................................................................
+
+
+handle_convert_doc_to_rules(Doc) ->
+	FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
+	handle_convert_widgets_to_tuples(undefined, FList#field.subfields).
+
+
+
+handle_convert_widgets_to_tuples(ParentType, ListOfWidgets) ->
+	lists:map(fun(W) ->
+		handle_convert_widget_to_tuple(ParentType, W)
+	end, ListOfWidgets).
+
+
+
+handle_convert_widget_to_tuple(ParentType, #field {id=Id, subfields=[#field {uivalue=?WTYPE_QUESTION} | _] = Subfields}) ->
+	[_FWType, _FWId, FWname, FWmarks, _FWLow] = Subfields,
+
+	Tuple = {
+		itf:val(FWname),
+		helper:s2f_v1(itf:val(FWmarks))
+	},
+
+	TupleGroup = {
+		group,
+		?WTYPE_RULE ++ ?WTYPE_GROUP ++ ?WTYPE_QUESTION ++ ?A2L(Id),
+		[Tuple]
+	},
+
+	TupleRule = {
+		rule,
+		"norule",
+		?WTYPE_RULE ++ ?WTYPE_GROUP ++ ?A2L(Id),
+		[TupleGroup]
+	},
+
+	case ParentType of
+		undefined ->
+			TupleRule;
+		?WTYPE_RULE ->
+			TupleGroup;
+		?WTYPE_GROUP ->
+			Tuple
+	end;
+
+handle_convert_widget_to_tuple(ParentType, #field {id=Id, subfields=[#field {uivalue=?WTYPE_GROUP} | _] = Subfields}) ->
+	[_FWType, _FWId, _FWname, _FWmarks, FWLow] = Subfields,
+	Tuple = {
+		group,
+		?WTYPE_GROUP ++ ?A2L(Id),
+		handle_convert_widgets_to_tuples(?WTYPE_GROUP, FWLow#field.subfields)
+	},
+	case ParentType of
+		?WTYPE_RULE ->
+			Tuple;
+		_ ->
+			{
+				rule,
+				"norule",
+				?WTYPE_RULE ++ ?WTYPE_GROUP ++ ?A2L(Id),
+				[Tuple]
+			}
+	end;
+
+
+handle_convert_widget_to_tuple(_, #field {id=Id, subfields=[#field {uivalue=?WTYPE_RULE} | _] = Subfields}) ->
+	[_FWType, FWId, _FWname, _FWmarks, FWLow] = Subfields,
+	{
+		rule,
+		itf:val(FWId),
+		?WTYPE_RULE ++ ?A2L(Id),
+		handle_convert_widgets_to_tuples(?WTYPE_RULE, FWLow#field.subfields)
+	}.
+
+%..............................................................................
+%
+% handle - view marking scheme layout
+%
+%..............................................................................
+
+handle_view_marking_scheme_layout() ->
+
+
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+
+
+	%
+	% convert doc to rules
+	%
+	Rules = handle_convert_doc_to_rules(Doc),
+
+
+
+	%
+	% show
+	%
+	try
+		helper:state(anpcandidate_state_marking, Rules),
+		Es = anp_marking:layout_marking_rules(anpmarking_anpevaluator, []),
+		itl:modal_fs(layout:grow(layout:g(4, 4, Es)))
+	catch
+		error:badarg ->
+			helper_ui:flash(error, "Please enter all question numbers and marks correctly.", 5)
+	end.
+
+
 
 %..............................................................................
 %
