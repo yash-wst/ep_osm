@@ -156,8 +156,8 @@ f({widget, WUId, ?WTYPE_RULE, ?WID_OR}) ->
 	% build child elements
 	%
 	GroupChildren = [
-		f({widget, ?NID(WUId, '1'), ?WTYPE_INSERT, ?WID_INSERT}),
-		f({widget, ?NID(WUId, '2'), ?WTYPE_INSERT, ?WID_INSERT})
+		f({widget, ?NID(WUId, '1'), ?WTYPE_QUESTION, ?WID_QUESTION}),
+		f({widget, ?NID(WUId, '2'), ?WTYPE_QUESTION, ?WID_QUESTION})
 	],
 
 
@@ -191,7 +191,7 @@ f({widget, WUId, ?WTYPE_RULE, {AnyI, OfJ}}) ->
 	% build child elements
 	%
 	GroupChildren = lists:map(fun(Ji) ->
-		f({widget, ?NID(WUId, ?I2A(Ji)), ?WTYPE_INSERT, ?WID_INSERT})
+		f({widget, ?NID(WUId, ?I2A(Ji)), ?WTYPE_QUESTION, ?WID_QUESTION})
 	end, lists:seq(1, OfJ)),
 
 
@@ -287,16 +287,18 @@ options(state) ->
 %
 %..............................................................................
 
-renderer({_WUId, ?WTYPE_QUESTION, _}) ->
-	fun(Mode, _Event, #field {subfields=Subfields}) ->
+renderer({WUId, ?WTYPE_QUESTION, _}) ->
+	fun(Mode, _Event, #field {subfields=Subfields} = F) ->
 
 		%
 		% render button
 		%
 		[FWType, FWId, FWname, FWmarks, FWLow] = Subfields,
 		EsVisible = layout:grow([
-			layout:g(6, itl:render(Mode, FWname)),
-			layout:g(6, itl:render(Mode, FWmarks))
+			layout:g(1, layout_wuid(WUId)),
+			layout:g(4, itl:render(Mode, FWname)),
+			layout:g(4, itl:render(Mode, FWmarks)),
+			layout:g(3, layout_actions(WUId, F))
 		]),
 
 
@@ -316,7 +318,10 @@ renderer({_WUId, ?WTYPE_QUESTION, _}) ->
 		%
 		{
 			nolabel,
-			[EsVisible, EsHiddenFields]
+			[
+				EsVisible,
+				EsHiddenFields
+			]
 		}
 	end;
 
@@ -369,7 +374,7 @@ renderer({WUId, ?WTYPE_INSERT, _}) ->
 %
 %..............................................................................
 
-renderer({_WUId, ?WTYPE_RULE, ?WID_OR}) ->
+renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 	fun(Mode, _Event, #field {subfields=Subfields} = F) ->
 
 		%
@@ -384,20 +389,8 @@ renderer({_WUId, ?WTYPE_RULE, ?WID_OR}) ->
 		%
 		EsSubFields = #panel {
 			body=[
-				#button {
-					class="btn btn-sm btn-danger-outline pull-sm-right",
-					style="margin: 5px;",
-					text="o",
-					delegate=?MODULE,
-					postback={replace, F}
-				},
-				#button {
-					class="btn btn-sm btn-danger-outline pull-sm-right",
-					style="margin: 5px;",
-					text="x",
-					delegate=?MODULE,
-					postback={remove, F}
-				},
+				layout_wuid(WUId),
+				layout_actions(WUId, F),
 				#p {text="."},
 				itl:render(Mode, [F1]),
 				#p {
@@ -424,7 +417,7 @@ renderer({_WUId, ?WTYPE_RULE, ?WID_OR}) ->
 %
 %..............................................................................
 
-renderer(_) ->
+renderer({WUId, _, _}) ->
 	fun(Mode, _Event, #field {subfields=Subfields} = F) ->
 
 		%
@@ -432,20 +425,8 @@ renderer(_) ->
 		%
 		EsSubFields = #panel {
 			body=[
-				#button {
-					class="btn btn-sm btn-danger-outline pull-sm-right",
-					style="margin: 5px;",
-					text="o",
-					delegate=?MODULE,
-					postback={replace, F}
-				},
-				#button {
-					class="btn btn-sm btn-danger-outline pull-sm-right",
-					style="margin: 5px;",
-					text="x",
-					delegate=?MODULE,
-					postback={remove, F}
-				},
+				layout:g(1, layout_wuid(WUId)),
+				layout_actions(WUId, F),
 				itl:render(Mode, Subfields)
 			]
 		},
@@ -465,18 +446,6 @@ renderer(_) ->
 % events
 %------------------------------------------------------------------------------
 
-event({confirmation_yes, {replace, #field {id=Id} = F}}) ->
-	ep_osm_mscheme_handler:handle_insert_widget(
-		F, ?OSMMSC({widget, Id, ?WTYPE_INSERT, ?WID_INSERT})
-	);
-
-event({replace, F}) ->
-	itl:confirmation(
-		"Are you sure you want to replace this widget with insert widget?",
-		{replace, F},
-		?MODULE
-	);
-
 event({confirmation_yes, {remove, F}}) ->
 	ep_osm_mscheme_handler:handle_remove_widget(F);
 
@@ -486,6 +455,9 @@ event({remove, F}) ->
 		{remove, F},
 		?MODULE
 	);
+
+event({replace, WUId, #field {} = F}) ->
+	itl:modal_fs(ep_osm_mscheme_layout:insert_buttons(WUId, F));
 
 event({insert, WUId, #field {} = F}) ->
 	itl:modal_fs(ep_osm_mscheme_layout:insert_buttons(WUId, F)).
@@ -505,6 +477,34 @@ uid() ->
 uid(Id) ->
 	?L2A(?FLATTEN(io_lib:format("~s_~s", [Id, uid()]))).
 
+
+
+%
+% layout actions
+%
+layout_actions(WUId, F) -> [
+	#button {
+		class="btn btn-sm btn-danger-outline pull-sm-right",
+		style="margin: 5px;",
+		text="o",
+		delegate=?MODULE,
+		postback={replace, WUId, F}
+	},
+	#button {
+		class="btn btn-sm btn-danger-outline pull-sm-right",
+		style="margin: 5px;",
+		text="x",
+		delegate=?MODULE,
+		postback={remove, F}
+	}
+].
+
+
+layout_wuid(WUId) ->
+	#span {
+		class="font-weight-bold lead",
+		text=WUId
+	}.
 
 %------------------------------------------------------------------------------
 % end

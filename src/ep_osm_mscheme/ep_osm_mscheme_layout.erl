@@ -25,7 +25,7 @@ insert_buttons(WUId, F) ->
 		lists:map(fun(I) ->
 			Label = io_lib:format("Group of ~p questions", [I]),
 			insert_button(Label, F, ?OSMMSC({widget, WUId, ?WTYPE_GROUP, I}))
-		end, lists:seq(2, 5)),
+		end, lists:seq(2, 15)),
 		#hr {},
 
 
@@ -33,11 +33,13 @@ insert_buttons(WUId, F) ->
 		% rule
 		%
 		lists:map(fun(I) ->
-			lists:map(fun(J) ->
-				Label = io_lib:format("Any ~p of ~p", [I, J]),
-				insert_button(Label, F, ?OSMMSC({widget, WUId, ?WTYPE_RULE, {I, J}}))
-			end, lists:seq(I + 1, 5))
-		end, lists:seq(1, 5)),
+			#p {
+				body=lists:map(fun(J) ->
+					Label = io_lib:format("Any ~p of ~p", [I, J]),
+					insert_button(Label, F, ?OSMMSC({widget, WUId, ?WTYPE_RULE, {I, J}}))
+				end, lists:seq(I + 1, 7))
+			}
+		end, lists:seq(1, 7)),
 		#hr {},
 
 
@@ -55,13 +57,21 @@ insert_buttons(WUId, F) ->
 
 insert_button(Label, #field {} = F, #field {} = FWidget) ->
 	#button {
-		style="margin: 10px; padding: 10px;",
+		style="margin: 5px; padding: 5px;",
 		class="btn btn-sm btn-primary-outline",
 		delegate=ep_osm_mscheme_handler,
 		text=Label,
 		postback={insert_widget, F, FWidget}
-	}.
+	};
 
+insert_button(Label, WUId, #field {} = FWidget) ->
+	#button {
+		style="margin: 5px; padding: 5px;",
+		class="btn btn-sm btn-primary-outline",
+		delegate=ep_osm_mscheme_handler,
+		text=Label,
+		postback={insert_widget, WUId, FWidget}
+	}.
 
 
 %------------------------------------------------------------------------------

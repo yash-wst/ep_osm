@@ -123,7 +123,7 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 		layout_actions(),
 		itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), table)
 	],
-	layout:g(4, 4, Es);
+	layout:g(6, 3, Es);
 
 
 
@@ -174,6 +174,9 @@ layout_actions() -> [
 % events
 %------------------------------------------------------------------------------
 
+event({action, add}) ->
+	handle_add();
+
 event({action, view_marking_scheme_layout}) ->
 	handle_view_marking_scheme_layout();
 
@@ -185,12 +188,6 @@ event({action, clearall}) ->
 		"Are you sure you want to clear this marking scheme?",
 		clearall
 	);
-
-event(add_widgets) ->
-	handle_add_widgets();
-
-event({action, add}) ->
-	handle_add();
 
 event(create) ->
 	handle_create();
@@ -205,6 +202,41 @@ event(E) ->
 %------------------------------------------------------------------------------
 % handlers
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - add
+%
+%..............................................................................
+
+handle_add() ->
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+	#field {subfields=Subfields} = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
+
+
+	%
+	% get next subfield number
+	%
+	 NextSubfieldNumber = case Subfields of
+	 	[] ->
+	 		1;
+	 	_ ->
+	 		#field {id=LastSubfieldId} = lists:last(Subfields),
+	 		?S2I(?A2L(LastSubfieldId)) + 1
+	 end,
+
+
+	 %
+	 % show widgets
+	 %
+	itl:modal_fs(ep_osm_mscheme_layout:insert_buttons(?I2A(NextSubfieldNumber), undefined)).
+
+
 
 %..............................................................................
 %
@@ -230,7 +262,7 @@ handle_convert_widget_to_tuple(ParentType, #field {id=Id, subfields=[#field {uiv
 	[_FWType, _FWId, FWname, FWmarks, _FWLow] = Subfields,
 
 	Tuple = {
-		itf:val(FWname),
+		helper:replace_these_with_that(itf:val(FWname), [" "], "_"),
 		helper:s2f_v1(itf:val(FWmarks))
 	},
 
@@ -345,98 +377,6 @@ handle_clearall() ->
 		FList#field {subfields=[]}
 	],
 	ep_osm_mscheme_handler:handle_save_and_reload(Id, FsToSave).
-
-
-%..............................................................................
-%
-% handle - add widgets
-%
-%..............................................................................
-
-handle_add_widgets() ->
-
-	%
-	% init
-	%
-	NumberOfWidgets = wf:q(number_of_widgets),
-	NumberOfWidgetsInt = ?S2I(NumberOfWidgets),
-	Id = wf:q(id),
-	{ok, Doc} = ep_osm_mscheme_api:get(Id),
-	#field {subfields=Subfields} = FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
-
-
-	%
-	% get last subfield id
-	%
-	 LastSubfieldNumber = case Subfields of
-	 	[] ->
-	 		0;
-	 	_ ->
-	 		#field {id=LastSubfieldId} = lists:last(Subfields),
-	 		?S2I(?A2L(LastSubfieldId))
-	 end,
-
-
-	%
-	% some gatekeeping
-	%
-	?ASSERT(
-		((NumberOfWidgetsInt /= error) and (NumberOfWidgetsInt < 25)),
-		"ERROR! too many widgets."
-	),
-
-
-
-	%
-	% widgets to add
-	%
-	WidgetFields = lists:map(fun(I) ->
-		?OSMMSC({widget, ?I2A(I), ?WTYPE_INSERT, ?WID_INSERT})
-	end, lists:seq(LastSubfieldNumber + 1, LastSubfieldNumber + NumberOfWidgetsInt)),
-
-
-	%
-	% save
-	%
-	FsToSave = [
-		FList#field {subfields=Subfields ++ WidgetFields}
-	],
-	ep_osm_mscheme_handler:handle_save_and_reload(Id, FsToSave).
-
-
-%..............................................................................
-%
-% handle - add
-%
-%..............................................................................
-
-handle_add() ->
-
-	%
-	% init
-	%
-	Fs = [
-		itf:textbox(?F(number_of_widgets, "Number of widgets"), [required, integer])
-	],
-
-
-	%
-	% layout
-	%
-	Es = [
-		#p {
-			class="",
-			text="Please specify the number of widgets/questions to add"
-		},
-		itl:get(?CREATE, Fs, ite:get(add_widgets, "Add"), table)
-	],
-	Es1 = itl:section(layout:grow(layout:g(6, 4, Es))),
-
-
-	%
-	% show
-	%
-	itl:modal_fs(Es1).
 
 
 %..............................................................................

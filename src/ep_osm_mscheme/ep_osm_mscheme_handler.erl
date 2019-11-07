@@ -9,6 +9,9 @@
 % events
 %------------------------------------------------------------------------------
 
+event({insert_widget, undefined, #field {} = FWidget}) ->
+	handle_add_widget(FWidget);
+
 event({insert_widget, #field {} = F, #field {} = FWidget}) ->
 	handle_insert_widget(F, FWidget);
 
@@ -21,6 +24,33 @@ event(Other) ->
 %------------------------------------------------------------------------------
 % handlers
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - add widget
+%
+%..............................................................................
+
+handle_add_widget(FWidget) ->
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+	#field {subfields=Subfields} = FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
+
+
+	%
+	% build fs to save
+	%
+	FsToSave = [
+		FList#field {subfields=Subfields ++ [FWidget]}
+	],
+
+	%
+	% save
+	%
+	handle_save_and_reload(Id, FsToSave).
 
 %..............................................................................
 %
