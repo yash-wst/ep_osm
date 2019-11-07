@@ -46,6 +46,10 @@ save(Fields) ->
 
 save(FsToSave, FsAll, Id) ->
 	{ok, Doc} = ?MODULE:get(Id),
+	?ASSERT(
+		itf:val(Doc, state) /= "published",
+		"ERROR! Editing of published documents is not allowed!"
+	),
 	FsAll1 = itf:d2f(Doc, FsAll),
 	FsAll2 = itf:fs_merge(FsAll1, FsToSave),
 	?MODULE:save(FsAll2).

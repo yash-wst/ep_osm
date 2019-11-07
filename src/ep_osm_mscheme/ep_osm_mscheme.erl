@@ -48,8 +48,11 @@ fs(edit) -> [
 	?OSMMSC({list_of_widgets, list_of_widgets})
 ];
 
-fs(update) ->
-	fs(basic);
+fs(update) -> [
+	?OSMMSC(name),
+	?OSMMSC(state)
+];
+
 
 fs(search) ->
 	fs(basic);
@@ -132,6 +135,9 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 % layout - other
 %
 %..............................................................................
+
+layout(?UPDATE, Id) when Id /= []; Id /= undefined ->
+	layout:g(6, 3, itxdocument:layout(?UPDATE, ?MODULE, Id));
 
 layout(_, _) ->
 	[].
