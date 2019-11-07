@@ -132,7 +132,7 @@ f({widget, WUId, ?WTYPE_GROUP, ChildrenCount}) ->
 	% build child elements
 	%
 	GroupChildren = lists:map(fun(I) ->
-		f({widget, ?NID(WUId, ?I2A(I)), ?WTYPE_QUESTION, ?WID_QUESTION})
+		f({widget, nid(WUId, ?I2A(I)), ?WTYPE_QUESTION, ?WID_QUESTION})
 	end, lists:seq(1, ChildrenCount)),
 
 
@@ -156,8 +156,8 @@ f({widget, WUId, ?WTYPE_RULE, ?WID_OR}) ->
 	% build child elements
 	%
 	GroupChildren = [
-		f({widget, ?NID(WUId, '1'), ?WTYPE_QUESTION, ?WID_QUESTION}),
-		f({widget, ?NID(WUId, '2'), ?WTYPE_QUESTION, ?WID_QUESTION})
+		f({widget, nid(WUId, '1'), ?WTYPE_QUESTION, ?WID_QUESTION}),
+		f({widget, nid(WUId, '2'), ?WTYPE_QUESTION, ?WID_QUESTION})
 	],
 
 
@@ -191,7 +191,7 @@ f({widget, WUId, ?WTYPE_RULE, {AnyI, OfJ}}) ->
 	% build child elements
 	%
 	GroupChildren = lists:map(fun(Ji) ->
-		f({widget, ?NID(WUId, ?I2A(Ji)), ?WTYPE_QUESTION, ?WID_QUESTION})
+		f({widget, nid(WUId, ?I2A(Ji)), ?WTYPE_QUESTION, ?WID_QUESTION})
 	end, lists:seq(1, OfJ)),
 
 
@@ -215,11 +215,11 @@ f({widget, WUId, WType, WId, WName, WMarks, WChildren}) ->
 	% sub fields of this widget
 	%
 	Subfields = [
-		itf:build(?OSMMSC({wtype, ?NID(WUId, wtype)}), WType),
-		itf:build(?OSMMSC({wid, ?NID(WUId, wid)}), WId),
-		itf:build(?OSMMSC({wname, ?NID(WUId, wname), WType}), WName),
-		itf:build(?OSMMSC({wmarks, ?NID(WUId, wmarks), WType}), WMarks),
-		itf:build(?OSMMSC({list_of_widgets, ?NID(WUId, list_of_widgets)}), WChildren)
+		itf:build(?OSMMSC({wtype, nid(WUId, wtype)}), WType),
+		itf:build(?OSMMSC({wid, nid(WUId, wid)}), WId),
+		itf:build(?OSMMSC({wname, nid(WUId, wname), WType}), WName),
+		itf:build(?OSMMSC({wmarks, nid(WUId, wmarks), WType}), WMarks),
+		itf:build(?OSMMSC({list_of_widgets, nid(WUId, list_of_widgets)}), WChildren)
 	],
 
 
@@ -294,10 +294,20 @@ renderer({WUId, ?WTYPE_QUESTION, _}) ->
 		% render button
 		%
 		[FWType, FWId, FWname, FWmarks, FWLow] = Subfields,
+		FWname1 = case FWname#field.uivalue of
+			[] ->
+				FWname#field {
+					uivalue=get_question_id_from_wuid(WUId)
+				};
+			_ ->
+				FWname
+		end,
+
+
 		EsVisible = layout:grow([
-			layout:g(1, layout_wuid(WUId)),
-			layout:g(4, itl:render(Mode, FWname)),
-			layout:g(4, itl:render(Mode, FWmarks)),
+			layout:g(2, layout_wuid(WUId)),
+			layout:g(3, itl:render(Mode, FWname1)),
+			layout:g(3, itl:render(Mode, FWmarks)),
 			layout:g(3, layout_actions(WUId, F))
 		]),
 
@@ -425,7 +435,7 @@ renderer({WUId, _, _}) ->
 		%
 		EsSubFields = #panel {
 			body=[
-				layout:g(1, layout_wuid(WUId)),
+				layout:g(2, layout_wuid(WUId)),
 				layout_actions(WUId, F),
 				itl:render(Mode, Subfields)
 			]
@@ -469,6 +479,15 @@ event({insert, WUId, #field {} = F}) ->
 %------------------------------------------------------------------------------
 
 %
+% nid
+%
+nid(A, B) when is_atom(B) ->
+	nid(A, ?A2L(B));
+nid(A, B) when is_list(B) ->
+	?L2A(?A2L(A) ++ "_" ++ B).
+
+
+%
 % uid
 %
 uid() ->
@@ -500,11 +519,44 @@ layout_actions(WUId, F) -> [
 ].
 
 
+
+%
+% layout quid
+%
 layout_wuid(WUId) ->
 	#span {
 		class="font-weight-bold lead",
-		text=WUId
+		text=get_question_id_from_wuid(WUId)
 	}.
+
+
+
+%
+% question id from quid
+%
+get_question_id_from_wuid(WUId) ->
+
+
+	%
+	% init
+	%
+	WUIdStr = ?A2L(WUId),
+	Tokens = string:tokens(WUIdStr, "_"),
+
+
+	%
+	% return
+	%
+	WUIdStr1 = case Tokens of
+		[First, Second | Rest] ->
+			AlphebetIndex = ?S2I(Second),
+			Alphabet = lists:nth(AlphebetIndex, helper:listof(alphabets)),
+			io_lib:format("~s~s~s", [First, Alphabet, Rest]);
+		_ ->
+			WUIdStr
+	end,
+	string:to_upper(?FLATTEN("Q" ++ WUIdStr1)).
+
 
 %------------------------------------------------------------------------------
 % end
