@@ -10,7 +10,6 @@
 %------------------------------------------------------------------------------
 
 event({insert_widget, undefined, {widget, _, _, _} = Widget}) ->
-	helper:session(marks_per_question, wf:q(marks_per_question)),
 	handle_add_widget(?OSMMSC(Widget));
 
 event({insert_widget, #field {} = F, {widget, _, _, _} = Widget}) ->

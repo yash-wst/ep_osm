@@ -108,7 +108,7 @@ f({widget, WUId, ?WTYPE_INSERT, ?WID_INSERT}) ->
 %..............................................................................
 
 f({widget, WUId, ?WTYPE_QUESTION, ?WID_QUESTION}) ->
-	f({widget, WUId, ?WTYPE_QUESTION, ?WID_QUESTION, [], [], []});
+	f({widget, WUId, ?WTYPE_QUESTION, ?WID_QUESTION, [], marks_per_question(), []});
 
 
 
@@ -563,7 +563,11 @@ get_question_id_from_wuid(WUId) ->
 % marks_per_question
 %
 marks_per_question() ->
-	helper:session(marks_per_question).
+	try
+		wf:q(marks_per_question)
+	catch _:_ ->
+		[]
+	end.
 
 %------------------------------------------------------------------------------
 % end
