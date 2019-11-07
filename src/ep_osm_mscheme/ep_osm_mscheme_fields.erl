@@ -558,6 +558,13 @@ get_question_id_from_wuid(WUId) ->
 	string:to_upper(?FLATTEN("Q" ++ WUIdStr1)).
 
 
+
+%
+% marks_per_question
+%
+marks_per_question() ->
+	helper:session(marks_per_question).
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
