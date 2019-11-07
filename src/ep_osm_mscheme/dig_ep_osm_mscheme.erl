@@ -10,7 +10,7 @@
 %------------------------------------------------------------------------------
 
 main() ->
-	ita:auth(?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
+	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
 
 title() ->
 	?LN("Marking Scheme").
@@ -76,7 +76,7 @@ fetch(D, From, Size, Fs) ->
 	%
 	% get docs
 	%
-	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+	#db2_find_response {docs=Docs} = db2es_find:get_by_fs(
 		ep_osm_mscheme_api:db(), Fs, From, Size
 	),
 
