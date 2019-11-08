@@ -193,6 +193,12 @@ fetch(D, _From, _Size, [
 
 
 	%
+	% init
+	%
+	TFs = anptests:get(ExamId),
+
+
+	%
 	% get evaluation stats
 	%
 	Stats = ep_osm_exam_api:get_evaluation_stats(ExamId),
@@ -205,8 +211,9 @@ fetch(D, _From, _Size, [
 	ProfileIds = lists:map(fun({[_, ProfileId], _}) ->
 		ProfileId
 	end, Stats),
-	ProfileIdsUnique = helper:unique(ProfileIds),
-	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique -- ["unassigned"]),
+	AllEligibleProfileIds = ProfileIds ++ anpcandidates:get_evaluators_for_test(TFs, anpevaluator),
+	ProfileIdsUnique = helper:unique(AllEligibleProfileIds) -- ["unassigned"],
+	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique),
 	ProfileDocsDict = helper:get_dict_from_docs(ProfileDocs),
 
 
@@ -231,19 +238,19 @@ fetch(D, _From, _Size, [
 				itf:val(ProfileDoc, email)
 			])}
 		] ++ lists:map(fun(State) ->
-			Val = case dict:find([State, ProfileId], StatsDict) of
-				{ok, Val0} ->
-					Val0;
-				_ ->
-					0
-			end,
+			Val = get_eval_count_for_profile(
+				ProfileId,
+				dict:find([State, ProfileId], StatsDict),
+				State,
+				itf:val(ProfileDoc, profiletype)
+			),
 			#dcell {
 				bgcolor=get_class(State, Val),
 				val=Val
 			}
 		end, states())
 
-	end, ProfileIdsUnique),
+	end, ["unassigned"] ++ ProfileIdsUnique),
 
 
 
@@ -365,6 +372,40 @@ get_class(State, Number) when Number > 0 ->
 
 get_class(_, _) ->
 	[].
+
+
+
+
+%
+% get evaluation count
+%
+get_eval_count_for_profile(_, error, _, _) ->
+	0;
+get_eval_count_for_profile("unassigned", {ok, Val}, State, _) when
+	State == "anpstate_not_uploaded";
+	State == "anpstate_yettostart";
+	State == "anpstate_discarded" ->
+	Val;
+get_eval_count_for_profile(_, {ok, Val}, State, "anpevaluator") when
+	State == "anpstate_yettostart";
+	State == "anpstate_active";
+	State == "anpstate_completed";
+	State == "anpstate_evaluation_rejected" ->
+	Val;
+get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator") when
+	State == "anpstate_moderation";
+	State == "anpstate_moderation_completed" ->
+	Val;
+get_eval_count_for_profile(_, {ok, Val}, State, "anprevaluator") when
+	State == "anpstate_revaluation";
+	State == "anpstate_revaluation_completed" ->
+	Val;
+get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator_reval") when
+	State == "anpstate_moderation_reval";
+	State == "anpstate_moderation_reval_completed" ->
+	Val;
+get_eval_count_for_profile(_, _, _, _) ->
+	0.
 
 
 %------------------------------------------------------------------------------

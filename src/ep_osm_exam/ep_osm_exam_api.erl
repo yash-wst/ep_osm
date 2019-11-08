@@ -172,10 +172,10 @@ get_evaluation_stats(TestId) ->
 			anpcandidates:db(TestId), Viename, SK, EK, 2
 		)
 	end, [], [
-		"state_assigned"
-		% "state_assigned_anpmoderator",
-		% "state_assigned_anprevaluator",
-		% "state_assigned_anpmoderator_reval"
+		"state_assigned",
+		"state_assigned_anpmoderator",
+		"state_assigned_anprevaluator",
+		"state_assigned_anpmoderator_reval"
 	]).
 
 
