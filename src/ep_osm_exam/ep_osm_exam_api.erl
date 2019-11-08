@@ -166,10 +166,17 @@ get_stats([
 get_evaluation_stats(TestId) ->
 	SK = [<<"">>, <<"">>],
 	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
-	itxview:get_stats(
-		anpcandidates:db(TestId), "state_assigned", SK, EK, 1
-	).
 
+	lists:foldl(fun(Viename, Acc) ->
+		Acc ++ itxview:get_stats(
+			anpcandidates:db(TestId), Viename, SK, EK, 2
+		)
+	end, [], [
+		"state_assigned"
+		% "state_assigned_anpmoderator",
+		% "state_assigned_anprevaluator",
+		% "state_assigned_anpmoderator_reval"
+	]).
 
 
 

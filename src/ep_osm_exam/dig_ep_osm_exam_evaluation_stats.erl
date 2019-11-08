@@ -48,7 +48,8 @@ get() ->
 			?CORSUB(subject_code_fk),
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
-			fields:get(exam_pattern)
+			fields:get(exam_pattern),
+			itf:hidden(osm_exam_fk)
 		],
 		size=50
 	}.
@@ -78,7 +79,7 @@ init() ->
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, [
+fetch(D, From, Size, [
 	]) ->
 
 	%
@@ -87,7 +88,7 @@ fetch(D, _From, _Size, [
 	Fs = [
 		fields:build(teststatus, ?ACTIVE)
 	],
-	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, Fs),
+	Docs = ep_osm_exam_api:fetch(From, Size, Fs),
 
 
 	%
@@ -130,7 +131,12 @@ fetch(D, _From, _Size, [
 			#dcell {val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)])},
 			#dcell {val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)])},
 			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
-			#dcell {val=itf:val(Doc, anptestcourseid)}
+			#dcell {
+				val=itl:blockquote([
+					itf:val(Doc, anptestcourseid)
+				]),
+				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))}
+			}
 
 		] ++ lists:map(fun(State) ->
 				Val = case dict:find([State], StatsDict) of
@@ -171,6 +177,97 @@ fetch(D, _From, _Size, [
 	%
 	{
 		D#dig {},
+		[Header] ++ dig:append_total_cells(Results)
+	};
+
+
+
+%..............................................................................
+%
+% [osm_exam_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=ExamId}
+	]) ->
+
+
+	%
+	% get evaluation stats
+	%
+	Stats = ep_osm_exam_api:get_evaluation_stats(ExamId),
+	StatsDict = dict:from_list(Stats),
+
+
+	%
+	% get profile docs
+	%
+	ProfileIds = lists:map(fun({[_, ProfileId], _}) ->
+		ProfileId
+	end, Stats),
+	ProfileIdsUnique = helper:unique(ProfileIds),
+	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique -- ["unassigned"]),
+	ProfileDocsDict = helper:get_dict_from_docs(ProfileDocs),
+
+
+
+	%
+	% layout results
+	%
+	Results = lists:map(fun(ProfileId) ->
+
+		%
+		% init
+		%
+		ProfileDoc = helper:get_doc_or_empty_doc_from_dict(ProfileId, ProfileDocsDict),
+
+		%
+		% get stats per profile
+		%
+		[
+			#dcell {val=itl:blockquote([
+				itf:val(ProfileDoc, fullname),
+				itf:val(ProfileDoc, mobile),
+				itf:val(ProfileDoc, email)
+			])}
+		] ++ lists:map(fun(State) ->
+			Val = case dict:find([State, ProfileId], StatsDict) of
+				{ok, Val0} ->
+					Val0;
+				_ ->
+					0
+			end,
+			#dcell {
+				bgcolor=get_class(State, Val),
+				val=Val
+			}
+		end, states())
+
+	end, ProfileIdsUnique),
+
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Profile"}
+	] ++ lists:map(fun(State) ->
+		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
+	end, states()) ++ [
+		#dcell {type=header, val="Total"}
+	],
+
+
+
+
+	%
+	% return
+	%
+	{
+		D#dig {
+			total=length(ProfileDocs)
+		},
 		[Header] ++ dig:append_total_cells(Results)
 	};
 
