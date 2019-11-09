@@ -74,113 +74,6 @@ init() ->
 % function - fetch
 %------------------------------------------------------------------------------
 
-%..............................................................................
-%
-% []
-%
-%..............................................................................
-fetch(D, From, Size, [
-	]) ->
-
-	%
-	% get active tests
-	%
-	Fs = [
-		fields:build(teststatus, ?ACTIVE)
-	],
-	Docs = ep_osm_exam_api:fetch(From, Size, Fs),
-
-
-	%
-	% build dicts
-	%
-	SeasonDocsDict = ep_core_exam_season_api:get_dict(Docs),
-	FacultyDocsDict = ep_core_faculty_api:get_dict(Docs),
-	ProgramDocsDict = ep_core_program_api:get_dict(Docs),
-	SubjectDocsDict = ep_core_subject_api:get_dict(Docs),
-
-
-	%
-	% results
-	%
-	Results = lists:map(fun(Doc) ->
-
-
-		%
-		% init
-		%
-		SeasonDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, season_fk), SeasonDocsDict),
-		FacultyDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, faculty_code_fk), FacultyDocsDict),
-		ProgramDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, program_code_fk), ProgramDocsDict),
-		SubjectDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, subject_code_fk), SubjectDocsDict),
-
-
-		%
-		% get stats for test
-		%
-		Stats = ep_osm_exam_api:get_evaluation_stats0(itf:idval(Doc)),
-		StatsDict = dict:from_list(Stats),
-
-
-
-		%
-		% layout test
-		%
-		[
-			#dcell {val=itl:blockquote(SeasonDoc, [?COREXS(name), ?COREXS(state)])},
-			#dcell {val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)])},
-			#dcell {val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)])},
-			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
-			#dcell {
-				val=itl:blockquote([
-					itf:val(Doc, anptestcourseid)
-				]),
-				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))}
-			}
-
-		] ++ lists:map(fun(State) ->
-				Val = case dict:find([State], StatsDict) of
-				{ok, Val0} ->
-					Val0;
-				_ ->
-					0
-				end,
-				#dcell {
-					bgcolor=get_class(State, Val),
-					val=Val
-				}
-		end, states())
-
-
-	end, Docs),
-
-
-	%
-	% header
-	%
-	Header = [
-		#dcell {type=header, val="Season"},
-		#dcell {type=header, val="Faculty"},
-		#dcell {type=header, val="Program"},
-		#dcell {type=header, val="Subject"},
-		#dcell {type=header, val="Test Id"}
-	] ++ lists:map(fun(State) ->
-		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
-	end, states()) ++ [
-		#dcell {type=header, val="Total"}
-	],
-
-
-
-	%
-	% return
-	%
-	{
-		D#dig {},
-		[Header] ++ dig:append_total_cells(Results)
-	};
-
-
 
 %..............................................................................
 %
@@ -281,14 +174,128 @@ fetch(D, _From, _Size, [
 
 %..............................................................................
 %
-% [other]
+% []
 %
 %..............................................................................
-fetch(D, _From, _Size, _) ->
+fetch(D, From, Size, []) ->
+	Fs = [
+		fields:build(teststatus, ?ACTIVE)
+	],
+	fetch(D, From, Size, Fs);
+
+
+
+%..............................................................................
+%
+% _
+%
+%..............................................................................
+
+fetch(D, From, Size, Fs) ->
+
+	%
+	% get active tests
+	%
+	Docs = ep_osm_exam_api:fetch(From, Size, Fs),
+
+
+	%
+	% build dicts
+	%
+	SeasonDocsDict = ep_core_exam_season_api:get_dict(Docs),
+	FacultyDocsDict = ep_core_faculty_api:get_dict(Docs),
+	ProgramDocsDict = ep_core_program_api:get_dict(Docs),
+	SubjectDocsDict = ep_core_subject_api:get_dict(Docs),
+
+
+	%
+	% results
+	%
+	Results = lists:map(fun(Doc) ->
+
+
+		%
+		% init
+		%
+		SeasonDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, season_fk), SeasonDocsDict),
+		FacultyDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, faculty_code_fk), FacultyDocsDict),
+		ProgramDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, program_code_fk), ProgramDocsDict),
+		SubjectDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, subject_code_fk), SubjectDocsDict),
+
+
+		%
+		% get stats for test
+		%
+		Stats = ep_osm_exam_api:get_evaluation_stats0(itf:idval(Doc)),
+		StatsDict = dict:from_list(Stats),
+
+
+
+		%
+		% layout test
+		%
+		[
+			#dcell {val=itl:blockquote(SeasonDoc, [?COREXS(name), ?COREXS(state)])},
+			#dcell {val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)])},
+			#dcell {val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)])},
+			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
+			#dcell {
+				val=itl:blockquote([
+					itf:val(Doc, anptestcourseid)
+				]),
+				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))}
+			}
+
+		] ++ lists:map(fun(State) ->
+				Val = case dict:find([State], StatsDict) of
+				{ok, Val0} ->
+					Val0;
+				_ ->
+					0
+				end,
+				#dcell {
+					bgcolor=get_class(State, Val),
+					val=Val
+				}
+		end, states())
+
+
+	end, Docs),
+
+
+	%
+	% sort results
+	%
+	ResultsSorted = lists:sort(fun(A, B) ->
+		#dcell {val=YetToStartA} = lists:nth(7, A),
+		#dcell {val=YetToStartB} = lists:nth(7, B),
+		YetToStartA > YetToStartB
+	end, Results),
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Season"},
+		#dcell {type=header, val="Faculty"},
+		#dcell {type=header, val="Program"},
+		#dcell {type=header, val="Subject"},
+		#dcell {type=header, val="Test Id"}
+	] ++ lists:map(fun(State) ->
+		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
+	end, states()) ++ [
+		#dcell {type=header, val="Total"}
+	],
+
+
+
+	%
+	% return
+	%
 	{
-		D,
-		[{error, "This combination of filters has not been implemented.
-		If you think it is useful, please contact the support team."}]
+		D#dig {},
+		[Header] ++ dig:append_total_cells(ResultsSorted)
 	}.
 
 
