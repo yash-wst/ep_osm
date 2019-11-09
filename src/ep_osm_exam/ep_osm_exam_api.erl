@@ -163,6 +163,14 @@ get_stats([
 %------------------------------------------------------------------------------
 
 
+get_evaluation_stats0(TestId) ->
+	SK = [<<"">>, <<"">>],
+	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
+	itxview:get_stats(
+		anpcandidates:db(TestId), "state_assigned", SK, EK, 1
+	).
+
+
 get_evaluation_stats(TestId) ->
 	SK = [<<"">>, <<"">>],
 	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],

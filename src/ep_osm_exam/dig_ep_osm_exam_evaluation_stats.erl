@@ -118,7 +118,7 @@ fetch(D, From, Size, [
 		%
 		% get stats for test
 		%
-		Stats = ep_osm_exam_api:get_evaluation_stats(itf:idval(Doc)),
+		Stats = ep_osm_exam_api:get_evaluation_stats0(itf:idval(Doc)),
 		StatsDict = dict:from_list(Stats),
 
 
