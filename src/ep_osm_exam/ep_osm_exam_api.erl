@@ -168,9 +168,17 @@ get_evaluation_stats(TestId) ->
 	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
 
 	lists:foldl(fun(Viename, Acc) ->
-		Acc ++ itxview:get_stats(
-			anpcandidates:db(TestId), Viename, SK, EK, 2
-		)
+		Acc ++
+		try
+			itxview:get_stats(
+				anpcandidates:db(TestId), Viename, SK, EK, 2
+			)
+		catch error:{badmatch,{error,not_found}} ->
+			view:setup_anpcandidates(anpcandidates:db(TestId)),
+			itxview:get_stats(
+				anpcandidates:db(TestId), Viename, SK, EK, 2
+			)
+		end
 	end, [], [
 		"state_assigned",
 		"state_assigned_anpmoderator",
