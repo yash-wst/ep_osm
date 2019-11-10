@@ -159,6 +159,15 @@ fetch(D, _From, _Size, [
 	],
 
 
+	%
+	% sort results
+	%
+	ResultsSorted = lists:sort(fun(A, B) ->
+		#dcell {val=YetToStartA} = lists:nth(5, A),
+		#dcell {val=YetToStartB} = lists:nth(5, B),
+		YetToStartA > YetToStartB
+	end, Results),
+
 
 
 	%
@@ -168,7 +177,7 @@ fetch(D, _From, _Size, [
 		D#dig {
 			total=length(ProfileDocs)
 		},
-		[Header] ++ dig:append_total_cells(Results)
+		[Header] ++ dig:append_total_cells(ResultsSorted)
 	};
 
 
