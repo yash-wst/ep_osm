@@ -33,7 +33,8 @@ fs(basic) -> [
 	?OSMBDL(qualityby),
 	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate)
+	?OSMBDL(uploadstate),
+	?OSMBDL(bundle_size)
 
 ];
 

@@ -138,6 +138,61 @@ delete_by_field(F = #field {}) ->
 %------------------------------------------------------------------------------
 
 
+
+%..............................................................................
+%
+% save
+%
+%..............................................................................
+
+update_bundle_size() ->
+
+	%
+	% get all bundles in inward completed state
+	%
+	FsFind = [
+		itf:build(?OSMBDL(inwardstate), "completed")
+	],
+	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
+		db(), FsFind, 0, ?INFINITY
+	),
+
+
+	%
+	% get candidate docs for this bundle and get size
+	%
+	LoLofFields = lists:map(fun(BundleDoc) ->
+
+		%
+		% get candidate docs for this bundle
+		%
+		CandidateDocs = dig_ep_osm_exam_inward:get_bundle_docs(
+			itf:val(BundleDoc, osm_exam_fk), itf:idval(BundleDoc)
+		),
+
+
+		%
+		% new fs
+		%
+		FsToSave = [
+			itf:build(?OSMBDL(bundle_size), ?I2S(length(CandidateDocs)))
+		],
+		FsAll = itf:d2f(BundleDoc, ep_osm_bundle:fs(all)),
+		itf:fs_merge(FsAll, FsToSave)
+
+
+	end, BundleDocs),
+
+
+
+	%
+	% save
+	%
+	ep_osm_bundle_api:savebulk(LoLofFields).
+
+
+
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------

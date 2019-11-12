@@ -1,5 +1,5 @@
 
--module(dig_mm_ep_osm_bundle).
+-module(dig_ep_osm_bundle_stats).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -13,47 +13,23 @@ main() ->
 	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
 
 title() ->
-	?LN("OSM Bundles").
+	?LN("Scanning Statistics").
 
 heading() ->
 	title().
 
-form() ->
-	ep_osm_bundle.
 
 %------------------------------------------------------------------------------
 % records
 %------------------------------------------------------------------------------
 
 
-%------------------------------------------------------------------------------
-% fields
-%------------------------------------------------------------------------------
-
-
-%------------------------------------------------------------------------------
-% options
-%------------------------------------------------------------------------------
-
-
-%------------------------------------------------------------------------------
-% fs
-%------------------------------------------------------------------------------
-
-
-%------------------------------------------------------------------------------
-% fs - group
-%------------------------------------------------------------------------------
-
-fields(ep_osm_bundle, _Fs) ->
-	ep_osm_bundle:fs(basic).
-
-
 
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
-access(_, ?ADMIN) -> true;
+access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_CONTROLLER) -> true;
 access(_, _) -> false.
 
 
@@ -64,16 +40,9 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?VIEW,
 		module=?MODULE,
 		filters=[
-			?OSMBDL(osm_exam_fk),
-			?OSMBDL(createdby),
-			?OSMBDL(inwardstate),
-			?OSMBDL(scanningstate),
-			?OSMBDL(uploadstate)
-		],
-		size=25
+		]
 	}.
 
 
@@ -81,7 +50,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("OSM Bundles").
+	?LN("Scanning Statistics").
 
 
 
@@ -101,8 +70,51 @@ init() ->
 % []
 %
 %..............................................................................
-fetch(D, From, Size, Fs) ->
-	dig_mm:fetch(D, From, Size, Fs).
+fetch(D, _From, _Size, [
+	]) ->
+
+	%
+	% init
+	%
+
+
+	%
+	% layout
+	%
+	Results = [
+	],
+
+
+	%
+	% return
+	%
+
+	{
+		D#dig {
+		},
+		Results
+	};
+
+
+%..............................................................................
+%
+% [other]
+%
+%..............................................................................
+fetch(D, _From, _Size, _) ->
+	{
+		D,
+		[{error, "This combination of filters has not been implemented.
+		If you think it is useful, please contact the support team."}]
+	}.
+
+
+
+%------------------------------------------------------------------------------
+% function - exports
+%------------------------------------------------------------------------------
+exports() -> [
+].
 
 
 
@@ -110,47 +122,16 @@ fetch(D, From, Size, Fs) ->
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	dig_mm:layout(?MODULE).
+	dig:dig(?MODULE:get()).
 
 
 
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
-event(E) ->
-	dig_mm:event(E).
+event({itx, E}) ->
+	ite:event(E).
 
-start_upload_event(Event) ->
-	dig_mm:start_upload_event(Event).
-
-finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
-	dig_mm:finish_upload_event(Tag, AttachmentName, LocalFileData, Node).
-
-%------------------------------------------------------------------------------
-% assertions
-%------------------------------------------------------------------------------
-
-
-%------------------------------------------------------------------------------
-% save
-%------------------------------------------------------------------------------
-
-%
-% override before create function
-%
-before_create(_FsToSave) ->
-
-	?ASSERT(
-		false,
-		"cannot create bundle from this ui. it needs to be created from osm exam"
-	).
-
-
-%
-% override before save function
-%
-before_save(FsToSave, _FsAll, _Doc) ->
-	FsToSave.
 
 
 %------------------------------------------------------------------------------

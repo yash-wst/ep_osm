@@ -90,6 +90,9 @@ f(uploadstate = I) ->
 	itf:dropdown(?F(I, "Upload State"), options(I));
 
 
+f(bundle_size = I) ->
+	itf:textbox_readonly(?F(I, "Bundle Size"));
+
 f(O) -> throw(O).
 
 %------------------------------------------------------------------------------

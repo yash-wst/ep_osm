@@ -787,7 +787,8 @@ handle_inward_completed() ->
 	% fs to save
 	%
 	FsToSave = [
-		itf:build(?OSMBDL(inwardstate), "completed")
+		itf:build(?OSMBDL(inwardstate), "completed"),
+		itf:build(?OSMBDL(bundle_size), ?I2S(length(get_bundle_docs())))
 	],
 
 
@@ -1311,12 +1312,16 @@ layout_osm_exam_name(OsmExamId) ->
 
 
 get_bundle_docs() ->
+	ExamId = wf:q(id),
+	OsmBundleId = wf:q(osm_bundle_fk),
+	get_bundle_docs(ExamId, OsmBundleId).
+
+
+get_bundle_docs(ExamId, OsmBundleId) ->
 
 	%
 	% init
 	%
-	ExamId = wf:q(id),
-	OsmBundleId = wf:q(osm_bundle_fk),
 	ExamDb = anpcandidates:db(ExamId),
 
 
