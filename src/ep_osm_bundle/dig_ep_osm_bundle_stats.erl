@@ -125,6 +125,16 @@ fetch(D, _From, _Size, [
 
 
 	%
+	% sort results
+	%
+	ResultsSorted = lists:sort(fun(A, B) ->
+		#dcell {val=Val1} = lists:nth(2, A),
+		#dcell {val=Val2} = lists:nth(2, B),
+		Val1 > Val2
+	end, Results),
+
+
+	%
 	% header
 	%
 	Header = [
@@ -141,9 +151,9 @@ fetch(D, _From, _Size, [
 	%
 	{
 		D#dig {
-			total=length(Results)
+			total=length(ResultsSorted)
 		},
-		[Header] ++ dig:append_total_cells(Results)
+		[Header] ++ dig:append_total_cells(ResultsSorted)
 	};
 
 
@@ -209,6 +219,16 @@ fetch(D, _From, _Size, [
 
 
 	%
+	% sort results
+	%
+	ResultsSorted = lists:sort(fun(A, B) ->
+		#dcell {val=Val1} = lists:nth(2, A),
+		#dcell {val=Val2} = lists:nth(2, B),
+		Val1 > Val2
+	end, Results),
+
+
+	%
 	% header
 	%
 	Header = [
@@ -225,9 +245,9 @@ fetch(D, _From, _Size, [
 	%
 	{
 		D#dig {
-			total=length(Results)
+			total=length(ResultsSorted)
 		},
-		[Header] ++ dig:append_total_cells(Results)
+		[Header] ++ dig:append_total_cells(ResultsSorted)
 	};
 
 
