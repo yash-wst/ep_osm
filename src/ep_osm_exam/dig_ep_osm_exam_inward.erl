@@ -1040,7 +1040,12 @@ handle_export_bundle_csv(ExamId, BundleId) ->
 	ExamDb = anpcandidates:db(ExamId),
 	{ok, ExamDoc} = anptests:getdoc(ExamId),
 	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
-	{ok, SubjectDoc} = ep_core_subject_api:get(itf:val(ExamDoc, subject_code_fk)),
+	{ok, SubjectDoc} = case itf:val(ExamDoc, subject_code_fk) of
+		[] ->
+			{ok, {[]}};
+		_ ->
+			ep_core_subject_api:get(itf:val(ExamDoc, subject_code_fk))
+	end,
 	SeasonName = ep_core_exam_season_api:getname(itf:val(ExamDoc, season_fk)),
 	SubjectCode = itf:val(SubjectDoc, subject_code),
 	BundleNumber = itf:val(BundleDoc, number),
