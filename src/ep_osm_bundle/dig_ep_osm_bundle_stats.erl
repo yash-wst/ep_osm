@@ -42,6 +42,7 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
+			?COREXS(season_fk)
 		]
 	}.
 
@@ -76,23 +77,59 @@ fetch(D, _From, _Size, [
 	%
 	% init
 	%
+	Stats = ep_osm_bundle_api:get_stats(),
+	StatsDict = dict:from_list(Stats),
+
+
+	%
+	% season ids
+	%
+	SeasonIds = lists:map(fun({[_, SeasonId], _}) ->
+		SeasonId
+	end, Stats),
+	SeasonIdsUnique = helper:unique(SeasonIds),
 
 
 	%
 	% layout
 	%
-	Results = [
+	Results = lists:map(fun(SeasonId) ->
+		[
+			#dcell {
+				val=SeasonId,
+				postback={filter, itf:build(?COREXS(season_fk), SeasonId)}
+			}
+		] ++ lists:map(fun(State) ->
+			Val = case dict:find([State, SeasonId], StatsDict) of
+				{ok, Count} ->
+					Count;
+				error ->
+					0
+			end,
+			dig:if_not(0, info, #dcell {val=Val})
+		end, states())
+	end, SeasonIdsUnique),
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Season"},
+		#dcell {type=header, val="Inward Completed"},
+		#dcell {type=header, val="Scanning Completed"},
+		#dcell {type=header, val="Upload Completed"}
 	],
 
 
 	%
 	% return
 	%
-
 	{
 		D#dig {
+			total=length(Results)
 		},
-		Results
+		[Header] ++ Results
 	};
 
 
@@ -144,6 +181,11 @@ event({itx, E}) ->
 % misc
 %------------------------------------------------------------------------------
 
+states() -> [
+	"inward_completed",
+	"scanning_completed",
+	"upload_completed"
+].
 
 
 %------------------------------------------------------------------------------
