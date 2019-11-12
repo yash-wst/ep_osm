@@ -26,6 +26,7 @@ layout_nav() ->
 		#panel {class="mycenter", body=[
 			#link {class="mylabel", text="Home", url="/ep_osm_web_landing"},
 			#link {class="mylabel", text="Evaluator Login", url="/login"},
+			#link {class="mylabel", text="Controller Login", url="/itxlogin"},
 			#link {class="mylabel", text="DTP Login", url="/itxlogin"},
 			#hr{}
 		]}
