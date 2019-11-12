@@ -99,7 +99,7 @@ fetch(D, _From, _Size, [
 
 		SeasonDoc = case SeasonDoc0 of
 			undefined ->
-				{[]};
+				{[{<<"_id">>, <<"unassigned">>}]};
 			_ ->
 				SeasonDoc0
 		end,
@@ -212,7 +212,7 @@ fetch(D, _From, _Size, [
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Season"},
+		#dcell {type=header, val="Exam"},
 		#dcell {type=header, val="Inward Completed"},
 		#dcell {type=header, val="Scanning Completed"},
 		#dcell {type=header, val="Upload Completed"},
