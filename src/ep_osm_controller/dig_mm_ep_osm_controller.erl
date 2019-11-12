@@ -46,7 +46,7 @@ form() ->
 %------------------------------------------------------------------------------
 
 fields(ep_osm_controller, _Fs) ->
-	ep_osm_controller:fs(basic).
+	ep_osm_controller:fs(form).
 
 
 
@@ -127,6 +127,18 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 %------------------------------------------------------------------------------
 % save
 %------------------------------------------------------------------------------
+
+%
+% after create
+%
+after_create(Fs, {ok, Doc}) ->
+	itxprofile:handle_send_welcome_message_email(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
+	),
+	itxprofile:handle_send_welcome_message_sms(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
+	).
+
 
 
 %
