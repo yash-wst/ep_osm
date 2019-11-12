@@ -43,7 +43,8 @@ access(_, _) -> false.
 get() ->
 	#dig {
 		module=?MODULE,
-		filters=anptest:fs(search)
+		filters=anptest:fs(search),
+		size=25
 	}.
 
 
@@ -71,12 +72,12 @@ init() ->
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, Fs) ->
+fetch(D, From, Size, Fs) ->
 
 	%
 	% fetch documents from db
 	%
-	Rec = db2_find:getrecord_by_fs(anptests:getdb(), Fs),
+	Rec = db2_find:getrecord_by_fs(anptests:getdb(), Fs, From, Size),
 	#db2_find_response {docs=Docs}  = db2_find:find(
 		Rec#db2_find {sort=anptest:fs(search)}
 	),
@@ -96,7 +97,9 @@ fetch(D, _From, _Size, Fs) ->
 
 		] ++ lists:map(fun(F) ->
 			#dcell {val=itl:render(F)}
-		end, FsDoc)
+		end, FsDoc) ++ [
+			#dcell {val=layout_files(Doc)}
+		]
 
 	end, Docs),
 
@@ -108,10 +111,13 @@ fetch(D, _From, _Size, Fs) ->
 		#dcell {type=header, val="Actions"}
 	] ++ lists:map(fun(#field {label=Label}) ->
 		#dcell {type=header, val=Label}
-	end, anptest:fs(search)),
+	end, anptest:fs(search)) ++ [
+		#dcell {type=header, val="Files"}
+	],
 
 	{
 		D#dig {
+			total=?INFINITY,
 			actions=[
 				{action_import, "+ Import", "+ Import"}
 			]
@@ -136,9 +142,39 @@ layout() ->
 
 
 
+%..............................................................................
+%
+% layout - files
+%
+%..............................................................................
+
+layout_files(Doc) ->
+
+	%
+	% init
+	%
+	Names = attachment:get_names(Doc),
+
+
+	%
+	% layout
+	%
+	lists:map(fun(Name) ->
+		#button {
+			style="display:block;",
+			class="btn btn-link",
+			text=Name,
+			postback={download, itf:idval(Doc), Name}
+		}
+	end, Names).
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({download, DocId, AttachmentName}) ->
+	attachment:download(anptests:getdb(), DocId, AttachmentName);
 
 event(E) ->
 	dig_mm:event(E).
