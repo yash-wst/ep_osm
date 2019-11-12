@@ -119,7 +119,8 @@ fetch(D, From, Size, Fs) ->
 		D#dig {
 			total=?INFINITY,
 			actions=[
-				{action_import, "+ Import", "+ Import"}
+				{action_import, "+ Import", "+ Import"},
+				{action_uploadzip, "Upload Zip", "Upload Zip"}
 			]
 		},
 		[Header] ++ Results
@@ -169,9 +170,65 @@ layout_files(Doc) ->
 	end, Names).
 
 
+
+
+%..............................................................................
+%
+% layout - upload form
+%
+%..............................................................................
+
+layout_upload_form() ->
+
+	%
+	% init
+	%
+	SeasonId = wf:q(season_fk),
+	?ASSERT(
+		((SeasonId /= []) and (SeasonId /= undefined)),
+		"ERROR: Please select a season under which files are to be uploaded"
+	),
+
+
+	ObjectKey = ?FLATTEN(io_lib:format("~s_~s.zip", [
+		SeasonId,
+		helper:uidintstr()
+	])),
+
+	RedirectUrl = ?FLATTEN(io_lib:format("~s/~p?&digx=~s&objectkey=~s", [
+		customer:get(mainserver_url),
+		?MODULE,
+		wf:q(digx),
+		ObjectKey
+	])),
+
+	Es = [
+		itxfile_s3_upload:form([
+			configs:get(aws_s3_bucket, []),
+			configs:get(aws_s3_access_key, []),
+			configs:get(aws_s3_secret, []),
+			configs:get(aws_s3_default_region, []),
+			ObjectKey,
+			RedirectUrl
+		])
+	],
+	[
+		itl:instructions([
+			{danger, "Folder name and zip file name should be same. Ex: Folder: 200, Zip: 200.zip"},
+			{ok, "Zip file should contain folders named by course ID"},
+			{ok, "Smaller PDF is assumed to be question paper and the bigger file is model answer."},
+			{danger, "Please ensure you have reliable, high bandwidth, internet connection"}
+		]),
+		Es
+	].
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(action_uploadzip) ->
+	handle_action_uploadzip();
 
 event({download, DocId, AttachmentName}) ->
 	attachment:download(anptests:getdb(), DocId, AttachmentName);
@@ -189,6 +246,51 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+
+%..............................................................................
+%
+% handle - action upload zip
+%
+%..............................................................................
+
+handle_action_uploadzip() ->
+	%
+	% build header
+	%
+	EsHeader = [
+		#button {
+			class="btn btn-sm btn-primary-outline pull-sm-right",
+			text="Close",
+			actions=[
+				#event {
+					type=click,
+					actions=#update {target=panel_actions, elements=[]}
+				}
+			]
+		},
+		#p {
+			class="font-weight-bold",
+			text="Upload Zip"
+		}
+	],
+
+
+	%
+	% build form
+	%
+	Es = [
+		layout_upload_form()
+	],
+
+
+	%
+	% show form
+	%
+	Es1 = itl:section(EsHeader, Es),
+	wf:update(panel_actions, Es1).
+
 
 
 
