@@ -24,6 +24,11 @@ getdocs() ->
 	db:getdocs(db()).
 
 
+getdocs_by_ids(ExamIds) ->
+	db:get_docs_by_ids(db(), ExamIds).
+
+
+
 list() ->
 	lists:map(fun(D) ->
 		{helper:l2a(itf:idval(D)), itf:idval(D)}

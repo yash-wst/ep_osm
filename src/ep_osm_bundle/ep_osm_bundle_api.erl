@@ -165,7 +165,7 @@ get_stats(SeasonId) ->
 
 %..............................................................................
 %
-% save
+% update - bundle_size
 %
 %..............................................................................
 
@@ -207,6 +207,62 @@ update_bundle_size() ->
 
 	end, BundleDocs),
 
+
+
+	%
+	% save
+	%
+	ep_osm_bundle_api:savebulk(LoLofFields).
+
+
+
+%..............................................................................
+%
+% update - season_fk
+%
+%..............................................................................
+
+update_bundle_season_fk() ->
+
+	%
+	% get all bundles
+	%
+	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
+		db(), [], 0, ?INFINITY
+	),
+
+
+	%
+	% get all exam docs
+	%
+	ExamIds = lists:map(fun(BundleDoc) ->
+		itf:val(BundleDoc, osm_exam_fk)
+	end, BundleDocs),
+	?D(ExamIds),
+	ExamDocs = ep_osm_exam_api:getdocs_by_ids(ExamIds),
+	ExamDocsDict = helper:get_dict_from_docs(ExamDocs),
+
+
+
+	LoLofFields = lists:map(fun(BundleDoc) ->
+
+
+		%
+		% init
+		%
+		{ok, ExamDoc} = dict:find(itf:val(BundleDoc, osm_exam_fk), ExamDocsDict),
+
+
+		%
+		% new fs
+		%
+		FsToSave = [
+			itf:build(?COREXS(season_fk), itf:val(ExamDoc, season_fk))
+		],
+		FsAll = itf:d2f(BundleDoc, ep_osm_bundle:fs(all)),
+		itf:fs_merge(FsAll, FsToSave)
+
+	end, BundleDocs),
 
 
 	%

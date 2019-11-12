@@ -42,7 +42,8 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
-			?COREXS(season_fk)
+			?COREXS(season_fk),
+			?OSMBDL(osm_exam_fk)
 		]
 	}.
 
@@ -88,15 +89,20 @@ fetch(D, _From, _Size, [
 		SeasonId
 	end, Stats),
 	SeasonIdsUnique = helper:unique(SeasonIds),
+	SeasonDocs = ep_core_exam_season_api:getdocs_by_ids(SeasonIdsUnique),
 
 
 	%
 	% layout
 	%
-	Results = lists:map(fun(SeasonId) ->
+	Results = lists:map(fun(SeasonDoc) ->
+		SeasonId = itf:idval(SeasonDoc),
 		[
 			#dcell {
-				val=SeasonId,
+				val=itl:blockquote([
+					itf:val(SeasonDoc, name),
+					itf:val(SeasonDoc, state)
+				]),
 				postback={filter, itf:build(?COREXS(season_fk), SeasonId)}
 			}
 		] ++ lists:map(fun(State) ->
@@ -108,7 +114,7 @@ fetch(D, _From, _Size, [
 			end,
 			dig:if_not(0, info, #dcell {val=Val})
 		end, states())
-	end, SeasonIdsUnique),
+	end, SeasonDocs),
 
 
 	%
@@ -161,12 +167,26 @@ fetch(D, _From, _Size, [
 
 
 	%
+	% exam docs dict
+	%
+	ExamIds = lists:map(fun({_, ExamId}) ->
+		ExamId
+	end, SeasonExamIdsUnique),
+	ExamDocs = ep_osm_exam_api:getdocs_by_ids(ExamIds),
+	ExamDocsDict = helper:get_dict_from_docs(ExamDocs),
+
+
+	%
 	% layout
 	%
 	Results = lists:map(fun({SeasonId, ExamId}) ->
+		{ok, ExamDoc} = dict:find(ExamId, ExamDocsDict),
 		[
 			#dcell {
-				val=ExamId,
+				val=itl:blockquote([
+					itf:val(ExamDoc, anptestcourseid),
+					itf:val(ExamDoc, testname)
+				]),
 				postback={filter, itf:build(?OSMBDL(osm_exam_fk), ExamId)}
 			}
 		] ++ lists:map(fun(State) ->
