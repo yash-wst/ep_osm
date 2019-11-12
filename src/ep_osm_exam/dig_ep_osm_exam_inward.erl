@@ -1271,7 +1271,15 @@ handle_create_bundle(ExamId) ->
 	%
 	% init
 	%
+	{ok, ExamDoc} = anptests:getdoc(ExamId),
+	SeasonId = itf:val(ExamDoc, season_fk),
+
+
+	%
+	% fields to save
+	%
 	FsToSave = [
+		itf:build(?COREXS(season_fk), SeasonId),
 		itf:build(?OSMBDL(osm_exam_fk), ExamId),
 		itf:build(?OSMBDL(createdby), itxauth:user()),
 		itf:build(?OSMBDL(createdon), helper:epochtimestr())

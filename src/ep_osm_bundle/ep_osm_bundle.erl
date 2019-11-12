@@ -25,6 +25,7 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 fs(basic) -> [
+	?COREXS(season_fk),
 	?OSMBDL(osm_exam_fk),
 	?OSMBDL(number),
 	?OSMBDL(createdby),
