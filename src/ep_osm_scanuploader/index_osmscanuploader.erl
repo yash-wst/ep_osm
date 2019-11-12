@@ -26,7 +26,7 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 layout() ->
-	"Welcome".
+	helper:redirect("/dig_ep_osm_exam_bundle").
 
 
 

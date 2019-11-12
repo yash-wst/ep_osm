@@ -13,7 +13,7 @@ main() ->
 	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
 
 title() ->
-	?LN("OSM Exams - Bundles").
+	?LN("OSM Exams - Inward, Scan, Upload").
 
 heading() ->
 	title().
@@ -51,7 +51,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("OSM Exams - Bundles").
+	?LN("OSM Exams - Inward, Scan, Upload").
 
 
 
@@ -71,6 +71,15 @@ init() ->
 % []
 %
 %..............................................................................
+fetch(D, _From, _Size, []) ->
+	{
+		D,
+		[{custom, #panel {
+			style="margin-top: 10px;",
+			class="mycenter",
+			body=layout:frame("Please select filters to search.")
+		}}]
+	};
 fetch(D, From, Size, Fs) ->
 
 	%
