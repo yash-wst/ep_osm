@@ -51,7 +51,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("Scanning Statistics").
+	?LN("Scanning Statistics - Number of booklets").
 
 
 

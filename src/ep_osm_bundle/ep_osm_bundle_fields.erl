@@ -13,7 +13,9 @@ f(osm_exam_fk = I) ->
 		options=#search {
 			title=?LN("Select OSM Exam"),
 			db=anptests:getdb(),
-			displayfs=anptest:fs(search),
+			displayfs=[
+				fields:get(testname)
+			],
 			filterfs=anptest:fs(search),
 			size=10
 		}
