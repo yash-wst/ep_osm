@@ -5,7 +5,7 @@ function (doc) {
 		if(doc.scanningstate == "completed")
 			bundle_state = "scanning_completed";
 		if(doc.uploadstate == "completed")
-			bundle_state == "upload_completed"
+			bundle_state = "upload_completed"
 
 		var season_fk = "unassigned";
 		if(doc.season_fk)
