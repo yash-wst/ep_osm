@@ -118,7 +118,8 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Season"},
 		#dcell {type=header, val="Inward Completed"},
 		#dcell {type=header, val="Scanning Completed"},
-		#dcell {type=header, val="Upload Completed"}
+		#dcell {type=header, val="Upload Completed"},
+		#dcell {type=header, val="Total"}
 	],
 
 
@@ -129,7 +130,7 @@ fetch(D, _From, _Size, [
 		D#dig {
 			total=length(Results)
 		},
-		[Header] ++ Results
+		[Header] ++ dig:append_total_cells(Results)
 	};
 
 
@@ -187,7 +188,8 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Season"},
 		#dcell {type=header, val="Inward Completed"},
 		#dcell {type=header, val="Scanning Completed"},
-		#dcell {type=header, val="Upload Completed"}
+		#dcell {type=header, val="Upload Completed"},
+		#dcell {type=header, val="Total"}
 	],
 
 
@@ -198,7 +200,7 @@ fetch(D, _From, _Size, [
 		D#dig {
 			total=length(Results)
 		},
-		[Header] ++ Results
+		[Header] ++ dig:append_total_cells(Results)
 	};
 
 
