@@ -95,7 +95,14 @@ fetch(D, _From, _Size, [
 	%
 	% layout
 	%
-	Results = lists:map(fun(SeasonDoc) ->
+	Results = lists:map(fun(SeasonDoc0) ->
+
+		SeasonDoc = case SeasonDoc0 of
+			undefined ->
+				{[]};
+			_ ->
+				SeasonDoc0
+		end,
 		SeasonId = itf:idval(SeasonDoc),
 		[
 			#dcell {
