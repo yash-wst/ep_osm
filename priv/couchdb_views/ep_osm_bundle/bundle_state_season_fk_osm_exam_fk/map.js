@@ -7,6 +7,10 @@ function (doc) {
 		if(doc.uploadstate == "completed")
 			bundle_state == "upload_completed"
 
-		emit([bundle_state, doc.season_fk, doc.osm_exam_fk], parseInt(doc.bundle_size, 10));
+		var season_fk = "unassigned";
+		if(doc.season_fk)
+			season_fk = doc.season_fk;
+
+		emit([bundle_state, season_fk, doc.osm_exam_fk], parseInt(doc.bundle_size, 10));
 	}
 }

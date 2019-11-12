@@ -133,6 +133,75 @@ fetch(D, _From, _Size, [
 	};
 
 
+
+%..............................................................................
+%
+% [season_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=season_fk, uivalue=SeasonId0}
+]) ->
+
+	%
+	% init
+	%
+	Stats = ep_osm_bundle_api:get_stats(SeasonId0),
+	StatsDict = dict:from_list(Stats),
+
+
+	%
+	% season exam ids
+	%
+	SeasonExamIds = lists:map(fun({[_, SeasonId, ExamId], _}) ->
+		{SeasonId, ExamId}
+	end, Stats),
+	SeasonExamIdsUnique = helper:unique(SeasonExamIds),
+
+
+	%
+	% layout
+	%
+	Results = lists:map(fun({SeasonId, ExamId}) ->
+		[
+			#dcell {
+				val=ExamId,
+				postback={filter, itf:build(?OSMBDL(osm_exam_fk), ExamId)}
+			}
+		] ++ lists:map(fun(State) ->
+			Val = case dict:find([State, SeasonId, ExamId], StatsDict) of
+				{ok, Count} ->
+					Count;
+				error ->
+					0
+			end,
+			dig:if_not(0, info, #dcell {val=Val})
+		end, states())
+	end, SeasonExamIdsUnique),
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Season"},
+		#dcell {type=header, val="Inward Completed"},
+		#dcell {type=header, val="Scanning Completed"},
+		#dcell {type=header, val="Upload Completed"}
+	],
+
+
+	%
+	% return
+	%
+	{
+		D#dig {
+			total=length(Results)
+		},
+		[Header] ++ Results
+	};
+
+
 %..............................................................................
 %
 % [other]

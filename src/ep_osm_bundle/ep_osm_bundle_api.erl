@@ -138,14 +138,21 @@ delete_by_field(F = #field {}) ->
 %------------------------------------------------------------------------------
 
 get_stats() ->
-	SK = [<<"">>, <<"">>],
-	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
+	SK = [<<"">>, <<"">>, <<"">>],
+	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>, <<"z\\ufff0">>],
 	itxview:get_stats(
 		db(), "bundle_state_season_fk_osm_exam_fk", SK, EK, 2
 	).
 
 
-
+get_stats(SeasonId) ->
+	lists:foldl(fun(State, Acc) ->
+		SK = [?L2B(State), ?L2B(SeasonId), <<"">>],
+		EK = [?L2B(State), ?L2B(SeasonId), <<"z\\ufff0">>],
+		Acc ++ itxview:get_stats(
+			db(), "bundle_state_season_fk_osm_exam_fk", SK, EK, 3
+		)
+	end, [], dig_ep_osm_bundle_stats:states()).
 
 
 
