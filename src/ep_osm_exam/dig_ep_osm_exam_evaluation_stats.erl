@@ -186,11 +186,11 @@ fetch(D, _From, _Size, [
 % []
 %
 %..............................................................................
-fetch(D, From, Size, []) ->
+fetch(D, _From, _Size, []) ->
 	Fs = [
 		fields:build(teststatus, ?ACTIVE)
 	],
-	fetch(D, From, Size, Fs);
+	fetch(D, 0, ?INFINITY, Fs);
 
 
 
@@ -203,9 +203,20 @@ fetch(D, From, Size, []) ->
 fetch(D, From, Size, Fs) ->
 
 	%
+	% init
+	%
+	Size1 = case wf:q(size) of
+		undefined ->
+			Size;
+		Size0 ->
+			?S2I(Size0)
+	end,
+
+
+	%
 	% get active tests
 	%
-	Docs = ep_osm_exam_api:fetch(From, Size, Fs),
+	Docs = ep_osm_exam_api:fetch(From, Size1, Fs),
 
 
 	%
@@ -303,7 +314,9 @@ fetch(D, From, Size, Fs) ->
 	% return
 	%
 	{
-		D#dig {},
+		D#dig {
+			total=?INFINITY
+		},
 		[Header] ++ dig:append_total_cells(ResultsSorted)
 	}.
 
