@@ -359,7 +359,7 @@ handle_download_from_s3(ObjectKey) ->
 
 	?ASSERT(
 		CmdRes == [],
-		"ERROR: download from s3 failed!"
+		?FLATTEN(io_lib:format("ERROR: download from s3 failed! ~p", [CmdRes]))
 	),
 
 
