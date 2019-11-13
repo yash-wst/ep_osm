@@ -139,6 +139,7 @@ exports() -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
+	handle_objectkey(wf:q(objectkey)),
 	dig:dig(?MODULE:get()).
 
 
@@ -195,10 +196,9 @@ layout_upload_form() ->
 		helper:uidintstr()
 	])),
 
-	RedirectUrl = ?FLATTEN(io_lib:format("~s/~p?&digx=~s&objectkey=~s", [
+	RedirectUrl = ?FLATTEN(io_lib:format("~s/~p?objectkey=~s", [
 		customer:get(mainserver_url),
 		?MODULE,
-		wf:q(digx),
 		ObjectKey
 	])),
 
@@ -217,7 +217,7 @@ layout_upload_form() ->
 			{danger, "Folder name and zip file name should be same. Ex: Folder: 200, Zip: 200.zip"},
 			{ok, "Zip file should contain folders named by course ID"},
 			{ok, "Smaller PDF is assumed to be question paper and the bigger file is model answer."},
-			{danger, "Please ensure you have reliable, high bandwidth, internet connection"}
+			{danger, "Existing files will be overwritten!"}
 		]),
 		Es
 	].
@@ -226,6 +226,9 @@ layout_upload_form() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({browser_to_s3_completed, ObjectKey}) ->
+	handle_objectkey_upload_completed(ObjectKey);
 
 event(action_uploadzip) ->
 	handle_action_uploadzip();
@@ -246,6 +249,45 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - object key upload completed
+%
+%..............................................................................
+
+handle_objectkey_upload_completed(ObjectKey) ->
+	dig_ep_osm_exam_file_upload:upload(ObjectKey).
+
+
+%..............................................................................
+%
+% handle - object key
+%
+%..............................................................................
+
+
+handle_objectkey(ObjectKey) when ObjectKey /=[], ObjectKey /= undefined ->
+	%
+	% before processing check if object exists
+	%
+	try
+		_Infos = helper_s3:info_dir(
+			configs:get(aws_s3_bucket, []),
+			"browser_to_s3/" ++ ObjectKey
+		),
+
+		wf:wire(#event{type=timer, delay=100, postback={browser_to_s3_completed, ObjectKey}}),
+		#span {text=[]}
+
+	catch
+		_E:_M ->
+			skip
+	end;
+
+handle_objectkey(_) ->
+	ok.
 
 
 
