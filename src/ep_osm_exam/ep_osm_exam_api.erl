@@ -218,6 +218,51 @@ states() -> [
 ].
 
 
+
+%------------------------------------------------------------------------------
+% csv - frp
+%------------------------------------------------------------------------------
+
+csv_frp(TestId) ->
+
+	%
+	% get candidate docs
+	%
+	TestDb = anpcandidates:db(TestId),
+	CandidateDocs = anpcandidates:getall(TestDb),
+
+
+	%
+	% csv
+	% prn, name, marks
+	%
+	Lines = lists:map(fun(CDoc) ->
+		string:join([
+			itf:val(CDoc, anpseatnumber),
+			itf:val(CDoc, anpfullname),
+			csv_frp_marks(itf:val(CDoc, total_anpevaluator))
+		], ",")
+	end, CandidateDocs),
+
+
+	%
+	% return
+	%
+	{length(Lines), string:join(Lines, "\n")}.
+
+
+
+
+csv_frp_marks([]) ->
+	[];
+csv_frp_marks(Str) ->
+	helper:i2s(helper:ceiling(helper:s2f_v1(Str))).
+
+
+
+
+
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
