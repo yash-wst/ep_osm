@@ -115,8 +115,8 @@ fetch(D, _From, _Size, Fs) ->
 	% init
 	%
 	FsFind = Fs ++ [
-		% fields:build(teststatus, "completed"),
-		% fields:build(result_upload_status, "")
+		fields:build(teststatus, "completed"),
+		fields:build(result_upload_status, "")
 	],
 
 
@@ -361,6 +361,16 @@ handle_upload_marks(FrpSeasonFk, OsmExamDoc, MatchingSubjectDoc) ->
 		{badrpc, Reason} ->
 			dig:log(error, io_lib:format("Failed! ~p", [Reason]));
 		_ ->
+
+			%
+			% update state
+			%
+			FsToSave = [
+				fields:build(result_upload_status, uploaded)
+			],
+			{ok, _} = ep_osm_exam_api:save(
+				FsToSave, ep_osm_exam_api:fs(all), ExamId
+			),
 			dig:log(success, io_lib:format("(~s, ~s) added to queue", [SubjectCode, Pattern]))
 	end.
 
