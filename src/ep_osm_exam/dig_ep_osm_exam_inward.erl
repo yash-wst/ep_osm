@@ -760,7 +760,7 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 	%
 	ExamDb = anpcandidates:db(ExamId),
 	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
-	BundleNumber = itf:val(BundleDoc, number),
+	BundleNumber = helper:sanitisestr(itf:val(BundleDoc, number)),
 
 
 	%
