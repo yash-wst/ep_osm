@@ -252,6 +252,28 @@ handle_action_upload_to_frp() ->
 
 handle_upload(OsmSeasonFk, FrpSeasonFk) ->
 
+
+	%
+	% ensure seasons have same name
+	%
+	{ok, OsmSeasonDoc} = ep_core_exam_season_api:get(OsmSeasonFk),
+	{ok, FrpSeasonDoc} = rpc:call(
+		itxnode:frp(),
+		ep_core_exam_season_api,
+		get,
+		[FrpSeasonFk]
+	),
+	?ASSERT(
+		(
+			(itf:val(OsmSeasonDoc, name) == itf:val(FrpSeasonDoc, name)) and
+			(itf:val(OsmSeasonDoc, type) == itf:val(FrpSeasonDoc, type)) and
+			(itf:val(OsmSeasonDoc, state) == itf:val(FrpSeasonDoc, state))
+		),
+		"Error! Season mismatch. Name, type and state should match between OSM & FRP seasons."
+	),
+
+
+
 	%
 	% get all completed but not uploaded exams
 	%
