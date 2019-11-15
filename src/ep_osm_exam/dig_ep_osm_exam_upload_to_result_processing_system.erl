@@ -33,7 +33,7 @@ f(frp_season_fk = I) ->
 	F#field {
 		id=I,
 		label="Season - Result Processing System",
-		options=F#field.options#search{node='frp@127.0.0.1'}
+		options=F#field.options#search{node=itxnode:frp()}
 	}.
 
 
@@ -116,7 +116,7 @@ fetch(D, _From, _Size, Fs) ->
 	%
 	FsFind = Fs ++ [
 		fields:build(teststatus, "completed"),
-		fields:build(result_upload_status, "")
+		db2es_find:get_field_cond("$in", result_upload_status, ["", "pending"])
 	],
 
 
@@ -260,7 +260,7 @@ handle_upload(OsmSeasonFk, FrpSeasonFk) ->
 	FsFilters = dig:get_nonempty_fs(Dig#dig.filters),
 	FsFind = FsFilters ++ [
 		fields:build(teststatus, "completed"),
-		fields:build(result_upload_status, "")
+		db2es_find:get_field_cond("$in", result_upload_status, ["", "pending"])
 	],
 
 	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
@@ -295,7 +295,7 @@ handle_upload(_OsmSeasonFk, FrpSeasonFk, Doc) ->
 	%
 
 	SubjectDocs = rpc:call(
-		'frp@127.0.0.1',
+		itxnode:frp(),
 		ep_core_subject_api,
 		getdocs_by_subject_codes,
 		[SubjectCodes]
@@ -352,7 +352,7 @@ handle_upload_marks(FrpSeasonFk, OsmExamDoc, MatchingSubjectDoc) ->
 	% post it on result processing system
 	%
 	RpcRes = rpc:call(
-		'frp@127.0.0.1',
+		itxnode:frp(),
 		up_core_marks_upload_queue_api,
 		create_rpc,
 		[FrpSeasonFk, SubjectId, MarkTypeId, ?L2B(CsvData), CsvDataSize]
@@ -366,10 +366,10 @@ handle_upload_marks(FrpSeasonFk, OsmExamDoc, MatchingSubjectDoc) ->
 			% update state
 			%
 			FsToSave = [
-				fields:build(result_upload_status, uploaded)
+				fields:build(result_upload_status, "uploaded")
 			],
 			{ok, _} = ep_osm_exam_api:save(
-				FsToSave, ep_osm_exam_api:fs(all), ExamId
+				FsToSave, ep_osm_exam:fs(all), ExamId
 			),
 			dig:log(success, io_lib:format("(~s, ~s) added to queue", [SubjectCode, Pattern]))
 	end.
