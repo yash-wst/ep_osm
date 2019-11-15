@@ -148,7 +148,8 @@ fetch(D, _From, _Size, [
 	Actions = [
 		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
 		{refresh, "Refresh", "Refresh"},
-		{export_bundle_csv, "Export Bundle CSV", "Export Bundle CSV"}
+		{export_bundle_csv, "Export Bundle CSV", "Export Bundle CSV"},
+		{export_bundle_dir, "Export Bundle Folder", "Export Bundle Folder"}
 	] ++
 		layout_action_inwarding(BundleDoc) ++
 		layout_action_scanning(BundleDoc) ++
@@ -630,6 +631,9 @@ finish_upload_event_inward(_Id, Filename, Fileloc, _Node) ->
 % events
 %------------------------------------------------------------------------------
 
+event(export_bundle_dir) ->
+	handle_export_bundle_dir(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+
 event({browser_to_s3_completed, _BundleDoc, ObjectKey}) ->
 	finish_upload_event_inward(undefined, ObjectKey, undefined, undefined);
 
@@ -743,6 +747,67 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - export bundle folder
+%
+%..............................................................................
+
+handle_export_bundle_dir(ExamId, BundleId) ->
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+	BundleNumber = itf:val(BundleDoc, number),
+
+
+	%
+	% prepare cover uids
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY
+	),
+	CandidateDirs = lists:map(fun(CandidateDoc) ->
+		itf:val(CandidateDoc, anpseatnumber)
+	end, CandidateDocs),
+
+
+	%
+	% create directories
+	%
+	UId = helper:uidintstr(),
+	WorkDir = ?FLATTEN(io_lib:format("/tmp/~s/~s", [UId, BundleNumber])),
+	helper:cmd("mkdir -p ~s; cd ~s; mkdir ~s", [
+		WorkDir, WorkDir, string:join(CandidateDirs, " ")
+	]),
+
+
+	%
+	% zip dir
+	%
+	helper:cmd("cd /tmp/~s; zip -r ~s.zip ~s", [UId, BundleNumber, BundleNumber]),
+
+
+	%
+	% clean up
+	%
+	helper:cmd("mv /tmp/~s/~s.zip /tmp/~s.zip", [UId, BundleNumber, UId]),
+	helper:cmd("rm -rf /tmp/~s", [UId]),
+
+
+	%
+	% export
+	%
+	Filename = ?FLATTEN(io_lib:format("~s.zip", [BundleNumber])),
+	Filepath = ?FLATTEN(io_lib:format("/tmp/~s.zip", [UId])),
+	itxdownload:stream_and_delete_file(Filename, Filepath).
+
+
 
 %..............................................................................
 %
