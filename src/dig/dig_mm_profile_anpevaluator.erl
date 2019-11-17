@@ -46,7 +46,7 @@ form() ->
 %------------------------------------------------------------------------------
 
 fields(profile_anpevaluator, _Fs) ->
-	profile_anpevaluator:fs(basic).
+	profile_anpevaluator:fs(form).
 
 
 
