@@ -51,6 +51,14 @@ fs(index) -> [
 	?OSMBDL(uploadstate)
 ];
 
+fs(form) -> [
+	?OSMBDL(osm_exam_fk),
+	?OSMBDL(number),
+	?OSMBDL(inwardstate),
+	?OSMBDL(scanningstate),
+	?OSMBDL(uploadstate)
+];
+
 fs(view) ->
 	fs(basic);
 
