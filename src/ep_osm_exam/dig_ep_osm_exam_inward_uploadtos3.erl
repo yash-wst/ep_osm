@@ -205,6 +205,13 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath) ->
 
 
 	%
+	% directories as serial numbers as prefix, remove the prefix
+	%
+	handle_remove_prefix(ZipDir),
+
+
+
+	%
 	% for each directory, check if exists and upload to s3
 	%
 	lists:foreach(fun(DirNameToUpload) ->
@@ -228,6 +235,35 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath) ->
 
 	dig:log("Uploading to S3 ... ok").
 
+
+
+%------------------------------------------------------------------------------
+% handle - remove prefix
+%------------------------------------------------------------------------------
+
+handle_remove_prefix(ZipDir) ->
+
+	{ok, Dirs} = file:list_dir(ZipDir),
+	lists:foreach(fun(Dir) ->
+
+		%
+		% remove prefix
+		%
+		Dir1 = case string:tokens(Dir, ".") of
+			[_H | []] ->
+				Dir;
+			[_H | Tail] ->
+				Tail
+		end,
+
+		%
+		% rename dir
+		%
+		Source = ?FLATTEN(io_lib:format("~s/~s", [ZipDir, Dir])),
+		Destination = ?FLATTEN(io_lib:format("~s/~s", [ZipDir, Dir1])),
+		ok = file:rename(Source, Destination)
+
+	end, Dirs).
 
 
 

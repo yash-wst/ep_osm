@@ -772,9 +772,14 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
 	),
-	CandidateDirs = lists:map(fun(CandidateDoc) ->
-		itf:val(CandidateDoc, anpseatnumber)
-	end, CandidateDocs),
+	{_, CandidateDirs} = lists:foldl(fun(CandidateDoc, {AccIndex, Acc}) ->
+		{
+			AccIndex + 1,
+			Acc ++ [
+				string:join([?I2S(AccIndex), itf:val(CandidateDoc, anpseatnumber)], ".")
+			]
+		}
+	end, {1, []}, CandidateDocs),
 
 
 	%
