@@ -45,4 +45,13 @@ html(xmlns='http://www.w3.org/1999/xhtml')
             .col-sm-12 [[[page:layout()]]]
 
 
+    #myModal.modal.fade(tabindex="-1", role="dialog", aria-labelledby="myModalLabel", aria-hidden="true", style="z-index: 2000;")
+      .modal-dialog(role="document")
+        .modal-content
+          .modal-header
+            button.close(type="button", data-dismiss="modal", aria-label="Close")
+              span(aria-hidden="true") &#215;
+          | [[[helper_ui:modal_body_element()]]]
+
+
     script [[[script]]]
