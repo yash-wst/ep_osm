@@ -343,8 +343,9 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	%
 	ListOfFsToSave = lists:map(fun([PRN, Name | _]) ->
 		Name1 = helper:replace_this_with_that(Name, "\"", ""),
+		PRN1 = string:tokens(PRN, "PRN:"),
 		[
-			itf:build(itf:textbox(?F(anpseatnumber)), PRN),
+			itf:build(itf:textbox(?F(anpseatnumber)), PRN1),
 			itf:build(itf:textbox(?F(anpfullname)), Name1),
 			itf:build(itf:textbox(?F(anpcentercode)), "0"),
 			itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
