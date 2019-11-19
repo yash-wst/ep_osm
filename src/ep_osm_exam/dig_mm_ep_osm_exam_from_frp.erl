@@ -248,6 +248,9 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 	),
 
 
+	dig:log(warning, "PROCESSING ... " ++ itf:val(FrpSubjectDoc, subject_code)),
+
+
 	%
 	% check if season doc exists else, create it
 	%
@@ -260,7 +263,7 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 	%
 	% check if exam doc exists else, create it
 	%
-	Res = handle_import_from_frp_examdoc_ensure_examdoc_exists(
+	ResOsmExamDoc = handle_import_from_frp_examdoc_ensure_examdoc_exists(
 		DateOfExam, OsmSeasonDoc, FrpSubjectDoc, FrpExamDoc
 	),
 
@@ -268,8 +271,98 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 	%
 	% upload or update student list
 	%
-	?D(Res).
+	handle_import_from_frp_examdoc_upload_student_list(
+		FrpExamDoc, ResOsmExamDoc
+	).
 
+
+
+%..............................................................................
+%
+% handle - upload student list
+%
+%..............................................................................
+
+handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc}) ->
+
+
+	%
+	% init
+	%
+	dig:log(info, "Updating student list ... "),
+	OsmExamId = itf:idval(OsmExamDoc),
+	ExamDb = anpcandidates:db(OsmExamId),
+	FrpSeasonId = itf:val(FrpExamDoc, season_fk),
+	FrpSubjectId = itf:val(FrpExamDoc, subject_code_fk),
+
+
+	%
+	% get student list from osm exam
+	%
+	Db2FindRec = db2_find:getrecord_by_fs(
+		ExamDb, [], 0, ?INFINITY
+	),
+	#db2_find_response {docs=OsmCandidateDocs} = db2_find:find(Db2FindRec#db2_find {
+		fields=[
+			itf:textbox(?F(anpseatnumber))
+		]
+	}),
+	OsmCandidateDocsDict = helper:get_dict_from_docs(OsmCandidateDocs, anpseatnumber),
+
+
+
+	%
+	% get student list from frp
+	%
+	FrpStudentList = rpc:call(
+		itxnode:frp(),
+		dig_result_upload_handlers,
+		handle_download_prns,
+		[FrpSeasonId, FrpSubjectId, end_exam_marks]
+	),
+
+
+	%
+	% find student list that does not exist on osm
+	%
+	FrpStudentListMissing = lists:filter(fun([PRN | _]) ->
+		case string:to_lower(PRN) of
+			"enrol" ++ _ ->
+				false;
+			"\"enrol" ++ _ ->
+				false;
+			_ ->
+				dict:find(PRN, OsmCandidateDocsDict) == error
+		end
+	end, FrpStudentList),
+	dig:log(info, io_lib:format("Missing found: ~p", [length(FrpStudentListMissing)])),
+
+
+	%
+	% create student list
+	%
+	ListOfFsToSave = lists:map(fun([PRN, Name | _]) ->
+		Name1 = helper:replace_this_with_that(Name, "\"", ""),
+		[
+			itf:build(itf:textbox(?F(anpseatnumber)), PRN),
+			itf:build(itf:textbox(?F(anpfullname)), Name1),
+			itf:build(itf:textbox(?F(anpcentercode)), "0"),
+			itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
+		]
+	end, FrpStudentListMissing),
+	{ok, Res} = anpcandidates:savebulk(ExamDb, ListOfFsToSave),
+
+
+	%
+	% update status
+	%
+	{OKs, Errors} = db_helper:bulksave_summary(Res),
+	dig:log(success, io_lib:format("Saved. Oks: ~p, Errors: ~p", [OKs, Errors]));
+
+
+
+handle_import_from_frp_examdoc_upload_student_list(_, _) ->
+	skip.
 
 
 %..............................................................................
