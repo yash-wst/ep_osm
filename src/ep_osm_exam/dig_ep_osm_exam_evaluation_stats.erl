@@ -120,16 +120,28 @@ fetch(D, _From, _Size, [
 		% init
 		%
 		ProfileDoc = helper:get_doc_or_empty_doc_from_dict(ProfileId, ProfileDocsDict),
+		Role = case itf:val(ProfileDoc, profiletype) of
+			"anp" ++ Role0  ->
+				Role0;
+			_ ->
+				"evaluator"
+		end,
 
 		%
 		% get stats per profile
 		%
 		[
-			#dcell {val=itl:blockquote([
-				itf:val(ProfileDoc, fullname),
-				itf:val(ProfileDoc, mobile),
-				itf:val(ProfileDoc, email)
-			])}
+			#dcell {val=#link {
+				new=true,
+				body=itl:blockquote([
+					itf:val(ProfileDoc, fullname),
+					itf:val(ProfileDoc, mobile),
+					itf:val(ProfileDoc, email)
+				]),
+				url=io_lib:format("/anptest?mode=status_~s&anptestid=~s&profileid=~s", [
+					Role, ExamId, ProfileId
+				])
+			}}
 		] ++ lists:map(fun(State) ->
 			Val = get_eval_count_for_profile(
 				ProfileId,

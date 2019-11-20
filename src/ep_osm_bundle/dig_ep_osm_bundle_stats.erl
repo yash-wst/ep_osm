@@ -42,8 +42,7 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
-			?COREXS(season_fk),
-			?OSMBDL(osm_exam_fk)
+			?COREXS(season_fk)
 		]
 	}.
 
@@ -200,11 +199,14 @@ fetch(D, _From, _Size, [
 		{ok, ExamDoc} = dict:find(ExamId, ExamDocsDict),
 		[
 			#dcell {
-				val=itl:blockquote([
-					itf:val(ExamDoc, anptestcourseid),
-					itf:val(ExamDoc, testname)
-				]),
-				postback={filter, itf:build(?OSMBDL(osm_exam_fk), ExamId)}
+				val=#link {
+					new=true,
+					body=itl:blockquote([
+						itf:val(ExamDoc, anptestcourseid),
+						itf:val(ExamDoc, testname)
+					]),
+					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [ExamId])
+				}
 			}
 		] ++ lists:map(fun(State) ->
 			Val = case dict:find([State, SeasonId, ExamId], StatsDict) of
