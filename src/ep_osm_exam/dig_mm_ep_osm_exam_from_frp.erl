@@ -409,11 +409,11 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 				fields:build(testname, ExamName),
 				fields:build(testdescription, ExamName),
 				fields:build(teststatus, ?SCHEDULED),
-				fields:build(testtotalmarks, "-"),
-				fields:build(testduration, "-"),
+				fields:build(testtotalmarks, "0"),
+				fields:build(testduration, "0"),
 				fields:build(startdate, DateOfExam),
 				fields:build(enddate, DateOfExam),
-				fields:build(pages_per_booklet, "-")
+				fields:build(pages_per_booklet, "0")
 			],
 			{ok,  OsmExamDoc0} = ep_osm_exam_api:create(FsToCreate),
 			dig:log(success, "Created test for subject " ++ SubjectCode),
