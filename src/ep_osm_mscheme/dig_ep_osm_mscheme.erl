@@ -89,10 +89,6 @@ fetch(D, From, Size, Fs) ->
 			#dcell {val=itf:val(Doc, name)},
 			#dcell {val=helper:titlecase(itf:val(Doc, state))},
 			#dcell {val=#link {
-				text="Update State",
-				url=io_lib:format("/ep_osm_mscheme?mode=update&id=~s", [itf:idval(Doc)])
-			}},
-			#dcell {val=#link {
 				text="Edit",
 				url=io_lib:format("/ep_osm_mscheme?mode=edit&id=~s", [itf:idval(Doc)])
 			}}
@@ -106,7 +102,6 @@ fetch(D, From, Size, Fs) ->
 	Header = [
 		#dcell {type=header, val="Name"},
 		#dcell {type=header, val="State"},
-		#dcell {type=header, val="Update"},
 		#dcell {type=header, val="Edit"}
 	],
 

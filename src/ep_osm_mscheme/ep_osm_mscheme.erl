@@ -45,12 +45,9 @@ fs(create) -> [
 ];
 
 fs(edit) -> [
-	?OSMMSC({list_of_widgets, list_of_widgets})
-];
-
-fs(update) -> [
 	?OSMMSC(name),
-	?OSMMSC(state)
+	?OSMMSC(state),
+	?OSMMSC({list_of_widgets, list_of_widgets})
 ];
 
 
@@ -109,7 +106,10 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 	%
 	% fs edit
 	%
-	FsEdit = case itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})) of
+	FsEdit = [
+		?OSMMSC(name),
+		?OSMMSC(state)
+	] ++ case itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})) of
 		#field {subfields=[]} -> [
 			?OSMMSC(list_of_widgets)
 		];
