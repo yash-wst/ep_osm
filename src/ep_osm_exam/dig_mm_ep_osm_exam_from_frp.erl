@@ -55,7 +55,8 @@ fs(form) ->
 		teststatus,
 		testtotalmarks,
 		testduration,
-		startdate
+		startdate,
+		osm_mscheme_fk
 	],
 	fields:getfields(Ids).
 
