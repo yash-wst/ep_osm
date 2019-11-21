@@ -29,10 +29,7 @@ dbs(delete) ->
 %
 db2indices() ->
 	lists:map(fun({Db, Fs}) ->
-		Fs1 = [
-			itf:id()
-		] ++ Fs,
-		db2_index:create(Db, Fs1)
+		db2_index:create(Db, Fs)
 	end, db2indiceslist()).
 
 
