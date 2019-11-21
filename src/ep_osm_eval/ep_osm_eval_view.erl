@@ -54,6 +54,18 @@ layout() ->
 
 
 	%
+	% init width and height
+	%
+	case itxconfigs_cache:get2(anpcandidate_review_module, "anpcandidate_review") of
+		"anpcandidate_review" ->
+			wf:wire("ANP.BG_WIDTH = 900; ANP.BG_HEIGHT = 1800;");
+		_ ->
+			skip
+	end,
+
+
+
+	%
 	% layout info
 	%
 	Es1 = itl:section(layout:grow([
