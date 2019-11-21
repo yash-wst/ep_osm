@@ -176,9 +176,18 @@ get_stats([
 get_evaluation_stats0(TestId) ->
 	SK = [<<"">>, <<"">>],
 	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
-	itxview:get_stats(
-		anpcandidates:db(TestId), "state_assigned", SK, EK, 1
-	).
+
+	try
+		itxview:get_stats(
+			anpcandidates:db(TestId), "state_assigned", SK, EK, 1
+		)
+	catch error:{badmatch,{error,not_found}} ->
+		anptests:setup(TestId),
+		itxview:get_stats(
+			anpcandidates:db(TestId), "state_assigned", SK, EK, 1
+		)
+	end.
+
 
 
 get_evaluation_stats(TestId) ->
@@ -192,7 +201,7 @@ get_evaluation_stats(TestId) ->
 				anpcandidates:db(TestId), Viename, SK, EK, 2
 			)
 		catch error:{badmatch,{error,not_found}} ->
-			view:setup_anpcandidates(anpcandidates:db(TestId)),
+			anptests:setup(TestId),
 			itxview:get_stats(
 				anpcandidates:db(TestId), Viename, SK, EK, 2
 			)
