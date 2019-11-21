@@ -351,7 +351,15 @@ handle_view_marking_scheme_layout() ->
 	%
 	try
 		helper:state(anpcandidate_state_marking, Rules),
-		Es = anp_marking:layout_marking_rules(anpmarking_anpevaluator, []),
+		anp_marking:init_testtotalmarks(),
+
+		Es = [
+			#p {
+				class="font-weight-bold",
+				text=io_lib:format("Total: ~s", [anpcandidate:testtotalmarks()])
+			},
+			anp_marking:layout_marking_rules(anpmarking_anpevaluator, [])
+		],
 		itl:modal_fs(layout:grow(layout:g(4, 4, Es)))
 	catch
 		error:badarg ->
