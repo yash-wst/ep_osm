@@ -205,8 +205,15 @@ ANP.setBackgroundImage = function (canvas, imgurl) {
 
 	var img = new Image();
 	img.crossOrigin = "anonymous";
-	img.src = imgurl;
 	img.onload = function() {
+
+		if(this.width < this.height) {
+			ANP.BG_WIDTH = 650;
+			ANP.BG_HEIGHT = 900;
+			canvas.setWidth(ANP.BG_WIDTH);
+			canvas.setHeight(ANP.BG_HEIGHT);
+		}
+
 		canvas.setBackgroundImage(new fabric.Image(img, {
 			originX: 'left',
 			originY: 'top',
@@ -216,6 +223,7 @@ ANP.setBackgroundImage = function (canvas, imgurl) {
 			height: ANP.BG_HEIGHT,
 		}), canvas.renderAll.bind(canvas));
 	};
+	img.src = imgurl;
 };
 
 
@@ -289,7 +297,7 @@ $(document).mousemove(function(event) {
 		$("#sidebar-wrapper").css("left", "20%");
 	} else if(ANP.showing_marking_scheme == true && event.pageX > 250) {
 		ANP.showing_marking_scheme = false;
-		$("#sidebar-wrapper").css("left", "1%");
+		$("#sidebar-wrapper").css("left", "0%");
 	}
 });
 
@@ -302,16 +310,36 @@ $(document).ready(function() {
 
 	if (viewFullScreen) {
 	  viewFullScreen.addEventListener("click", function() {
-	    var docElm = document.documentElement;
-	    if (docElm.requestFullscreen) {
-	      docElm.requestFullscreen();
-	    } else if (docElm.msRequestFullscreen) {
-	      docElm.msRequestFullscreen();
-	    } else if (docElm.mozRequestFullScreen) {
-	      docElm.mozRequestFullScreen();
-	    } else if (docElm.webkitRequestFullScreen) {
-	      docElm.webkitRequestFullScreen();
-	    }
+
+		var isInFullScreen =
+			(document.fullscreenElement && document.fullscreenElement !== null) ||
+			(document.webkitFullscreenElement && document.webkitFullscreenElement !== null) ||
+			(document.mozFullScreenElement && document.mozFullScreenElement !== null) ||
+			(document.msFullscreenElement && document.msFullscreenElement !== null);
+
+		var docElm = document.documentElement;
+		if (!isInFullScreen) {
+			if (docElm.requestFullscreen) {
+				docElm.requestFullscreen();
+			} else if (docElm.mozRequestFullScreen) {
+				docElm.mozRequestFullScreen();
+			} else if (docElm.webkitRequestFullScreen) {
+				docElm.webkitRequestFullScreen();
+			} else if (docElm.msRequestFullscreen) {
+				docElm.msRequestFullscreen();
+			}
+		} else {
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+			} else if (document.webkitExitFullscreen) {
+				document.webkitExitFullscreen();
+			} else if (document.mozCancelFullScreen) {
+				document.mozCancelFullScreen();
+			} else if (document.msExitFullscreen) {
+				document.msExitFullscreen();
+			}
+		}
+
 	  });
 	}
 

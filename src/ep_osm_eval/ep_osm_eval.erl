@@ -57,12 +57,17 @@ layout() ->
 
 	Elements = [
 		#panel {
+			style="margin: 0px;",
+			class="mscheme-text",
+			body=string:join(lists:duplicate(5, " MARKING SCHEME "), " / ")
+		},
+		#panel {
 			style="border: 1px solid #fff; box-shadow: 5px 0 5px -1px #888;",
 			html_id="sidebar-wrapper",
 			body=anpcandidate:layout_review_right(TFs, Fs)
 		},
 		#panel {
-			style="padding-top: 60px;",
+			style="padding-top: 60px; padding-left: 2.2em;",
 			html_id="page-content-wrapper",
 			body=layout:grow([
 				anpcandidate:layout_review_left(TFs, Fs)

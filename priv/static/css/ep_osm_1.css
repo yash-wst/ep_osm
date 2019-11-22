@@ -165,3 +165,24 @@
     }
 }
 
+
+
+.mscheme-text {
+  position: fixed;
+  transform-origin: 0 0;
+  transform: rotate(-90deg);
+  top: 100%;
+  left: 0;
+  font: bold 12px Sans-Serif;
+  letter-spacing: 10px;
+  text-transform: uppercase;
+  background: #5bc0de;
+  color: #fff;
+  padding: 0 20px 0 20px;
+  margin: 0px;
+  line-height: 34px;
+  text-align: center;
+  white-space: nowrap;
+  font-style: italic;
+  border-right: 1px solid rgba(0,0,0,.1);
+}
