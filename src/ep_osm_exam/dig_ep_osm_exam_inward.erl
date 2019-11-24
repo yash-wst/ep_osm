@@ -759,8 +759,9 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 	% init
 	%
 	ExamDb = anpcandidates:db(ExamId),
+	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
 	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
-	BundleNumber = helper:sanitisestr(itf:val(BundleDoc, number)),
+	BundleDirName = get_bundle_dir_name(ExamDoc, BundleDoc),
 
 
 	%
@@ -786,7 +787,7 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 	% create directories
 	%
 	UId = helper:uidintstr(),
-	WorkDir = ?FLATTEN(io_lib:format("/tmp/~s/~s", [UId, BundleNumber])),
+	WorkDir = ?FLATTEN(io_lib:format("/tmp/~s/~s", [UId, BundleDirName])),
 	helper:cmd("mkdir -p ~s; cd ~s; mkdir ~s", [
 		WorkDir, WorkDir, string:join(CandidateDirs, " ")
 	]),
@@ -795,20 +796,20 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 	%
 	% zip dir
 	%
-	helper:cmd("cd /tmp/~s; zip -r ~s.zip ~s", [UId, BundleNumber, BundleNumber]),
+	helper:cmd("cd /tmp/~s; zip -r ~s.zip ~s", [UId, BundleDirName, BundleDirName]),
 
 
 	%
 	% clean up
 	%
-	helper:cmd("mv /tmp/~s/~s.zip /tmp/~s.zip", [UId, BundleNumber, UId]),
+	helper:cmd("mv /tmp/~s/~s.zip /tmp/~s.zip", [UId, BundleDirName, UId]),
 	helper:cmd("rm -rf /tmp/~s", [UId]),
 
 
 	%
 	% export
 	%
-	Filename = ?FLATTEN(io_lib:format("~s.zip", [BundleNumber])),
+	Filename = ?FLATTEN(io_lib:format("~s.zip", [BundleDirName])),
 	Filepath = ?FLATTEN(io_lib:format("/tmp/~s.zip", [UId])),
 	itxdownload:stream_and_delete_file(Filename, Filepath).
 
@@ -1375,6 +1376,41 @@ handle_create_bundle(ExamId) ->
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
+
+
+
+get_bundle_dir_name(ExamDoc, BundleDoc) ->
+	%
+	% init
+	%
+	SeasonId = itf:val(ExamDoc, season_fk),
+	SubjectId = itf:val(ExamDoc, subject_code_fk),
+	{ok, SeasonDoc} = case SeasonId of
+		[] ->
+			{ok, {[]}};
+		_ ->
+			ep_core_exam_season_api:get(SeasonId)
+	end,
+	{ok, SubjectDoc} = case SubjectId of
+		[] ->
+			{ok, {[]}};
+		_ ->
+			ep_core_subject_api:get(SubjectId)
+	end,
+	AnpTestCourseId = itf:val(ExamDoc, anptestcourseid),
+
+
+	%
+	% build name
+	%
+	Dirname = io_lib:format("~s_~s_~s_~s", [
+		itf:val(SeasonDoc, name),
+		itf:val(SubjectDoc, subject_code),
+		AnpTestCourseId,
+		itf:val(BundleDoc, number)
+	]),
+	helper:sanitisestr(Dirname).
+
 
 
 layout_osm_exam_name(undefined) ->
