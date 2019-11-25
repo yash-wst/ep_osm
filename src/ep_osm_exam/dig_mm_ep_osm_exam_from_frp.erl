@@ -230,7 +230,7 @@ handle_import_from_frp(DateOfExam) ->
 
 	lists:foreach(fun({_, FrpExamDoc}) ->
 			handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc)
-	end, lists:sublist(FrpExamDocsUnique, 4)),
+	end, FrpExamDocsUnique),
 
 
 	%
