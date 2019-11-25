@@ -180,7 +180,7 @@ layout() ->
 %------------------------------------------------------------------------------
 
 event(upload) ->
-	handle_upload(wf:q(season_fk), wf:q(frp_season_fk));
+	handle_upload();
 
 event(action_upload_to_frp) ->
 	handle_action_upload_to_frp();
@@ -248,6 +248,34 @@ handle_action_upload_to_frp() ->
 % handle upload
 %
 %..............................................................................
+
+
+handle_upload() ->
+
+
+	%
+	% init
+	%
+	Context = wf_context:context(),
+	OsmSeasonFk = wf:q(season_fk),
+	FrpSeasonFk = wf:q(frp_season_fk),
+
+
+	%
+	% function
+	%
+	Fun = fun([]) ->
+		wf_context:context(Context),
+		handle_upload(OsmSeasonFk, FrpSeasonFk)
+	end,
+
+
+	%
+	% add to queue
+	%
+	taskqueue:create(Fun, []),
+	helper_ui:flash(warning, "Added to queue.", 5).
+
 
 
 handle_upload(OsmSeasonFk, FrpSeasonFk) ->

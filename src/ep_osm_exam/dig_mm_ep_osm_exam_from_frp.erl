@@ -405,6 +405,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	%
 	SeasonId = itf:idval(OsmSeasonDoc),
 	SubjectCode = itf:val(FrpSubjectDoc, subject_code),
+	SubjectPattern = itf:val(FrpSubjectDoc, pattern),
 	ExamName = itf:val(FrpExamDoc, exam_name),
 
 
@@ -439,7 +440,8 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 				fields:build(testduration, "0"),
 				fields:build(startdate, DateOfExam),
 				fields:build(enddate, DateOfExam),
-				fields:build(pages_per_booklet, "0")
+				fields:build(pages_per_booklet, "0"),
+				fields:build(exam_pattern, SubjectPattern)
 			],
 			{ok,  OsmExamDoc0} = ep_osm_exam_api:create(FsToCreate),
 			dig:log(success, "Created test for subject " ++ SubjectCode),
