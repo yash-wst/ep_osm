@@ -268,7 +268,7 @@ csv_frp(TestId) ->
 
 
 csv_frp_marks([]) ->
-	[];
+	"ab";
 csv_frp_marks(Str) ->
 	helper:i2s(helper:ceiling(helper:s2f_v1(Str))).
 
