@@ -357,7 +357,8 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 			"\"enrol" ++ _ ->
 				false;
 			_ ->
-				dict:find(PRN, OsmCandidateDocsDict) == error
+				PRN1 = lists:flatten(string:tokens(PRN, "PRN:")),
+				dict:find(PRN1, OsmCandidateDocsDict) == error
 		end
 	end, FrpStudentList),
 	dig:log(info, io_lib:format("Missing found: ~p", [length(FrpStudentListMissing)])),
