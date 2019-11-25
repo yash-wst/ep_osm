@@ -206,14 +206,6 @@ ANP.setBackgroundImage = function (canvas, imgurl) {
 	var img = new Image();
 	img.crossOrigin = "anonymous";
 	img.onload = function() {
-
-		if(this.width < this.height) {
-			ANP.BG_WIDTH = 650;
-			ANP.BG_HEIGHT = 900;
-			canvas.setWidth(ANP.BG_WIDTH);
-			canvas.setHeight(ANP.BG_HEIGHT);
-		}
-
 		canvas.setBackgroundImage(new fabric.Image(img, {
 			originX: 'left',
 			originY: 'top',
