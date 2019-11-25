@@ -178,7 +178,31 @@ handle_import_from_frp() ->
 	%
 	% init
 	%
+	Context = wf_context:context(),
 	DateOfExam = wf:q(date_of_test),
+
+
+	%
+	% function
+	%
+	Fun = fun([]) ->
+		wf_context:context(Context),
+		handle_import_from_frp(DateOfExam)
+	end,
+
+
+	%
+	% add to queue
+	%
+	taskqueue:create(Fun, []),
+	helper_ui:flash(warning, "Added to queue.", 5).
+
+
+handle_import_from_frp(DateOfExam) ->
+
+	%
+	% init
+	%
 	FDate = itf:build(itf:date(?F(date)), DateOfExam),
 
 	%
