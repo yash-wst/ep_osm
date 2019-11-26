@@ -214,6 +214,29 @@ get_evaluation_stats(TestId) ->
 	]).
 
 
+get_evaluation_stats(TestId, Role) ->
+
+	SK = [<<"">>, <<"">>],
+	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
+
+	Viewname = case Role of
+		"anpevaluator" ->
+			"state_assigned";
+		_ ->
+			"state_assigned_" ++ Role
+	end,
+
+	try
+		itxview:get_stats(
+			anpcandidates:db(TestId), Viewname, SK, EK, 2
+		)
+	catch error:{badmatch,{error,not_found}} ->
+		anptests:setup(TestId),
+		itxview:get_stats(
+			anpcandidates:db(TestId), Viewname, SK, EK, 2
+		)
+	end.
+
 
 
 
