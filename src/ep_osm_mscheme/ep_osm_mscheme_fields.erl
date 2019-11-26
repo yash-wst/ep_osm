@@ -391,7 +391,23 @@ renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 		% init
 		%
 		[_FWType, _FWId, _FWname, _FWmarks, FWLow] = Subfields,
-		[F1, F2] = FWLow#field.subfields,
+		Separator =	#p {class="font-weight-bold mycenter", text="(OR)"},
+
+
+		%
+		% render or fields
+		%
+		EsFields = lists:map(fun(Fi) ->
+			itl:render(Mode, Fi)
+		end, FWLow#field.subfields),
+
+
+		{EsClass, EsText} = case length(EsFields) of
+			1 ->
+				{"text-danger myitalic", "Error: An 'OR' rule needs at least 2 questions"};
+			_ ->
+				{"", "."}
+		end,
 
 
 		%
@@ -401,13 +417,8 @@ renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 			body=[
 				layout_wuid(WUId),
 				layout_actions(WUId, F),
-				#p {text="."},
-				itl:render(Mode, [F1]),
-				#p {
-					class="font-weight-bold mycenter",
-					text="(OR)"
-				},
-				itl:render(Mode, [F2])
+				#p {class=EsClass, text=EsText},
+				helper:join(EsFields, Separator)
 			]
 		},
 
