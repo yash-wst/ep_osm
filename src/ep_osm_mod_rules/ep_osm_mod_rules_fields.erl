@@ -55,6 +55,16 @@ f(rules = I) ->
 		renderer=renderer_subfields_table:get()
 	};
 
+
+f(osm_mod_rules_fk = I) ->
+	F = itf:textbox_picker(?F(I, "Moderation Rule")),
+	F#field {
+		module=ep_core_subject,
+		options=options(I)
+	};
+
+
+
 f(O) ->
 	throw(O).
 
@@ -67,6 +77,19 @@ validator(O) ->
 %------------------------------------------------------------------------------
 % options
 %------------------------------------------------------------------------------
+
+options(osm_mod_rules_fk) ->
+	#search {
+		title=?LN("Select Moderation Rule"),
+		db=ep_osm_mod_rules_api:db(),
+		displayfs=ep_osm_mod_rules:fs(grid),
+		filterfs=[
+			?OSMRLS(name)
+		],
+		size=10
+	};
+
+
 options(type) ->
 	itf:options([
 		?F(evaluation, "Apply to evaluators"),
