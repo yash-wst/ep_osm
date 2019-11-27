@@ -5,6 +5,8 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 
+-define(BATCH_SIZE, 500).
+
 %------------------------------------------------------------------------------
 % main
 %------------------------------------------------------------------------------
@@ -171,14 +173,32 @@ handle_apply_yes() ->
 	% init
 	%
 	itl:modal_close(),
+	Context = wf_context:context(),
 	D = helper:state(dig),
 	Fs = dig:get_nonempty_fs(D#dig.filters),
 	Docs = get_test_docs(Fs, 0, ?INFINITY),
+	{ok, ModDoc} = ep_osm_mod_rules_api:get(wf:q(osm_mod_rules_fk)),
+	Rules = get_moderation_rules(ModDoc),
 
 
-	lists:foreach(fun(Doc) ->
-		handle_apply_yes_test_yes(Doc)
-	end, Docs).
+	%
+	% function
+	%
+	Fun = fun([]) ->
+		wf_context:context(Context),
+		lists:foreach(fun(Doc) ->
+			handle_apply_yes_test_doc(Rules, Doc)
+		end, Docs),
+		dig:log(success, "Task completed")
+	end,
+
+
+	%
+	% add to queue
+	%
+	taskqueue:create(Fun, []),
+	helper_ui:flash(warning, "Added to queue.", 5).
+
 
 
 %..............................................................................
@@ -187,7 +207,7 @@ handle_apply_yes() ->
 %
 %..............................................................................
 
-handle_apply_yes_test_yes(Doc) ->
+handle_apply_yes_test_doc(Rules, Doc) ->
 
 	%
 	% init
@@ -196,8 +216,46 @@ handle_apply_yes_test_yes(Doc) ->
 		itf:val(Doc, anptestcourseid),
 		itf:val(Doc, testname)
 	]),
+	dig:log(warning, io_lib:format("Processing ~s", [Testname])),
 
-	dig:log(info, io_lib:format("Processing ~s", [Testname])).
+
+	%
+	% apply
+	%
+	handle_apply_yes_test_doc_batch(Rules, Doc, 0, get_candidate_docs(Doc, 0, ?BATCH_SIZE)).
+
+
+
+
+
+%..............................................................................
+%
+% handle - apply yes doc batch
+%
+%..............................................................................
+
+handle_apply_yes_test_doc_batch(_Rules, _ExamDoc, _From, []) ->
+	ok;
+
+handle_apply_yes_test_doc_batch(Rules, ExamDoc, From, CandidateDocs) ->
+
+	dig:log(info, io_lib:format("Batch: ~p", [From])),
+	dig:log(info, io_lib:format("Candidate docs: ~p", [length(CandidateDocs)])),
+
+	%
+	% apply rule and get updated student docs
+	%
+
+
+
+	%
+	% save student docs
+	%
+
+	From1 = From + ?BATCH_SIZE,
+	handle_apply_yes_test_doc_batch(
+		Rules, ExamDoc, From1, get_candidate_docs(ExamDoc, From1, ?BATCH_SIZE)
+	).
 
 
 %..............................................................................
@@ -256,6 +314,33 @@ get_test_docs(Fs, From, Size) ->
 	),
 	Docs.
 
+
+
+
+get_candidate_docs(ExamDoc, From, Size) ->
+
+	%
+	% init
+	%
+	ExamId = itf:idval(ExamDoc),
+	ExamDb = anpcandidates:db(ExamId),
+
+
+	%
+	% exec
+	%
+	#db2_find_response {docs=Docs}  = db2_find:get_by_fs(
+		ExamDb, [], From, Size
+	),
+	Docs.
+
+
+
+
+
+get_moderation_rules(ModDoc) ->
+	?D(ModDoc),
+	[].
 
 
 %------------------------------------------------------------------------------
