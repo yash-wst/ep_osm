@@ -57,7 +57,8 @@ dblist() ->
 	[
 		"ep_osm_cap",
 		"ep_osm_bundle",
-		"ep_osm_mscheme"
+		"ep_osm_mscheme",
+		"ep_osm_mod_rules"
 	].
 
 
@@ -68,7 +69,8 @@ dblist() ->
 db2indiceslist() -> [
 	{"ep_osm_cap", ep_osm_cap:fs(index)},
 	{"ep_osm_bundle", ep_osm_bundle:fs(index)},
-	{"ep_osm_mscheme", ep_osm_mscheme:fs(index)}
+	{"ep_osm_mscheme", ep_osm_mscheme:fs(index)},
+	{"ep_osm_mod_rules", ep_osm_mod_rules:fs(index)}
 ].
 
 
