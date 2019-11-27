@@ -339,8 +339,48 @@ get_candidate_docs(ExamDoc, From, Size) ->
 
 
 get_moderation_rules(ModDoc) ->
-	?D(ModDoc),
-	[].
+
+	%
+	% init
+	%
+	Vals = mylist_field:val(itf:d2f(ModDoc, ?OSMRLS(rules))),
+
+
+	%
+	% build dict
+	%
+	KVList = lists:foldl(fun({_RuleId, RuleVals}, Acc) ->
+
+		%
+		% get vals
+		%
+		FromMarks = proplists:get_value("frommarks", RuleVals),
+		ToMarks = proplists:get_value("tomarks", RuleVals),
+		MovePercentage = proplists:get_value("movepercentage", RuleVals),
+		FromMarksInt = ?S2I(FromMarks),
+		ToMarksInt = ?S2I(ToMarks),
+		MovePercentageInt = ?S2I(MovePercentage),
+
+
+		KVList0 = lists:map(fun(I) ->
+			{I, {FromMarksInt, ToMarksInt, MovePercentageInt}}
+		end, lists:seq(FromMarksInt, ToMarksInt)),
+
+
+		Acc ++ KVList0
+
+
+	end, [], Vals),
+
+
+	%
+	% return dict
+	%
+	KVList1 = KVList ++ [
+		{type, itf:val(ModDoc, type)}
+	],
+	dict:from_list(KVList1).
+
 
 
 %------------------------------------------------------------------------------
