@@ -5,6 +5,8 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 
+-define(ITXAUDIT_LOG_REMINDER_SENT, "osm_evaluator_reminder_sent").
+
 %------------------------------------------------------------------------------
 % main
 %------------------------------------------------------------------------------
@@ -407,6 +409,16 @@ handle_send_reminder_confirmed() ->
 	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
 
 
+	%
+	% create audit before sending
+	%
+	{ok, _} = itxaudit_api:create(#itxaudit {
+		log=?ITXAUDIT_LOG_REMINDER_SENT,
+		refid1=?A2L(?MODULE),
+		refid2=helper:date_today_str()
+	}),
+
+
 
 	%
 	% for each test, send reminder
@@ -516,10 +528,40 @@ handle_send_reminder() ->
 
 handle_show_send_reminder() ->
 
-	Fs = [
-		fields:get(osm_profiletype)
-	],
-	Es = itl:get(?CREATE, Fs, ite:get(send_reminder, "Send"), table),
+	%
+	% init
+	%
+	Date = helper:date_today_str(),
+
+
+	%
+	% check if reminder already sent today
+	%
+	#db2_find_response {docs=AuditDocs} = db2_find:get_by_fs(
+		itxaudit_api:db(), [
+			itf:build(?ITXAUD(log), ?ITXAUDIT_LOG_REMINDER_SENT),
+			itf:build(?ITXAUD(refid1), ?A2L(?MODULE)),
+			itf:build(?ITXAUD(refid2), Date)
+		]
+	),
+
+
+	Es = case AuditDocs of
+		[] ->
+			Fs = [
+				fields:get(osm_profiletype)
+			],
+			itl:get(?CREATE, Fs, ite:get(send_reminder, "Send"), table);
+		_ ->
+			#p {
+				text="Reminders sent for today. You can send only once per day"
+			}
+	end,
+
+
+	%
+	% layout
+	%
 	dig_mm:handle_show_action("Send Reminder", Es).
 
 
