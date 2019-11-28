@@ -212,6 +212,7 @@ handle_apply_yes_test_doc(Rules, Doc) ->
 	%
 	% init
 	%
+	{ok, Type} = dict:find(type, Rules),
 	Testname = io_lib:format("~s ~s", [
 		itf:val(Doc, anptestcourseid),
 		itf:val(Doc, testname)
@@ -223,14 +224,14 @@ handle_apply_yes_test_doc(Rules, Doc) ->
 	% apply
 	%
 	ApplyResDict = handle_apply_yes_test_doc_batch(
-		dict:new(), Rules, Doc, 0, get_candidate_docs(Doc, 0, ?BATCH_SIZE)
+		dict:new(), Rules, Doc, 0, get_candidate_docs(Type, Doc, 0, ?BATCH_SIZE)
 	),
 
 
 	%
 	% save result of application
 	%
-	handle_apply_yes_test_save_result(ApplyResDict, Rules).
+	handle_apply_yes_test_save_result(Doc, ApplyResDict, Rules).
 
 
 %..............................................................................
@@ -239,9 +240,27 @@ handle_apply_yes_test_doc(Rules, Doc) ->
 %
 %..............................................................................
 
-handle_apply_yes_test_save_result([], _) ->
+handle_apply_yes_test_save_result(_Doc, [], _) ->
 	dig:log("Result of apply rule is empty");
-handle_apply_yes_test_save_result(ApplyResDict, Rules) ->
+handle_apply_yes_test_save_result(Doc, ApplyResDict, Rules) ->
+
+
+	%
+	% init
+	%
+	TId = itf:idval(Doc),
+	ExamDb = anpcandidates:db(TId),
+	{ok, Type} = dict:find(type, Rules),
+	NewCandidateState = case Type of
+		"evaluation" ->
+			"anpstate_moderation";
+		"moderation" ->
+			"anpstate_revaluation";
+		"revaluation" ->
+			"anpstate_moderation_reval"
+	end,
+
+
 
 	%
 	% save
@@ -257,10 +276,22 @@ handle_apply_yes_test_save_result(ApplyResDict, Rules) ->
 		])),
 		dig:log(info, io_lib:format("Moved: ~p", [MoveList])),
 
+
+
 		%
 		% save
 		%
-		ok
+		CandidateDocs = anpcandidates:getdocs_by_snos(TId, MoveList),
+		LoLFs = lists:map(fun(CandidateDoc) ->
+			Fs = helper_api:doc2fields({ok, CandidateDoc}),
+			fields:delete(Fs, anpstate) ++ [
+				fields:build(anpstate, NewCandidateState)
+			]
+		end, CandidateDocs),
+		{ok, SaveRes} = anpcandidates:updateall(ExamDb, LoLFs),
+		{Oks, Errors} = db_helper:bulksave_summary(SaveRes),
+		dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [Oks, Errors]))
+
 
 
 	end, dict:to_list(ApplyResDict)).
@@ -317,7 +348,7 @@ handle_apply_yes_test_doc_batch(ApplyAcc, Rules, ExamDoc, From, CandidateDocs) -
 
 	From1 = From + ?BATCH_SIZE,
 	handle_apply_yes_test_doc_batch(
-		ApplyAcc1, Rules, ExamDoc, From1, get_candidate_docs(ExamDoc, From1, ?BATCH_SIZE)
+		ApplyAcc1, Rules, ExamDoc, From1, get_candidate_docs(Type, ExamDoc, From1, ?BATCH_SIZE)
 	).
 
 
@@ -380,7 +411,7 @@ get_test_docs(Fs, From, Size) ->
 
 
 
-get_candidate_docs(ExamDoc, From, Size) ->
+get_candidate_docs(Type, ExamDoc, From, Size) ->
 
 	%
 	% init
@@ -388,12 +419,20 @@ get_candidate_docs(ExamDoc, From, Size) ->
 	ExamId = itf:idval(ExamDoc),
 	ExamDb = anpcandidates:db(ExamId),
 
+	CandidateState = case Type of
+		"evaluation" ->
+			"anpstate_completed";
+		"moderation" ->
+			"anpstate_moderation_completed";
+		"revaluation" ->
+			"anpstate_revaluation_completed"
+	end,
 
 	%
 	% exec
 	%
 	#db2_find_response {docs=Docs}  = db2_find:get_by_fs(
-		ExamDb, [], From, Size
+		ExamDb, [fields:build(anpstate, CandidateState)], From, Size
 	),
 	Docs.
 

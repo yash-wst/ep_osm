@@ -637,7 +637,8 @@ get_eval_count_for_profile(_, error, _, _) ->
 get_eval_count_for_profile("unassigned", {ok, Val}, State, _) when
 	State == "anpstate_not_uploaded";
 	State == "anpstate_yettostart";
-	State == "anpstate_discarded" ->
+	State == "anpstate_discarded";
+	State == "anpstate_moderation" ->
 	Val;
 get_eval_count_for_profile(_, {ok, Val}, State, "anpevaluator") when
 	State == "anpstate_yettostart";
