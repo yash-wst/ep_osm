@@ -275,11 +275,19 @@ layout_cell_header(RoleId) ->
 
 layout_cell(RoleId, StatsDict, ProfileIds) ->
 
+	%
+	% init
+	%
+	TotalPapers = lists:foldl(fun(State, Acc) ->
+		Val = dict:find([?A2L(State)], StatsDict),
+		Acc + get_val(Val)
+	end, 0, states(RoleId)),
+
 	#table {
 		rows=[
 			#tablerow {cells=[
 				#tablecell {
-					class="mycenter " ++ get_class_evaluator(length(ProfileIds)),
+					class="mycenter " ++ get_class_evaluator(length(ProfileIds), TotalPapers),
 					colspan=?CASE_IF_THEN_ELSE(RoleId, anpevaluator, 6, 2),
 					text=length(helper:unique(ProfileIds))
 				}
@@ -317,11 +325,12 @@ event({itx, E}) ->
 %
 % get class evaluator
 %
-get_class_evaluator(0) ->
+get_class_evaluator(TotalEvaluators, _) when TotalEvaluators > 0 ->
+	"bg-success";
+get_class_evaluator(0, TotalPapers) when TotalPapers > 0 ->
 	"bg-danger";
-get_class_evaluator(_) ->
-	"bg-success".
-
+get_class_evaluator(_, _) ->
+	[].
 
 %
 % get class
