@@ -222,8 +222,51 @@ handle_apply_yes_test_doc(Rules, Doc) ->
 	%
 	% apply
 	%
-	handle_apply_yes_test_doc_batch(Rules, Doc, 0, get_candidate_docs(Doc, 0, ?BATCH_SIZE)).
+	ApplyResDict = handle_apply_yes_test_doc_batch(
+		dict:new(), Rules, Doc, 0, get_candidate_docs(Doc, 0, ?BATCH_SIZE)
+	),
 
+
+	%
+	% save result of application
+	%
+	handle_apply_yes_test_save_result(ApplyResDict, Rules).
+
+
+%..............................................................................
+%
+% handle - apply yes test save result
+%
+%..............................................................................
+
+handle_apply_yes_test_save_result([], _) ->
+	dig:log("Result of apply rule is empty");
+handle_apply_yes_test_save_result(ApplyResDict, Rules) ->
+
+	%
+	% init
+	%
+
+
+
+	%
+	% save
+	%
+	lists:foreach(fun({{_FromMarks, _ToMarks, MovePercentage} = Group, CandidateList}) ->
+
+		%
+		% get documents to move
+		%
+		MoveList = get_x_percent_of(CandidateList, MovePercentage),
+		dig:log(info, io_lib:format("~p - ~p", [Group, MoveList])),
+
+		%
+		% save
+		%
+		ok
+
+
+	end, dict:to_list(ApplyResDict)).
 
 
 
@@ -234,17 +277,40 @@ handle_apply_yes_test_doc(Rules, Doc) ->
 %
 %..............................................................................
 
-handle_apply_yes_test_doc_batch(_Rules, _ExamDoc, _From, []) ->
-	ok;
+handle_apply_yes_test_doc_batch(ApplyAcc, _Rules, _ExamDoc, _From, []) ->
+	ApplyAcc;
+handle_apply_yes_test_doc_batch(ApplyAcc, Rules, ExamDoc, From, CandidateDocs) ->
 
-handle_apply_yes_test_doc_batch(Rules, ExamDoc, From, CandidateDocs) ->
 
+	%
+	% init
+	%
+	{ok, Type} = dict:find(type, Rules),
+	TotalRoleId = case Type of
+		"evaluation" ->
+			"total_anpevaluator";
+		"moderation" ->
+			"total_anpmoderator";
+		"revaluation"  ->
+			"total_anprevaluator"
+	end,
+	TotalRoleId1 = ?L2A(TotalRoleId),
 	dig:log(info, io_lib:format("Batch: ~p", [From])),
 	dig:log(info, io_lib:format("Candidate docs: ~p", [length(CandidateDocs)])),
 
 	%
 	% apply rule and get updated student docs
 	%
+	ApplyAcc1 = lists:foldl(fun(CandidateDoc, Acc) ->
+		case itf:val(CandidateDoc, TotalRoleId1) of
+			[] ->
+				Acc;
+			Marks ->
+				Marks1 = trunc(helper:s2f(Marks)),
+				{ok, Group} = dict:find(Marks1, Rules),
+				dict:append(Group, itf:idval(CandidateDoc), Acc)
+		end
+	end, ApplyAcc, CandidateDocs),
 
 
 
@@ -254,7 +320,7 @@ handle_apply_yes_test_doc_batch(Rules, ExamDoc, From, CandidateDocs) ->
 
 	From1 = From + ?BATCH_SIZE,
 	handle_apply_yes_test_doc_batch(
-		Rules, ExamDoc, From1, get_candidate_docs(ExamDoc, From1, ?BATCH_SIZE)
+		ApplyAcc1, Rules, ExamDoc, From1, get_candidate_docs(ExamDoc, From1, ?BATCH_SIZE)
 	).
 
 
@@ -380,6 +446,24 @@ get_moderation_rules(ModDoc) ->
 		{type, itf:val(ModDoc, type)}
 	],
 	dict:from_list(KVList1).
+
+
+
+
+
+%
+% get x percent from list
+%
+get_x_percent_of(_CandidateList, 0) ->
+	[];
+get_x_percent_of(CandidateList, 100) ->
+	CandidateList;
+get_x_percent_of(CandidateList, MovePercentage) ->
+	MoveCount = helper:ceiling(length(CandidateList) * MovePercentage / 100),
+	lists:map(fun(_) ->
+		Index = rand:uniform(length(CandidateList)),
+		lists:nth(Index, CandidateList)
+	end, lists:seq(1, MoveCount)).
 
 
 
