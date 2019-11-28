@@ -244,21 +244,18 @@ handle_apply_yes_test_save_result([], _) ->
 handle_apply_yes_test_save_result(ApplyResDict, Rules) ->
 
 	%
-	% init
-	%
-
-
-
-	%
 	% save
 	%
-	lists:foreach(fun({{_FromMarks, _ToMarks, MovePercentage} = Group, CandidateList}) ->
+	lists:foreach(fun({{FromMarks, ToMarks, MovePercentage}, CandidateList}) ->
 
 		%
 		% get documents to move
 		%
 		MoveList = get_x_percent_of(CandidateList, MovePercentage),
-		dig:log(info, io_lib:format("~p - ~p", [Group, MoveList])),
+		dig:log(info, io_lib:format("[~p to ~p]: ~p % - Moved: ~p", [
+			FromMarks, ToMarks, MovePercentage, length(MoveList)
+		])),
+		dig:log(info, io_lib:format("Moved: ~p", [MoveList])),
 
 		%
 		% save
@@ -308,7 +305,7 @@ handle_apply_yes_test_doc_batch(ApplyAcc, Rules, ExamDoc, From, CandidateDocs) -
 			Marks ->
 				Marks1 = trunc(helper:s2f(Marks)),
 				{ok, Group} = dict:find(Marks1, Rules),
-				dict:append(Group, itf:idval(CandidateDoc), Acc)
+				dict:append(Group, itf:val(CandidateDoc, anpseatnumber), Acc)
 		end
 	end, ApplyAcc, CandidateDocs),
 
