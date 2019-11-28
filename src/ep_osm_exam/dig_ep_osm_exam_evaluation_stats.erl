@@ -393,14 +393,31 @@ event({itx, E}) ->
 
 handle_send_reminder_confirmed() ->
 
-
 	%
 	% init
 	%
+	Context = wf_context:context(),
 	itl:modal_close(),
 	"profiletype_" ++ ProfileType = wf:q(osm_profiletype),
 	RoleId = ?L2A(ProfileType),
 
+	Fun = fun([]) ->
+		wf_context:context(Context),
+		handle_send_reminder_confirmed(RoleId),
+		dig:log(success, "Task completed")
+	end,
+
+
+	%
+	% add to queue
+	%
+	taskqueue:create(Fun, []),
+	helper_ui:flash(warning, "Added to queue.", 5).
+
+
+
+
+handle_send_reminder_confirmed(RoleId) ->
 
 	%
 	% get active tests
@@ -440,14 +457,7 @@ handle_send_reminder_confirmed() ->
 			[fields:build(anpstate, "anpstate_yettostart")]
 		),
 		handle_send_reminder_confirmed(RoleId, Doc, CandidateDocs)
-	end, Docs),
-
-
-
-	%
-	% done
-	%
-	dig:log(success, "Task completed").
+	end, Docs).
 
 
 
