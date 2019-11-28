@@ -8,6 +8,7 @@ menu(?APPOSM_CONTROLLER) ->
 		{?LN("OSM Exams"), [
 			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Statistics")},
 			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Exam Evaluation Statistics")},
+			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Exam Evaluator Statistics")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Statistics")}
 		]}
 	];

@@ -202,7 +202,18 @@ fetch(D, _From, _Size, []) ->
 	Fs = [
 		fields:build(teststatus, ?ACTIVE)
 	],
-	fetch(D, 0, ?INFINITY, Fs);
+
+	{D1, Results} = fetch(D, 0, ?INFINITY, Fs),
+
+
+	{
+		D1#dig {
+			actions=[
+				{show_send_reminder, "Send Reminder", "Send Reminder"}
+			]
+		},
+		Results
+	};
 
 
 
@@ -353,6 +364,16 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({confirmation_yes, send_reminder}) ->
+	handle_send_reminder_confirmed();
+
+event(send_reminder) ->
+	handle_send_reminder();
+
+event(show_send_reminder) ->
+	handle_show_send_reminder();
+
 event({itx, E}) ->
 	ite:event(E).
 
@@ -361,6 +382,145 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - send reminder
+%
+%..............................................................................
+
+handle_send_reminder_confirmed() ->
+
+
+	%
+	% init
+	%
+	itl:modal_close(),
+	"profiletype_" ++ ProfileType = wf:q(osm_profiletype),
+	RoleId = ?L2A(ProfileType),
+
+
+	%
+	% get active tests
+	%
+	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, [fields:build(teststatus, ?ACTIVE)]),
+	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
+
+
+
+	%
+	% for each test, send reminder
+	%
+	lists:foreach(fun(Doc) ->
+
+		%
+		% init
+		%
+		Testname = io_lib:format("~s / ~s", [
+			itf:val(Doc, anptestcourseid),
+			itf:val(Doc, testname)
+		]),
+		dig:log(warning, "Processing " ++ Testname),
+
+
+		#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+			anpcandidates:db(itf:idval(Doc)),
+			[fields:build(anpstate, "anpstate_yettostart")]
+		),
+		handle_send_reminder_confirmed(RoleId, Doc, CandidateDocs)
+	end, Docs),
+
+
+
+	%
+	% done
+	%
+	dig:log(success, "Task completed").
+
+
+
+
+%..............................................................................
+%
+% handle - send reminder confirmed doc
+%
+%..............................................................................
+
+handle_send_reminder_confirmed(_RoleId, _Doc, []) ->
+	dig:log(info, "Skipping, no papers in yet-to-start");
+handle_send_reminder_confirmed(RoleId, Doc, _) ->
+
+	%
+	% init
+	%
+	TFs = helper_api:doc2fields({ok, Doc}),
+	SubjectId = itf:val(TFs, subject_code_fk),
+	SubjectName = case itf:val(TFs, subject_code_fk) of
+		[] ->
+			itf:val(TFs, anptestcourseid);
+		_ ->
+			{ok, SubjectDoc} = ep_core_subject_api:get(SubjectId),
+			itf:val(SubjectDoc, subject_code)
+	end,
+
+
+	%
+	% get profile ids
+	%
+	ProfileIds = anpcandidates:get_evaluators_for_test(TFs, RoleId),
+	ProfileIdsUnique = helper:unique(ProfileIds),
+	dig:log(info, io_lib:format("Sending ~p emails", [length(ProfileIdsUnique)])),
+
+
+	%
+	% get profile docs
+	%
+	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique),
+
+
+	%
+	% send notification
+	%
+	lists:foreach(fun(ProfileDoc) ->
+		anptest:send_reminder_email_to_evaluator(TFs, ProfileDoc, SubjectName),
+		anptest:send_reminder_sms_to_evaluator(TFs, ProfileDoc, SubjectName)
+	end, ProfileDocs).
+
+
+
+%..............................................................................
+%
+% handle - send reminder
+%
+%..............................................................................
+
+handle_send_reminder() ->
+
+	%
+	% get active tests
+	%
+	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, [fields:build(teststatus, ?ACTIVE)]),
+
+
+	itl:confirmation(
+		io_lib:format("Are you sure you want to send reminder for ~p exams?", [length(Docs)]),
+		send_reminder
+	).
+
+
+%..............................................................................
+%
+% handle - show send reminder
+%
+%..............................................................................
+
+handle_show_send_reminder() ->
+
+	Fs = [
+		fields:get(osm_profiletype)
+	],
+	Es = itl:get(?CREATE, Fs, ite:get(send_reminder, "Send"), table),
+	dig_mm:handle_show_action("Send Reminder", Es).
 
 
 
