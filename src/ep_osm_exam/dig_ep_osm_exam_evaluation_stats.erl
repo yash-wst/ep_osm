@@ -469,7 +469,7 @@ handle_send_reminder_confirmed(RoleId, Doc, _) ->
 	%
 	ProfileIds = anpcandidates:get_evaluators_for_test(TFs, RoleId),
 	ProfileIdsUnique = helper:unique(ProfileIds),
-	dig:log(info, io_lib:format("Sending ~p emails", [length(ProfileIdsUnique)])),
+	dig:log(danger, io_lib:format("Sending ~p emails & SMS", [length(ProfileIdsUnique)])),
 
 
 	%
