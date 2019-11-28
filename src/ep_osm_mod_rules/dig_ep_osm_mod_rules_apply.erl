@@ -5,7 +5,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 
--define(BATCH_SIZE, 500).
+-define(BATCH_SIZE, 100).
 
 %------------------------------------------------------------------------------
 % main
