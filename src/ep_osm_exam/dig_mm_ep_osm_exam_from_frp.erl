@@ -357,7 +357,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 			"\"enrol" ++ _ ->
 				false;
 			_ ->
-				PRN1 = lists:flatten(string:tokens(PRN, "PRN:")),
+				PRN1 = sanitise_prn(PRN),
 				dict:find(PRN1, OsmCandidateDocsDict) == error
 		end
 	end, FrpStudentList),
@@ -369,7 +369,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	%
 	ListOfFsToSave = lists:map(fun([PRN, Name | _]) ->
 		Name1 = helper:replace_this_with_that(Name, "\"", ""),
-		PRN1 = string:tokens(PRN, "PRN:"),
+		PRN1 = sanitise_prn(PRN),
 		[
 			itf:build(itf:textbox(?F(anpseatnumber)), PRN1),
 			itf:build(itf:textbox(?F(anpfullname)), Name1),
@@ -545,6 +545,15 @@ handle_action_import() ->
 % misc
 %------------------------------------------------------------------------------
 
+
+
+%
+% sanitise prn
+%
+sanitise_prn("PRN:" ++ PRN) ->
+	PRN;
+sanitise_prn(PRN) ->
+	PRN.
 
 
 %------------------------------------------------------------------------------
