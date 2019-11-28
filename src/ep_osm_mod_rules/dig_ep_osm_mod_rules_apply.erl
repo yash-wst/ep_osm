@@ -179,6 +179,7 @@ handle_apply_yes() ->
 	Docs = get_test_docs(Fs, 0, ?INFINITY),
 	{ok, ModDoc} = ep_osm_mod_rules_api:get(wf:q(osm_mod_rules_fk)),
 	Rules = get_moderation_rules(ModDoc),
+	RunningMode = wf:q(running_mode),
 
 
 	%
@@ -187,7 +188,7 @@ handle_apply_yes() ->
 	Fun = fun([]) ->
 		wf_context:context(Context),
 		lists:foreach(fun(Doc) ->
-			handle_apply_yes_test_doc(Rules, Doc)
+			handle_apply_yes_test_doc(RunningMode, Rules, Doc)
 		end, Docs),
 		dig:log(success, "Task completed")
 	end,
@@ -207,7 +208,7 @@ handle_apply_yes() ->
 %
 %..............................................................................
 
-handle_apply_yes_test_doc(Rules, Doc) ->
+handle_apply_yes_test_doc(RunningMode, Rules, Doc) ->
 
 	%
 	% init
@@ -231,7 +232,7 @@ handle_apply_yes_test_doc(Rules, Doc) ->
 	%
 	% save result of application
 	%
-	handle_apply_yes_test_save_result(Doc, ApplyResDict, Rules).
+	handle_apply_yes_test_save_result(RunningMode, Doc, ApplyResDict, Rules).
 
 
 %..............................................................................
@@ -240,9 +241,9 @@ handle_apply_yes_test_doc(Rules, Doc) ->
 %
 %..............................................................................
 
-handle_apply_yes_test_save_result(_Doc, [], _) ->
+handle_apply_yes_test_save_result(_RunningMode, _Doc, [], _) ->
 	dig:log("Result of apply rule is empty");
-handle_apply_yes_test_save_result(Doc, ApplyResDict, Rules) ->
+handle_apply_yes_test_save_result(RunningMode, Doc, ApplyResDict, Rules) ->
 
 
 	%
@@ -288,9 +289,17 @@ handle_apply_yes_test_save_result(Doc, ApplyResDict, Rules) ->
 				fields:build(anpstate, NewCandidateState)
 			]
 		end, CandidateDocs),
-		{ok, SaveRes} = anpcandidates:updateall(ExamDb, LoLFs),
-		{Oks, Errors} = db_helper:bulksave_summary(SaveRes),
-		dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [Oks, Errors]))
+
+
+
+		case RunningMode of
+			"live_mode" ->
+				{ok, SaveRes} = anpcandidates:updateall(ExamDb, LoLFs),
+				{Oks, Errors} = db_helper:bulksave_summary(SaveRes),
+				dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [Oks, Errors]));
+			"test_mode" ->
+				dig:log(danger, "Save skipped in test mode")
+		end
 
 
 
@@ -343,7 +352,7 @@ handle_apply_yes_test_doc_batch(ApplyAcc, Rules, ExamDoc, From, CandidateDocs) -
 
 
 	%
-	% save student docs
+	% apply rules
 	%
 
 	From1 = From + ?BATCH_SIZE,
@@ -390,7 +399,14 @@ handle_apply() ->
 %..............................................................................
 
 handle_select_moderation_rule() ->
-	Es = itl:get(?CREATE, [?OSMRLS(osm_mod_rules_fk)], ite:get(apply), table),
+	Fs = [
+		itf:dropdown(?F(running_mode, "Run Mode"), itf:options([
+			?F(test_mode, "Test Mode"),
+			?F(live_mode, "Live Mode")
+		])),
+		?OSMRLS(osm_mod_rules_fk)
+	],
+	Es = itl:get(?CREATE, Fs, ite:get(apply), table),
 	dig_mm:handle_show_action("Moderation Rule", Es).
 
 
