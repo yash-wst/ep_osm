@@ -344,7 +344,17 @@ handle_apply_yes_test_doc_batch(ApplyAcc, Rules, ExamDoc, From, CandidateDocs) -
 				Acc;
 			Marks ->
 				Marks1 = trunc(helper:s2f(Marks)),
-				{ok, Group} = dict:find(Marks1, Rules),
+				Group = case dict:find(Marks1, Rules) of
+					{ok, Group0} ->
+						Group0;
+					_ ->
+						?ASSERT(
+							false,
+							?FLATTEN(io_lib:format("Marks out of range!  (~p, ~s)", [
+								Marks1, itf:val(CandidateDoc, anpseatnumber)
+							]))
+						)
+				end,
 				dict:append(Group, itf:val(CandidateDoc, anpseatnumber), Acc)
 		end
 	end, ApplyAcc, CandidateDocs),
