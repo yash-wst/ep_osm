@@ -443,8 +443,6 @@ get_candidate_docs(Type, ExamDoc, From, Size) ->
 	% init
 	%
 	ExamId = itf:idval(ExamDoc),
-	ExamDb = anpcandidates:db(ExamId),
-
 	CandidateState = case Type of
 		"evaluation" ->
 			"anpstate_completed";
@@ -457,10 +455,7 @@ get_candidate_docs(Type, ExamDoc, From, Size) ->
 	%
 	% exec
 	%
-	#db2_find_response {docs=Docs}  = db2_find:get_by_fs(
-		ExamDb, [fields:build(anpstate, CandidateState)], From, Size
-	),
-	Docs.
+	anpcandidates:getdocs_by_state(ExamId, CandidateState, From, Size).
 
 
 
