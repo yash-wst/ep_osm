@@ -3,6 +3,7 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
+-include_lib("itx/include/records_dev.hrl").
 
 
 -define(ITXAUDIT_LOG_REMINDER_SENT, "osm_evaluator_reminder_sent").
@@ -254,9 +255,25 @@ fetch(D, From, Size, Fs) ->
 
 
 	%
+	% get stats concurrently
+	%
+	ConcurrentStats = itx:exec(
+		#itxexec {
+			type=concurrent,
+			module=?MODULE,
+			function= fun get_evaluation_stats0/1,
+			items=Docs,
+			batch_size=25
+		}
+	),
+
+
+
+
+	%
 	% results
 	%
-	Results = lists:map(fun(Doc) ->
+	Results = lists:map(fun({Doc, Stats}) ->
 
 
 		%
@@ -271,7 +288,6 @@ fetch(D, From, Size, Fs) ->
 		%
 		% get stats for test
 		%
-		Stats = ep_osm_exam_api:get_evaluation_stats0(itf:idval(Doc)),
 		StatsDict = dict:from_list(Stats),
 
 
@@ -305,7 +321,7 @@ fetch(D, From, Size, Fs) ->
 		end, states())
 
 
-	end, Docs),
+	end, ConcurrentStats),
 
 
 	%
@@ -660,6 +676,17 @@ get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator_reval") when
 	Val;
 get_eval_count_for_profile(_, _, _, _) ->
 	0.
+
+
+
+%
+% get evaluation stats
+%
+get_evaluation_stats0(TestDocs) ->
+	lists:map(fun(TestDoc) ->
+		TestId = itf:idval(TestDoc),
+		{TestDoc, ep_osm_exam_api:get_evaluation_stats0(TestId)}
+	end, TestDocs).
 
 
 %------------------------------------------------------------------------------
