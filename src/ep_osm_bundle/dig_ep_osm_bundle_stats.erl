@@ -227,8 +227,8 @@ fetch(D, _From, _Size, [
 	% sort results
 	%
 	ResultsSorted = lists:sort(fun(A, B) ->
-		#dcell {val=Val1} = lists:nth(2, A),
-		#dcell {val=Val2} = lists:nth(2, B),
+		#dcell {val=Val1} = lists:nth(3, A),
+		#dcell {val=Val2} = lists:nth(3, B),
 		Val1 > Val2
 	end, Results),
 
