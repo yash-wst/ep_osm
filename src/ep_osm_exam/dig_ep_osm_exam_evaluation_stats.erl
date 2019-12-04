@@ -331,8 +331,8 @@ fetch(D, From, Size, Fs) ->
 	% sort results
 	%
 	ResultsSorted = lists:sort(fun(A, B) ->
-		#dcell {val=YetToStartA} = lists:nth(7, A),
-		#dcell {val=YetToStartB} = lists:nth(7, B),
+		#dcell {val=YetToStartA} = lists:nth(8, A),
+		#dcell {val=YetToStartB} = lists:nth(8, B),
 		YetToStartA > YetToStartB
 	end, Results),
 
@@ -394,7 +394,7 @@ dcell_days_since_test(TodaySeconds, Doc) ->
 		val=[
 			#span {text=DaysSinceTest},
 			#br {},
-			#span {style="font-size: 0.7em", text=Testdate}
+			#span {style="font-size: 0.7em; white-space: nowrap;", text=Testdate}
 		]
 	}.
 
