@@ -169,6 +169,8 @@ fetch(D, _From, _Size, [
 	%
 	% init
 	%
+	Today = helper:date_today_str(),
+	TodaySeconds = helper:date_d2epoch(Today),
 	Stats = ep_osm_bundle_api:get_stats(SeasonId0),
 	StatsDict = dict:from_list(Stats),
 
@@ -207,7 +209,8 @@ fetch(D, _From, _Size, [
 					]),
 					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [ExamId])
 				}
-			}
+			},
+			dig_ep_osm_exam_evaluation_stats:dcell_days_since_test(TodaySeconds, ExamDoc)
 		] ++ lists:map(fun(State) ->
 			Val = case dict:find([State, SeasonId, ExamId], StatsDict) of
 				{ok, Count} ->
@@ -235,6 +238,7 @@ fetch(D, _From, _Size, [
 	%
 	Header = [
 		#dcell {type=header, val="Exam"},
+		#dcell {type=header, val="Days"},
 		#dcell {type=header, val="Inward Completed"},
 		#dcell {type=header, val="Scanning Completed"},
 		#dcell {type=header, val="Upload Completed"},

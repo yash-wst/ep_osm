@@ -231,6 +231,8 @@ fetch(D, From, Size, Fs) ->
 	%
 	% init
 	%
+	Today = helper:date_today_str(),
+	TodaySeconds = helper:date_d2epoch(Today),
 	Size1 = case wf:q(size) of
 		undefined ->
 			Size;
@@ -305,7 +307,8 @@ fetch(D, From, Size, Fs) ->
 					itf:val(Doc, anptestcourseid)
 				]),
 				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))}
-			}
+			},
+			dcell_days_since_test(TodaySeconds, Doc)
 
 		] ++ lists:map(fun(State) ->
 				Val = case dict:find([State], StatsDict) of
@@ -342,7 +345,8 @@ fetch(D, From, Size, Fs) ->
 		#dcell {type=header, val="Faculty"},
 		#dcell {type=header, val="Program"},
 		#dcell {type=header, val="Subject"},
-		#dcell {type=header, val="Test Id"}
+		#dcell {type=header, val="Test Id"},
+		#dcell {type=header, val="Days"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
 	end, states()) ++ [
@@ -377,6 +381,22 @@ exports() -> [
 layout() ->
 	dig:dig(?MODULE:get()).
 
+
+%------------------------------------------------------------------------------
+% dcells
+%------------------------------------------------------------------------------
+
+dcell_days_since_test(TodaySeconds, Doc) ->
+	Testdate = itf:val(Doc, startdate),
+	DaysSinceTest = get_days_since_test(TodaySeconds, Testdate),
+	#dcell {
+		bgcolor=get_class_days_since_test(DaysSinceTest),
+		val=[
+			#span {text=DaysSinceTest},
+			#br {},
+			#span {style="font-size: 0.7em", text=Testdate}
+		]
+	}.
 
 
 %------------------------------------------------------------------------------
@@ -687,6 +707,35 @@ get_evaluation_stats0(TestDocs) ->
 		TestId = itf:idval(TestDoc),
 		{TestDoc, ep_osm_exam_api:get_evaluation_stats0(TestId)}
 	end, TestDocs).
+
+
+
+
+%
+% get days since test
+%
+get_days_since_test(_TodaySeconds, []) ->
+	[];
+get_days_since_test(TodaySeconds, TestDate) ->
+	TestdateSeconds = helper:date_d2epoch(TestDate),
+	DiffSeconds = TodaySeconds - TestdateSeconds,
+	DiffSeconds div (60*60*24).
+
+
+
+
+%
+% get class days since test
+%
+get_class_days_since_test(DaysSinceTest) when DaysSinceTest > 45 ->
+	"bg-danger";
+get_class_days_since_test(DaysSinceTest) when DaysSinceTest > 35 ->
+	"bg-warning";
+get_class_days_since_test(DaysSinceTest) when DaysSinceTest > 25 ->
+	"bg-info";
+get_class_days_since_test(_) ->
+	"".
+
 
 
 %------------------------------------------------------------------------------
