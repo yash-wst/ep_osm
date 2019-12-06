@@ -40,9 +40,9 @@ insert_buttons(WUId, F) ->
 				body=lists:map(fun(J) ->
 					Label = io_lib:format("Any ~p of ~p", [I, J]),
 					insert_button(Label, F, {widget, WUId, ?WTYPE_RULE, {I, J}})
-				end, lists:seq(I + 1, 8))
+				end, lists:seq(I + 1, 12))
 			}
-		end, lists:seq(1, 7)),
+		end, lists:seq(1, 10)),
 		#hr {},
 
 

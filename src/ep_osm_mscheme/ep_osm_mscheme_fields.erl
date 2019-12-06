@@ -264,6 +264,7 @@ options(osm_mscheme_fk) ->
 		db=ep_osm_mscheme_api:db(),
 		displayfs=ep_osm_mscheme:fs(grid),
 		filterfs=[
+			f(name),
 			f(state)
 		],
 		size=10
