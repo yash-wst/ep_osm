@@ -414,7 +414,8 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	%
 	FsFind = [
 		fields:build(season_fk, SeasonId),
-		fields:build(anptestcourseid, SubjectCode)
+		fields:build(anptestcourseid, SubjectCode),
+		fields:build(exam_pattern, SubjectPattern)
 	],
 	#db2_find_response {docs=OsmExamDocs} = db2_find:get_by_fs(
 		anptests:getdb(), FsFind, 0, ?INFINITY
