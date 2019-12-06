@@ -47,6 +47,12 @@ fs(create) -> [
 fs(edit) ->
 	fs(basic);
 
+fs({edit, Doc}) -> [
+	?OSMRLS(name),
+	?OSMRLS(type),
+	?OSMRLS({rules, Doc})
+];
+
 fs(update) ->
 	fs(basic);
 
@@ -73,12 +79,48 @@ fs(all) -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
+	layout(wf:q(mode)).
+
+
+layout(?EDIT) ->
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mod_rules_api:get(Id),
+	Fs = fs({edit, Doc}),
+
+
+	%
+	% layout
+	%
+	Es = itl:get(?EDIT, itf:d2f(Doc, Fs), ite:get(edit), table),
+	Sec = layout:grow(itl:section("Edit & Save", Es)),
+	itl:page(heading(), layout:grow(layout:g(9, Sec)), links(Id));
+
+
+layout(_) ->
 	itxdocument:layout(wf:q(mode), ?MODULE, wf:q(id)).
 
 
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(edit) ->
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mod_rules_api:get(Id),
+	Fs = fs({edit, Doc}),
+
+	Fsui = itf:uivalue(itf:d2f(Doc, Fs)),
+	FsAll = itf:d2f(Doc, fs(all)),
+	Res = itxdocuments:save(ep_osm_mod_rules_api:db(), Fsui, FsAll, Id),
+	itl:flash(Res, "Saved", "Failed");
+
+
 event(E) ->
 	itxdocument:event(E, ?MODULE, wf:q(id)).
 

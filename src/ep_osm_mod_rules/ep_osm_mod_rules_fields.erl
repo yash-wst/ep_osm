@@ -26,20 +26,51 @@ f(movepercentage = I) ->
 	itf:textbox_int(?F(I, "Move Percentage"));
 
 
-f({FId, I}) ->
-	?OSMRLS(FId, #field {id=I});
+f(evaluator_role = I) ->
+	itf:dropdown(?F(I, "Role"), options(I));
 
 
-f(rules = I) ->
+f(evaluator_role_1 = I) ->
+	F = f(evaluator_role),
+	F#field {id=I};
+
+
+f(evaluator_role_2 = I) ->
+	F = f(evaluator_role),
+	F#field {id=I};
+
+
+f(diffpercentage = I) ->
+	itf:textbox_int(?F(I, "Difference Percentage"));
+
+
+f(rules) ->
+	Doc = {[]},
+	f({rules, Doc});
+
+f({rules = I, Doc}) ->
+
+
+	%
+	% subfield ids
+	%
+	SubfieldIds = case itf:val(Doc, type) of
+		"difference" -> [
+			evaluator_role_1, evaluator_role_2, diffpercentage
+		];
+		_ ->  [
+			frommarks, tomarks, movepercentage
+		]
+	end,
+
+
 
 	%
 	% define field
 	%
 	F = itf:field_group_list(
 		{I, ?LN("Moderation Rules")},
-		[
-			frommarks, tomarks, movepercentage
-		],
+		SubfieldIds,
 		{
 			ep_osm_mod_rules,
 			ep_osm_mod_rules_api,
@@ -65,6 +96,10 @@ f(osm_mod_rules_fk = I) ->
 
 
 
+f({FId, I}) ->
+	?OSMRLS(FId, #field {id=I});
+
+
 f(O) ->
 	throw(O).
 
@@ -77,6 +112,14 @@ validator(O) ->
 %------------------------------------------------------------------------------
 % options
 %------------------------------------------------------------------------------
+
+options(evaluator_role) ->
+	itf:options([
+		?F(anpevaluator, "Evaluator"),
+		?F(anpmoderator, "Moderator"),
+		?F(anprevaluator, "Revaluator"),
+		?F(anpmoderator_reval, "Reval Moderator")
+	]);
 
 options(osm_mod_rules_fk) ->
 	#search {
@@ -94,7 +137,8 @@ options(type) ->
 	itf:options([
 		?F(evaluation, "Apply to evaluators"),
 		?F(moderation, "Apply to moderators"),
-		?F(revaluation, "Apply to revaluators")
+		?F(revaluation, "Apply to revaluators"),
+		?F(difference, "Difference")
 	]).
 
 %------------------------------------------------------------------------------
