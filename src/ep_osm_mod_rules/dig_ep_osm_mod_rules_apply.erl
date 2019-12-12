@@ -188,7 +188,8 @@ handle_apply_yes() ->
 	Fun = fun([]) ->
 		wf_context:context(Context),
 		lists:foreach(fun(Doc) ->
-			handle_apply_yes_test_doc(RunningMode, Rules, Doc)
+			Type = itf:val(ModDoc, type),
+			handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc)
 		end, Docs),
 		dig:log(success, "Task completed")
 	end,
@@ -208,12 +209,11 @@ handle_apply_yes() ->
 %
 %..............................................................................
 
-handle_apply_yes_test_doc(RunningMode, Rules, Doc) ->
+handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc) ->
 
 	%
 	% init
 	%
-	{ok, Type} = dict:find(type, Rules),
 	Testname = io_lib:format("~s ~s", [
 		itf:val(Doc, anptestcourseid),
 		itf:val(Doc, testname)
@@ -225,14 +225,14 @@ handle_apply_yes_test_doc(RunningMode, Rules, Doc) ->
 	% apply
 	%
 	ApplyResDict = handle_apply_yes_test_doc_batch(
-		dict:new(), Rules, Doc, 0, get_candidate_docs(Type, Doc, 0, ?BATCH_SIZE)
+		Type, dict:new(), Rules, Doc, 0, get_candidate_docs(Type, Doc, 0, ?BATCH_SIZE)
 	),
 
 
 	%
 	% save result of application
 	%
-	handle_apply_yes_test_save_result(RunningMode, Doc, ApplyResDict, Rules).
+	handle_apply_yes_test_save_result(Type, RunningMode, Doc, ApplyResDict, Rules).
 
 
 %..............................................................................
@@ -241,9 +241,76 @@ handle_apply_yes_test_doc(RunningMode, Rules, Doc) ->
 %
 %..............................................................................
 
-handle_apply_yes_test_save_result(_RunningMode, _Doc, [], _) ->
+handle_apply_yes_test_save_result(_Type, _RunningMode, _Doc, [], _) ->
 	dig:log("Result of apply rule is empty");
-handle_apply_yes_test_save_result(RunningMode, Doc, ApplyResDict, Rules) ->
+
+
+%
+% difference
+%
+handle_apply_yes_test_save_result("difference", RunningMode, Doc, ApplyResDict, _Rules) ->
+
+	TId = itf:idval(Doc),
+	ExamDb = anpcandidates:db(TId),
+
+
+	%
+	% save
+	%
+	lists:foreach(fun({MoveToRole, CandidateList}) ->
+
+		%
+		% get documents to move
+		%
+		dig:log(info, io_lib:format("[Moved to: ~s, Moved: ~p", [
+			MoveToRole, length(CandidateList)
+		])),
+		dig:log(info, io_lib:format("Moved: ~p", [CandidateList])),
+
+
+		%
+		% new state
+		%
+		NewCandidateState = case MoveToRole of
+			"anprevaluator" ->
+				"anpstate_revaluation";
+			"anpmoderator_reval" ->
+				"anpstate_moderation_reval"
+		end,
+
+
+		%
+		% save
+		%
+		CandidateDocs = anpcandidates:getdocs_by_snos(TId, CandidateList),
+		LoLFs = lists:map(fun(CandidateDoc) ->
+			Fs = helper_api:doc2fields({ok, CandidateDoc}),
+			fields:delete(Fs, anpstate) ++ [
+				fields:build(anpstate, NewCandidateState)
+			]
+		end, CandidateDocs),
+
+
+
+		case RunningMode of
+			"live_mode" ->
+				{ok, SaveRes} = anpcandidates:updateall(ExamDb, LoLFs),
+				{Oks, Errors} = db_helper:bulksave_summary(SaveRes),
+				dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [Oks, Errors]));
+			"test_mode" ->
+				dig:log(danger, "Save skipped in test mode")
+		end
+
+
+
+	end, dict:to_list(ApplyResDict));
+
+
+
+%
+% default
+%
+handle_apply_yes_test_save_result(_Type, RunningMode, Doc, ApplyResDict, Rules) ->
 
 
 	%
@@ -314,9 +381,79 @@ handle_apply_yes_test_save_result(RunningMode, Doc, ApplyResDict, Rules) ->
 %
 %..............................................................................
 
-handle_apply_yes_test_doc_batch(ApplyAcc, _Rules, _ExamDoc, _From, []) ->
+%
+% difference
+%
+
+handle_apply_yes_test_doc_batch(_Type, ApplyAcc, _Rules, _ExamDoc, _From, []) ->
 	ApplyAcc;
-handle_apply_yes_test_doc_batch(ApplyAcc, Rules, ExamDoc, From, CandidateDocs) ->
+handle_apply_yes_test_doc_batch("difference" = Type, ApplyAcc, Rules, ExamDoc, From, CandidateDocs) ->
+
+	%
+	% init
+	%
+	dig:log(info, io_lib:format("Batch: ~p", [From])),
+	dig:log(info, io_lib:format("Candidate docs: ~p", [length(CandidateDocs)])),
+
+	%
+	% apply rule and get updated student docs
+	%
+	ApplyAcc1 = lists:foldl(fun({DiffPercentage, Role1, Role2, Role3}, Acc) ->
+
+		%
+		% init
+		%
+		Role1Id = ?L2A(?FLATTEN("total_" ++ Role1)),
+		Role2Id = ?L2A(?FLATTEN("total_" ++ Role2)),
+		DiffPercentageInt = ?S2I(DiffPercentage),
+
+
+		lists:foldl(fun(CandidateDoc, Acc1) ->
+			%
+			% init
+			%
+			Total1 = itf:val(CandidateDoc, Role1Id),
+			Total2 = itf:val(CandidateDoc, Role2Id),
+			Total1Float = helper:s2f_v1(Total1),
+			Total2Float = helper:s2f_v1(Total2),
+
+
+			%
+			% check difference
+			%
+			case {Total1Float, Total2Float} of
+				{error, _} ->
+					Acc1;
+				{_, error} ->
+					Acc1;
+				_ ->
+					case abs(Total1Float - Total2Float) > DiffPercentageInt of
+						false ->
+							Acc1;
+						_ ->
+							dict:append(Role3, itf:val(CandidateDoc,anpseatnumber) , Acc1)
+					end
+			end
+
+		end, Acc, CandidateDocs)
+
+	end, ApplyAcc, Rules),
+
+	%
+	% apply rules
+	%
+
+	From1 = From + ?BATCH_SIZE,
+	handle_apply_yes_test_doc_batch(
+		Type, ApplyAcc1, Rules, ExamDoc, From1, get_candidate_docs(Type, ExamDoc, From1, ?BATCH_SIZE)
+	);
+
+
+%
+% default
+%
+
+handle_apply_yes_test_doc_batch(Type, ApplyAcc, Rules, ExamDoc, From, CandidateDocs) ->
 
 
 	%
@@ -367,7 +504,7 @@ handle_apply_yes_test_doc_batch(ApplyAcc, Rules, ExamDoc, From, CandidateDocs) -
 
 	From1 = From + ?BATCH_SIZE,
 	handle_apply_yes_test_doc_batch(
-		ApplyAcc1, Rules, ExamDoc, From1, get_candidate_docs(Type, ExamDoc, From1, ?BATCH_SIZE)
+		Type, ApplyAcc1, Rules, ExamDoc, From1, get_candidate_docs(Type, ExamDoc, From1, ?BATCH_SIZE)
 	).
 
 
@@ -437,6 +574,19 @@ get_test_docs(Fs, From, Size) ->
 
 
 
+get_candidate_docs("difference", ExamDoc, From, Size) ->
+
+	%
+	% init
+	%
+	ExamId = itf:idval(ExamDoc),
+	ExamDb = anpcandidates:db(ExamId),
+
+	%
+	% exec
+	%
+	anpcandidates:getdocs(ExamDb, From, Size);
+
 get_candidate_docs(Type, ExamDoc, From, Size) ->
 
 	%
@@ -462,6 +612,38 @@ get_candidate_docs(Type, ExamDoc, From, Size) ->
 
 
 get_moderation_rules(ModDoc) ->
+	get_moderation_rules(ModDoc, itf:val(ModDoc, type)).
+
+
+get_moderation_rules(ModDoc, "difference") ->
+
+	%
+	% init
+	%
+	Vals = mylist_field:val(itf:d2f(ModDoc, ?OSMRLS({rules, ModDoc}))),
+
+
+	%
+	% build dict
+	%
+	lists:foldl(fun({_RuleId, RuleVals}, Acc) ->
+
+		%
+		% get vals
+		%
+		Role1 = proplists:get_value("evaluator_role_1", RuleVals),
+		Role2 = proplists:get_value("evaluator_role_2", RuleVals),
+		Role3 = proplists:get_value("evaluator_role_3", RuleVals),
+		DiffPercentage = proplists:get_value("diffpercentage", RuleVals),
+
+		Acc ++ [
+			{DiffPercentage, Role1, Role2, Role3}
+		]
+
+	end, [], Vals);
+
+
+get_moderation_rules(ModDoc, _) ->
 
 	%
 	% init

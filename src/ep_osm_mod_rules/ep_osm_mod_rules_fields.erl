@@ -32,16 +32,20 @@ f(evaluator_role = I) ->
 
 f(evaluator_role_1 = I) ->
 	F = f(evaluator_role),
-	F#field {id=I};
+	F#field {label="Role 1", id=I};
 
 
 f(evaluator_role_2 = I) ->
 	F = f(evaluator_role),
-	F#field {id=I};
+	F#field {label="Role 2", id=I};
 
 
 f(diffpercentage = I) ->
 	itf:textbox_int(?F(I, "Difference Percentage"));
+
+f(evaluator_role_3 = I) ->
+	F = f(evaluator_role),
+	F#field {label="Move To", id=I};
 
 
 f(rules) ->
@@ -56,7 +60,7 @@ f({rules = I, Doc}) ->
 	%
 	SubfieldIds = case itf:val(Doc, type) of
 		"difference" -> [
-			evaluator_role_1, evaluator_role_2, diffpercentage
+			evaluator_role_1, evaluator_role_2, diffpercentage, evaluator_role_3
 		];
 		_ ->  [
 			frommarks, tomarks, movepercentage
