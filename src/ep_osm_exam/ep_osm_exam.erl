@@ -58,7 +58,8 @@ fs(import) ->
 		"anptestcourseid",
 		"testtotalmarks",
 		"testduration",
-		"pages_per_booklet"
+		"pages_per_booklet",
+		"startdate"
 	],
 	ImportFormat = string:join(Ids, ",\n"),
 	[

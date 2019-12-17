@@ -49,7 +49,7 @@ handle_import_validate_csv_length(List) ->
 	%
 	{_Oks, Errors} = lists:foldl(fun(Csv, {AccOKs, AccErrors}) ->
 		case length(Csv) of
-			12 ->
+			13 ->
 				{AccOKs ++ [Csv], AccErrors};
 			_ ->
 				{AccOKs, AccErrors ++ [Csv]}
@@ -397,7 +397,6 @@ handle_import_csv_to_fs(List) ->
 		SeasonCode /= [],
 		"season code is empty!"
 	),
-	Date = helper:date_today_str(),
 
 	%
 	% get dicts
@@ -422,7 +421,8 @@ handle_import_csv_to_fs(List) ->
 		ANPCourseId,
 		TestTotalMarks,
 		TestDuration,
-		PagesPerBooklet
+		PagesPerBooklet,
+		Startdate
 	]) ->
 
 		%
@@ -457,8 +457,8 @@ handle_import_csv_to_fs(List) ->
 			fields:build(teststatus, ?SCHEDULED),
 			fields:build(testtotalmarks, TestTotalMarks),
 			fields:build(testduration, TestDuration),
-			fields:build(startdate, Date),
-			fields:build(enddate, Date),
+			fields:build(startdate, Startdate),
+			fields:build(enddate, Startdate),
 			fields:build(pages_per_booklet, PagesPerBooklet)
 		]
 
