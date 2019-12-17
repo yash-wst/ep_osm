@@ -19,7 +19,18 @@ heading() ->
 	title().
 
 form() ->
-	profile_anpevaluator.
+	profile_module().
+
+module(import) ->
+	profile_anpevaluator_import.
+
+profile_module() ->
+	case wf:q(mode) of
+		undefined ->
+			profile_anpevaluator;
+		Module ->
+			?L2A(Module)
+	end.
 
 %------------------------------------------------------------------------------
 % records
@@ -45,8 +56,8 @@ form() ->
 % fs - group
 %------------------------------------------------------------------------------
 
-fields(profile_anpevaluator, _Fs) ->
-	profile_anpevaluator:fs(form).
+fields(ProfileModule, _Fs) ->
+	ProfileModule:fs(form).
 
 
 
@@ -63,9 +74,10 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 get() ->
+	ProfileModule = profile_module(),
 	#dig {
 		module=?MODULE,
-		filters=profile_anpevaluator:fs(search),
+		filters=ProfileModule:fs(search),
 		size=25
 	}.
 
