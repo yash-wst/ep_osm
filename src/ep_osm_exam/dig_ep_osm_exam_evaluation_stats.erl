@@ -54,6 +54,9 @@ get() ->
 			fields:get(exam_pattern),
 			itf:hidden(osm_exam_fk)
 		],
+		events=[
+			ite:button(email_export, "Email CSV", {itx, {dig, email_export}})
+		],
 		size=50
 	}.
 
@@ -298,15 +301,28 @@ fetch(D, From, Size, Fs) ->
 		% layout test
 		%
 		[
-			#dcell {val=itl:blockquote(SeasonDoc, [?COREXS(name), ?COREXS(state)])},
-			#dcell {val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)])},
-			#dcell {val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)])},
-			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
+			#dcell {
+				val=itl:blockquote(SeasonDoc, [?COREXS(name), ?COREXS(state)]),
+				val_export=?FLATTEN(itf:val(SeasonDoc, name))
+			},
+			#dcell {
+				val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)]),
+				val_export=itf:val(FacultyDoc, faculty_code)
+			},
+			#dcell {
+				val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)]),
+				val_export=itf:val(ProgramDoc, program_name)
+			},
+			#dcell {
+				val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)]),
+				val_export=itf:val(SubjectDoc, subject_name)
+			},
 			#dcell {
 				val=itl:blockquote([
 					itf:val(Doc, anptestcourseid)
 				]),
-				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))}
+				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))},
+				val_export=itf:val(Doc, anptestcourseid)
 			},
 			dcell_days_since_test(TodaySeconds, Doc)
 
