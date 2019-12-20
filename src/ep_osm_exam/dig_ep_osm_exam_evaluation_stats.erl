@@ -43,6 +43,7 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
+		description="Evaluation Statistics",
 		module=?MODULE,
 		filters=[
 			?COREXS(season_fk),
@@ -307,15 +308,15 @@ fetch(D, From, Size, Fs) ->
 			},
 			#dcell {
 				val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)]),
-				val_export=itf:val(FacultyDoc, faculty_code)
+				val_export=itf:val(FacultyDoc, faculty_code) ++ " / " ++ itf:val(FacultyDoc, faculty_name)
 			},
 			#dcell {
 				val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)]),
-				val_export=itf:val(ProgramDoc, program_name)
+				val_export=itf:val(ProgramDoc, program_code) ++ " / " ++ itf:val(ProgramDoc, program_name)
 			},
 			#dcell {
 				val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)]),
-				val_export=itf:val(SubjectDoc, subject_name)
+				val_export=itf:val(SubjectDoc, subject_code) ++ " / " ++ itf:val(SubjectDoc, subject_name)
 			},
 			#dcell {
 				val=itl:blockquote([
