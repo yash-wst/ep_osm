@@ -452,8 +452,17 @@ handle_send_reminder_confirmed() ->
 
 
 
+handle_send_reminder_confirmed(anpevaluator) ->
+	handle_send_reminder_confirmed(anpevaluator, "anpstate_yettostart");
+handle_send_reminder_confirmed(anpmoderator) ->
+	handle_send_reminder_confirmed(anpmoderator, "anpstate_moderation");
+handle_send_reminder_confirmed(anprevaluator) ->
+	handle_send_reminder_confirmed(anprevaluator, "anpstate_revaluation");
+handle_send_reminder_confirmed(anpmoderator_reval) ->
+	handle_send_reminder_confirmed(anpmoderator_reval, "anpstate_moderation_reval").
 
-handle_send_reminder_confirmed(RoleId) ->
+
+handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 
 	%
 	% get active tests
@@ -490,9 +499,9 @@ handle_send_reminder_confirmed(RoleId) ->
 
 		#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 			anpcandidates:db(itf:idval(Doc)),
-			[fields:build(anpstate, "anpstate_yettostart")]
+			[fields:build(anpstate, AnpCheckState)]
 		),
-		handle_send_reminder_confirmed(RoleId, Doc, CandidateDocs)
+		handle_send_reminder_confirmed(RoleId, Doc, CandidateDocs, AnpCheckState)
 	end, Docs).
 
 
@@ -504,9 +513,9 @@ handle_send_reminder_confirmed(RoleId) ->
 %
 %..............................................................................
 
-handle_send_reminder_confirmed(_RoleId, _Doc, []) ->
-	dig:log(info, "Skipping, no papers in yet-to-start");
-handle_send_reminder_confirmed(RoleId, Doc, _) ->
+handle_send_reminder_confirmed(_RoleId, _Doc, [], AnpCheckState) ->
+	dig:log(info, "Skipping, no papers in " ++ ?LN(?L2A(AnpCheckState)));
+handle_send_reminder_confirmed(RoleId, Doc, _, _AnpCheckState) ->
 
 	%
 	% init
