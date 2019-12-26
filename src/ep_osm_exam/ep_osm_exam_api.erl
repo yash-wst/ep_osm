@@ -268,6 +268,13 @@ csv_frp(TestId) ->
 	TestDb = anpcandidates:db(TestId),
 	CandidateDocs = anpcandidates:getall(TestDb),
 
+	%
+	% filter out unwanted docs
+	%
+	CandidateDocs1 = lists:filter(fun(CDoc) ->
+		itf:val(CDoc, anpstate) /= "anpstate_discarded"
+	end, CandidateDocs),
+
 
 	%
 	% csv
@@ -279,7 +286,7 @@ csv_frp(TestId) ->
 			itf:val(CDoc, anpfullname),
 			csv_frp_marks(itf:val(CDoc, total_anpevaluator))
 		], ",")
-	end, CandidateDocs),
+	end, CandidateDocs1),
 
 
 	%
