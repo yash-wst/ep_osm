@@ -55,6 +55,7 @@ fs(import) ->
 		"subject_code",
 		"subject_name",
 		"subject_pattern",
+		"testname",
 		"anptestcourseid",
 		"testtotalmarks",
 		"testduration",

@@ -49,7 +49,7 @@ handle_import_validate_csv_length(List) ->
 	%
 	{_Oks, Errors} = lists:foldl(fun(Csv, {AccOKs, AccErrors}) ->
 		case length(Csv) of
-			13 ->
+			14 ->
 				{AccOKs ++ [Csv], AccErrors};
 			_ ->
 				{AccOKs, AccErrors ++ [Csv]}
@@ -418,6 +418,7 @@ handle_import_csv_to_fs(List) ->
 		SubjectCode,
 		_SubjectName,
 		_SubjectPattern,
+		TestName,
 		ANPCourseId,
 		TestTotalMarks,
 		TestDuration,
@@ -435,11 +436,6 @@ handle_import_csv_to_fs(List) ->
 			SeasonCode,
 			itf:val(SubDoc, subject_code)
 		])),
-		TestName = ?FLATTEN(io_lib:format("~s / ~s", [
-			itf:val(SubDoc, subject_code),
-			itf:val(SubDoc, subject_name)
-		])),
-
 
 
 		%
