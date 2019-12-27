@@ -444,8 +444,7 @@ layout_upload_form(BundleDoc, _) ->
 
 layout_user_info({ok, ProfileDoc}) ->
 	itl:blockquote([
-		itf:val(ProfileDoc, fullname),
-		itf:val(ProfileDoc, mobile)
+		itf:val(ProfileDoc, fullname)
 	]);
 layout_user_info(_) ->
 	"ERROR!".
