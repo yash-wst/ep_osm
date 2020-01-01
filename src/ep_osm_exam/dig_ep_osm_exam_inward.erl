@@ -113,6 +113,7 @@ fetch(D, _From, _Size, [
 	% init
 	%
 	ExamDb = anpcandidates:db(OsmExamId),
+	{ok, ExamDoc} = ep_osm_exam_api:get(OsmExamId),
 	{ok, BundleDoc} = ep_osm_bundle_api:get(OsmBundleId),
 
 
@@ -172,6 +173,9 @@ fetch(D, _From, _Size, [
 	% return
 	%
 	{D#dig {
+		description=io_lib:format("~s / ~s", [
+			itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
+		]),
 		actions=Actions
 	}, [Header] ++ Results};
 
@@ -189,6 +193,7 @@ fetch(D, _From, _Size, [
 	%
 	% init
 	%
+	{ok, ExamDoc} = ep_osm_exam_api:get(OsmExamId),
 	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
 		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY
 	),
@@ -298,6 +303,9 @@ fetch(D, _From, _Size, [
 	% return
 	%
 	{D#dig {
+		description=io_lib:format("~s / ~s", [
+			itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
+		]),
 		actions=Actions
 	}, [Header] ++ Results};
 
@@ -1193,6 +1201,10 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 			#p {
 				style="font-size: 1.5em; margin: 0px;",
 				text=ep_core_subject_api:getname(itf:val(ExamDoc, subject_code_fk))
+			},
+			#p {
+				style="font-size: 1.5em; margin: 0px;",
+				text=itf:val(ExamDoc, testname)
 			},
 			#p {
 				style="font-size: 2em; margin: 0px;",

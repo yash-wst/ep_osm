@@ -65,8 +65,11 @@ fs(view) ->
 fs(create) ->
 	fs(basic);
 
-fs(edit) ->
-	fs(basic);
+fs(edit) -> [
+	?OSMBDL(inwardstate),
+	?OSMBDL(scanningstate),
+	?OSMBDL(uploadstate)
+];
 
 fs(update) ->
 	fs(basic);

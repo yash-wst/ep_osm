@@ -21,6 +21,11 @@ heading() ->
 form() ->
 	ep_osm_bundle.
 
+digmm_actions() -> [
+	?F(view, "View"),
+	?F(edit, "Edit")
+].
+
 %------------------------------------------------------------------------------
 % records
 %------------------------------------------------------------------------------
@@ -64,7 +69,7 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?CASE_IF_THEN_ELSE(wf:q(mode), undefined, ?VIEW, wf:q(mode)),
+		mode=?VIEW,
 		module=?MODULE,
 		filters=[
 			?OSMBDL(osm_exam_fk),
@@ -117,6 +122,8 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+event(action_new) ->
+	helper_ui:flash(error, "Cannot create bundle here. Please use DTP login.", 5);
 event(E) ->
 	dig_mm:event(E).
 
