@@ -58,7 +58,7 @@ get() ->
 		events=[
 			ite:button(email_export, "Email CSV", {itx, {dig, email_export}})
 		],
-		size=50
+		size=25
 	}.
 
 
@@ -261,17 +261,9 @@ fetch(D, From, Size, Fs) ->
 
 
 	%
-	% get stats concurrently
+	% get stats
 	%
-	ConcurrentStats = itx:exec(
-		#itxexec {
-			type=concurrent,
-			module=?MODULE,
-			function= fun get_evaluation_stats0/1,
-			items=Docs,
-			batch_size=25
-		}
-	),
+	AllStats = get_evaluation_stats0(Docs),
 
 
 
@@ -341,7 +333,7 @@ fetch(D, From, Size, Fs) ->
 		end, states())
 
 
-	end, ConcurrentStats),
+	end, AllStats),
 
 
 	%
