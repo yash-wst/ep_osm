@@ -205,12 +205,12 @@ fetch(D, _From, _Size, [
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, []) ->
+fetch(D, From, Size, []) ->
 	Fs = [
 		fields:build(teststatus, ?ACTIVE)
 	],
 
-	{D1, Results} = fetch(D, 0, ?INFINITY, Fs),
+	{D1, Results} = fetch(D, From, Size, Fs),
 
 
 	{

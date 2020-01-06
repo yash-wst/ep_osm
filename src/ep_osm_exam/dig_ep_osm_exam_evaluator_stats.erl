@@ -91,11 +91,11 @@ fetch(D, From, Size, [
 % []
 %
 %..............................................................................
-fetch(D, _From, _Size, []) ->
+fetch(D, From, Size, []) ->
 	Fs = [
 		fields:build(teststatus, ?ACTIVE)
 	],
-	fetch(D, 0, ?INFINITY, Fs);
+	fetch(D, From, Size, Fs);
 
 
 
