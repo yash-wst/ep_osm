@@ -53,7 +53,7 @@ get() ->
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
 			fields:get(exam_pattern),
-			itf:hidden(osm_exam_fk)
+			itf:build(itf:hidden(osm_exam_fk), wf:q(id))
 		],
 		events=[
 			ite:button(email_export, "Email CSV", {itx, {dig, email_export}})
@@ -194,7 +194,8 @@ fetch(D, _From, _Size, [
 	%
 	{
 		D#dig {
-			total=length(ProfileDocs)
+			total=length(ProfileDocs),
+			description=itf:val(TFs, testname)
 		},
 		[Header] ++ dig:append_total_cells(ResultsSorted)
 	};
@@ -312,9 +313,14 @@ fetch(D, From, Size, Fs) ->
 			},
 			#dcell {
 				val=itl:blockquote([
-					itf:val(Doc, anptestcourseid)
+					#link {
+						new=true,
+						url=io_lib:format("/dig_ep_osm_exam_evaluation_stats?id=~s", [
+							itf:idval(Doc)
+						]),
+						text=itf:val(Doc, anptestcourseid)
+					}
 				]),
-				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))},
 				val_export=itf:val(Doc, anptestcourseid)
 			},
 			dcell_days_since_test(TodaySeconds, Doc)
