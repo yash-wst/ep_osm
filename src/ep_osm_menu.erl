@@ -9,7 +9,8 @@ menu(?APPOSM_CONTROLLER) ->
 			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Statistics")},
 			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Exam Evaluation Statistics")},
 			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Exam Evaluator Statistics")},
-			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Statistics")}
+			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Statistics")},
+			{dig_rds_payments, ?VIEW, ?LN("Payments")}
 		]}
 	];
 
