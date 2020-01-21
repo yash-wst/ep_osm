@@ -217,7 +217,8 @@ fetch(D, From, Size, []) ->
 	{
 		D1#dig {
 			actions=[
-				{show_send_reminder, "Send Reminder", "Send Reminder"}
+				{show_send_reminder, "Send Reminder", "Send Reminder"},
+				{reset_forgotten_active, "Rest Forgotten Active Booklets", "Rest Forgotten Active Booklets"}
 			]
 		},
 		Results
@@ -418,6 +419,12 @@ dcell_days_since_test(TodaySeconds, Doc) ->
 % events
 %------------------------------------------------------------------------------
 
+event({confirmation_yes, reset_forgotten_active}) ->
+	handle_reset_forgotten_active_booklets();
+
+event(reset_forgotten_active) ->
+	itl:confirmation("Are you sure you want to reset forgotten active booklets?", reset_forgotten_active);
+
 event({confirmation_yes, send_reminder}) ->
 	handle_send_reminder_confirmed();
 
@@ -435,6 +442,149 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - reset which are forgotten in active state
+%
+%..............................................................................
+
+
+%
+% reset forgotten - add to queue
+%
+handle_reset_forgotten_active_booklets() ->
+
+	%
+	% init
+	%
+	ForgottenDays = 10,
+	Context = wf_context:context(),
+	itl:modal_close(),
+
+	Fun = fun([]) ->
+		wf_context:context(Context),
+		handle_reset_forgotten_active_booklets(ForgottenDays),
+		dig:log(success, "Task completed")
+	end,
+
+
+	%
+	% add to queue
+	%
+	taskqueue:create(Fun, []),
+	helper_ui:flash(warning, "Added to queue.", 5).
+
+
+
+%
+% reset forgotten - exec for each test
+%
+handle_reset_forgotten_active_booklets(ForgottenDays) ->
+
+	%
+	% init
+	%
+	Today = helper:date_today_str(),
+	TenDaysBeforeToday = helper:date_str_offset(Today, -ForgottenDays),
+
+
+	%
+	% get active tests
+	%
+	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, [fields:build(teststatus, ?ACTIVE)]),
+	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
+
+
+	%
+	% for each test, send reminder
+	%
+	lists:foreach(fun(Doc) ->
+
+		%
+		% init
+		%
+		Testname = io_lib:format("~s / ~s", [
+			itf:val(Doc, anptestcourseid),
+			itf:val(Doc, testname)
+		]),
+		dig:log(warning, "Processing " ++ Testname),
+
+
+		#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+			anpcandidates:db(itf:idval(Doc)), [
+				fields:build(anpstate, "anpstate_active")
+			], 0, ?INFINITY
+		),
+		handle_reset_forgotten_active_booklets(Doc, TenDaysBeforeToday, CandidateDocs)
+	end, Docs).
+
+
+
+%
+% reset forgotten - identify docs
+%
+handle_reset_forgotten_active_booklets(_ExamDoc, _TenDaysBeforeToday, []) ->
+	skip;
+handle_reset_forgotten_active_booklets(ExamDoc, TenDaysBeforeToday, CandidateDocs) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(itf:idval(ExamDoc)),
+
+	%
+	% filter out docs where last comment is older than 10 days from today
+	%
+	CandidateDocsToReset = lists:filter(fun(CandidateDoc) ->
+
+		%
+		% get last comment date
+		%
+		Comments = itf:val(CandidateDoc, fields:get(comments)),
+		case Comments of
+			[] ->
+				false;
+			_ ->
+				{Signature, _Comment} = lists:last(Comments),
+				[Date, _Time, _IP, _Role] = string:tokens(Signature, " "),
+				[YYYY, MM, DD] = string:tokens(Date, "/"),
+				LastCommentDate = string:join([YYYY, MM, DD], "-"),
+				LastCommentDate < TenDaysBeforeToday
+		end
+	end, CandidateDocs),
+	handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset).
+
+
+
+%
+% reset forgotten - reset
+%
+handle_reset_forgotten_active_booklets_reset(_ExamDb, []) ->
+	skip;
+handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset) ->
+	%
+	% reset
+	%
+	dig:log(warning, io_lib:format("~p booklets will be reset", [length(CandidateDocsToReset)])),
+	LoLFs = lists:map(fun(CandidateDoc) ->
+		Fs = helper_api:doc2fields({ok, CandidateDoc}),
+		Fs1 = fields:listdelete(Fs, anpcandidate:fids_reset() ++ [
+			anpstate
+		]),
+		Fs1 ++ [
+			fields:build(anpstate, "anpstate_yettostart")
+		]
+	end, CandidateDocsToReset),
+
+	%
+	% save
+	%
+	{ok, SaveRes} = anpcandidates:updateall(ExamDb, LoLFs),
+	{Oks, Errors} = db_helper:bulksave_summary(SaveRes),
+	dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [Oks, Errors])).
+
+
 
 %..............................................................................
 %
