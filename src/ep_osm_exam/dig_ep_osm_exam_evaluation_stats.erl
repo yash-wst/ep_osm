@@ -702,7 +702,7 @@ handle_send_reminder_confirmed(RoleId, Doc, _, _AnpCheckState) ->
 	%
 	ProfileIds = anpcandidates:get_evaluators_for_test(TFs, RoleId),
 	ProfileIdsUnique = helper:unique(ProfileIds),
-	dig:log(danger, io_lib:format("Sending ~p emails & SMS", [length(ProfileIdsUnique)])),
+	dig:log(danger, io_lib:format("Sending ~p SMSes", [length(ProfileIdsUnique)])),
 
 
 	%
@@ -715,7 +715,6 @@ handle_send_reminder_confirmed(RoleId, Doc, _, _AnpCheckState) ->
 	% send notification
 	%
 	lists:foreach(fun(ProfileDoc) ->
-		anptest:send_reminder_email_to_evaluator(TFs, ProfileDoc, SubjectName),
 		anptest:send_reminder_sms_to_evaluator(TFs, ProfileDoc, SubjectName)
 	end, ProfileDocs).
 
