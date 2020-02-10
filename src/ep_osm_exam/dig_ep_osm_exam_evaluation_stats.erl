@@ -316,8 +316,8 @@ fetch(D, From, Size, Fs) ->
 				val=itl:blockquote([
 					#link {
 						new=true,
-						url=io_lib:format("/dig_ep_osm_exam_evaluation_stats?id=~s", [
-							itf:idval(Doc)
+						url=io_lib:format("/~p?id=~s", [
+							wf:page_module(), itf:idval(Doc)
 						]),
 						text=itf:val(Doc, anptestcourseid)
 					}
