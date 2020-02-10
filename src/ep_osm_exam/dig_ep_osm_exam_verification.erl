@@ -216,7 +216,7 @@ fetch(D, _From, _Size, [
 	% get student docs from osm exam db with the specified bundle id
 	%
 	FsToSearchBundle = [
-		% itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
 	],
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
