@@ -58,7 +58,16 @@ get() ->
 			fields:get(exam_pattern),
 			itf:build(itf:hidden(osm_exam_fk), wf:q(id)),
 			itf:build(itf:hidden(osm_bundle_fk), wf:q(bundleid))
-		],
+		] ++
+		case wf:q(id) of
+			ExamId when
+				ExamId /=[],
+				ExamId /= undefined -> [
+					fields:get(anpseatnumber)
+				];
+			_ -> [
+			]
+		end,
 		size=25
 	}.
 
@@ -276,6 +285,90 @@ fetch(D, _From, _Size, [
 		])
 	}, [Header] ++ Results};
 
+
+
+%..............................................................................
+%
+% [osm_exam_fk, anpseatnumber]
+%
+%..............................................................................
+
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=ExamId},
+	#field {id=anpseatnumber, uivalue=SeatNumber}
+]) ->
+
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
+
+
+	%
+	% get student docs from osm exam db with the specified bundle id
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(anpseatnumber)), SeatNumber)
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY
+	),
+
+
+
+	%
+	% results
+	%
+	Results = lists:map(fun(CDoc) ->
+		[
+			#dcell {val=itf:val(CDoc, anp_paper_uid)},
+			#dcell {val=itf:val(CDoc, anpseatnumber)},
+			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
+			#dcell {
+				val=#link {
+					text="View",
+					new=true,
+					url=io_lib:format("/ep_osm_eval_view?mode=view&anpid=~s&anptestid=~s&role=anpevaluator", [
+						itf:idval(CDoc), ExamId
+					])
+				}
+			}
+			% #dcell {
+			% 	val=ite:button(
+			% 		view_scanned_images,
+			% 		"View Images",
+			% 		{view_scanned_images, ExamId, itf:idval(CDoc)}
+			% 	)
+			% }
+		]
+	end, CandidateDocs),
+
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Barcode / UID"},
+		#dcell {type=header, val="Seat No."},
+		#dcell {type=header, val="State"},
+		#dcell {type=header, val="Scanned Images"}
+	],
+
+
+	%
+	% return
+	%
+	{D#dig {
+		total=length(CandidateDocs),
+		description=io_lib:format("~s / ~s / ~s", [
+			SeatNumber,
+			itf:val(ExamDoc, testname),
+			?LN(?L2A(itf:val(ExamDoc, teststatus)))
+		])
+	}, [Header] ++ Results};
 
 
 
