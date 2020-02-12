@@ -67,9 +67,13 @@ get_test(ExamSeasonId, SubjectCode, _SubjectPattern) ->
 		fields:build(anptestcourseid, SubjectCode)
 	],
 
-	#db2_find_response {docs=OsmExamDocs} = db2_find:get_by_fs(anptests:getdb(), FsFind, 0, ?INFINITY),
+	#db2_find_response {docs=OsmExamDocs0} = db2_find:get_by_fs(anptests:getdb(), FsFind, 0, ?INFINITY),
 
-	?ASSERT(length(OsmExamDocs) == 1, "Test not/multiple found."),
+	OsmExamDocs = lists:filter(fun (TDoc) ->
+		itf:val(TDoc, teststatus) == ?COMPLETED
+	end, OsmExamDocs0),
+
+	?ASSERT(length(OsmExamDocs) == 1, "No or multiple tests found."),
 	[TDoc] = OsmExamDocs,
 	TDoc.
 
