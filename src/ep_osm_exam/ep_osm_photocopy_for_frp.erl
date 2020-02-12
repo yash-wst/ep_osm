@@ -5,6 +5,8 @@
 
 photocopy_url(ExamSeasonId, SubjectCode, SubjectPattern, PRN) ->
 
+	wf_context:init_context(undefined),
+
 	Bucket = configs:get(aws_s3_bucket, []),
 	Region = configs:get(aws_s3_region, "s3.ap-south-1.amazonaws.com"),
 
