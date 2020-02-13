@@ -23,6 +23,7 @@ heading() ->
 % records
 %------------------------------------------------------------------------------
 
+-define(BATCH_SIZE, 100).
 
 
 %------------------------------------------------------------------------------
@@ -52,6 +53,9 @@ get() ->
 			itf:hidden(osm_exam_fk)
 		],
 		size=10,
+		actions=[
+			{export_evaluator_stats_bulk, "Bulk Export Evaluator Stats", "Bulk Export Evaluator Stats"}
+		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
 		]
@@ -309,6 +313,10 @@ layout_cell(RoleId, StatsDict, ProfileIds) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(export_evaluator_stats_bulk) ->
+	handle_export_evaluator_stats_bulk();
+
 event({itx, E}) ->
 	ite:event(E).
 
@@ -317,6 +325,136 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - bulk export evaluator stats
+%
+%..............................................................................
+
+handle_export_evaluator_stats_bulk() ->
+
+	%
+	% init
+	%
+	D = helper:state(dig),
+	Fs = dig:get_nonempty_fs(D#dig.filters),
+
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter."
+	),
+
+	%
+	% create
+	%
+	Context = wf_context:context(),
+	Fun = fun({Fs1, Email}) ->
+		wf_context:context(Context),
+		handle_export_evaluator_stats_bulk(Fs1, Email)
+	end,
+
+
+	%
+	% add to task queue
+	%
+	taskqueue:create(Fun, {Fs, itxauth:email()}),
+	helper_ui:flash("Added to task queue. Please check email for zip file.").
+
+
+
+handle_export_evaluator_stats_bulk(Fs, Email) ->
+
+	%
+	% init
+	%
+	dig:log(info, "Starting task ..."),
+	Uid = helper:uidintstr(),
+	Dir = "/tmp/" ++ Uid,
+
+
+	%
+	% create dir
+	%
+	helper:cmd("mkdir -p ~s", [Dir]),
+
+
+	%
+	% export in batches
+	%
+	done = handle_export_evaluator_stats_bulk(Fs, Dir, 0),
+
+
+	%
+	% zip and mail dir
+	%
+	helper:zip_mail_clean_dir([Email], Dir, "OSM: Evaluator statistics export"),
+	dig:log(success, "Task completed.").
+
+
+
+handle_export_evaluator_stats_bulk(Fs, Dir, From) ->
+
+
+	%
+	% get docs in batches
+	%
+	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
+	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),
+
+
+
+	%
+	% create csv for every test
+	%
+	lists:foreach(fun(Doc) ->
+
+		%
+		% init
+		%
+		dig:log(warning, io_lib:format("Processing ... ~s", [itf:val(Doc, testname)])),
+
+
+		%
+		% create dig for export
+		%
+		D = #dig {
+			module=dig_ep_osm_exam_evaluation_stats,
+			filters=[
+				itf:build(itf:hidden(osm_exam_fk), itf:idval(Doc))
+			]
+		},
+
+
+		%
+		% create file
+		%
+		{_Name, FilePath} = handle_export_evaluator_stats_bulk_create_file(Doc, D),
+		helper:cmd("mv ~s ~s", [FilePath, Dir]),
+		dig:log(success, io_lib:format("Created ~s", [FilePath]))
+
+
+	end, Docs),
+
+
+	%
+	% termination condiction
+	%
+	case length(Docs) < ?BATCH_SIZE of
+		true ->
+			done;
+		_ ->
+			handle_export_evaluator_stats_bulk(Fs, Dir, From + ?BATCH_SIZE)
+	end.
+
+
+
+handle_export_evaluator_stats_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
+	{Name, FilePath} = dig:get_filename_path(io_lib:format("~s_~s_~s", [
+		itf:val(Doc, anptestcourseid), itf:val(Doc, testname), dig:export_filename(D)
+	])),
+	dig:handle_export(Name, FilePath, D, Fs).
 
 
 
