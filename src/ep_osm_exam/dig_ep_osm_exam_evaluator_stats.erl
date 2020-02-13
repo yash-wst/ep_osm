@@ -51,7 +51,10 @@ get() ->
 			fields:get(exam_pattern),
 			itf:hidden(osm_exam_fk)
 		],
-		size=50
+		size=10,
+		events=[
+			ite:button(export, "CSV", {itx, {dig, export}})
+		]
 	}.
 
 
