@@ -207,7 +207,7 @@ fetch(D, _From, _Size, [
 			total=length(ProfileDocs),
 			description=itf:val(TFs, testname)
 		},
-		[Header] ++ dig:append_total_cells(ResultsSorted)
+		[Header] ++ tl(dig:append_total_cells(ResultsSorted))
 	};
 
 
@@ -871,23 +871,27 @@ get_eval_count_for_profile("unassigned", {ok, Val}, State, _) when
 	State == "anpstate_discarded";
 	State == "anpstate_moderation" ->
 	Val;
-get_eval_count_for_profile(_, {ok, Val}, State, "anpevaluator") when
-	State == "anpstate_yettostart";
-	State == "anpstate_active";
-	State == "anpstate_completed";
-	State == "anpstate_evaluation_rejected" ->
-	Val;
-get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator") when
-	State == "anpstate_moderation";
-	State == "anpstate_moderation_completed" ->
-	Val;
-get_eval_count_for_profile(_, {ok, Val}, State, "anprevaluator") when
-	State == "anpstate_revaluation";
-	State == "anpstate_revaluation_completed" ->
-	Val;
-get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator_reval") when
-	State == "anpstate_moderation_reval";
-	State == "anpstate_moderation_reval_completed" ->
+get_eval_count_for_profile("unassigned", _, _, _) ->
+	0;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anpevaluator") when
+% 	State == "anpstate_yettostart";
+% 	State == "anpstate_active";
+% 	State == "anpstate_completed";
+% 	State == "anpstate_evaluation_rejected" ->
+% 	Val;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator") when
+% 	State == "anpstate_moderation";
+% 	State == "anpstate_moderation_completed" ->
+% 	Val;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anprevaluator") when
+% 	State == "anpstate_revaluation";
+% 	State == "anpstate_revaluation_completed" ->
+% 	Val;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator_reval") when
+% 	State == "anpstate_moderation_reval";
+% 	State == "anpstate_moderation_reval_completed" ->
+% 	Val;
+get_eval_count_for_profile(_, {ok, Val}, _State, _Role) ->
 	Val;
 get_eval_count_for_profile(_, _, _, _) ->
 	0.
