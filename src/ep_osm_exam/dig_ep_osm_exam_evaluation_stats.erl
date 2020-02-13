@@ -56,7 +56,7 @@ get() ->
 			itf:build(itf:hidden(osm_exam_fk), wf:q(id))
 		],
 		events=[
-			ite:button(email_export, "Email CSV", {itx, {dig, email_export}})
+			ite:button(export, "CSV", {itx, {dig, export}})
 		],
 		size=25
 	}.
@@ -138,17 +138,26 @@ fetch(D, _From, _Size, [
 		% get stats per profile
 		%
 		[
-			#dcell {val=#link {
-				new=true,
-				body=itl:blockquote([
-					itf:val(ProfileDoc, fullname),
+			#dcell {
+				val=#link {
+					new=true,
+					body=itl:blockquote([
+						itf:val(ProfileDoc, fullname),
+						itf:val(ProfileDoc, mobile),
+						itf:val(ProfileDoc, email)
+					]),
+					url=io_lib:format("/anptest?mode=status_~s&anptestid=~s&profileid=~s", [
+						Role, ExamId, ProfileId
+					])
+				},
+				val_export=io_lib:format("~s / ~s", [
 					itf:val(ProfileDoc, mobile),
-					itf:val(ProfileDoc, email)
-				]),
-				url=io_lib:format("/anptest?mode=status_~s&anptestid=~s&profileid=~s", [
-					Role, ExamId, ProfileId
+					itf:val(ProfileDoc, fullname)
 				])
-			}}
+			},
+			#dcell {
+				val=?LN(?L2A(itf:val(ProfileDoc, profiletype)))
+			}
 		] ++ lists:map(fun(State) ->
 			Val = get_eval_count_for_profile(
 				ProfileId,
@@ -170,7 +179,8 @@ fetch(D, _From, _Size, [
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Profile"}
+		#dcell {type=header, val="Profile"},
+		#dcell {type=header, val="Role"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
 	end, states()) ++ [
