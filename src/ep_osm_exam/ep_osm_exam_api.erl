@@ -281,14 +281,15 @@ states() -> [
 %------------------------------------------------------------------------------
 % csv - frp
 %------------------------------------------------------------------------------
-
-csv_frp(TestId) ->
+csv_frp(TestId, "profiletype_" ++ RoleType) ->
 
 	%
 	% get candidate docs
 	%
 	TestDb = anpcandidates:db(TestId),
 	CandidateDocs = anpcandidates:getall(TestDb),
+	EvaluatorTotalId = ?L2A(?FLATTEN("total_" ++ RoleType)),
+
 
 	%
 	% filter out unwanted docs
@@ -302,13 +303,33 @@ csv_frp(TestId) ->
 	% csv
 	% prn, name, marks
 	%
-	Lines = lists:map(fun(CDoc) ->
-		string:join([
+	Lines = lists:foldl(fun(CDoc, Acc) ->
+
+		%
+		% create string
+		%
+		Marks = csv_frp_marks(itf:val(CDoc, EvaluatorTotalId)),
+		Line = string:join([
 			itf:val(CDoc, anpseatnumber),
 			itf:val(CDoc, anpfullname),
-			csv_frp_marks(itf:val(CDoc, total_anpevaluator))
-		], ",")
-	end, CandidateDocs1),
+			Marks
+		], ","),
+
+
+		%
+		% do not send ab marks for non-evaluator type
+		%
+		case {Marks, EvaluatorTotalId} of
+			{"ab", total_anpevaluator} ->
+				Acc ++ [Line];
+			{"ab", _} ->
+				Acc;
+			_ ->
+				Acc ++ [Line]
+		end
+
+
+	end, [], CandidateDocs1),
 
 
 	%

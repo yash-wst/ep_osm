@@ -226,8 +226,10 @@ handle_action_upload_to_frp() ->
 	%
 	% build form
 	%
+	FEvaluatorType = fields:get(osm_profiletype),
 	FsUpload = [
-		f(frp_season_fk)
+		f(frp_season_fk),
+		FEvaluatorType#field {label="Upload Marks Of"}
 	],
 	Es = [
 		itl:get(?EDIT, FsUpload, ite:get(upload, "Upload"), table)
@@ -259,6 +261,7 @@ handle_upload() ->
 	Context = wf_context:context(),
 	OsmSeasonFk = wf:q(season_fk),
 	FrpSeasonFk = wf:q(frp_season_fk),
+	OsmEvaluatorType = wf:q(osm_profiletype),
 
 
 	%
@@ -266,7 +269,7 @@ handle_upload() ->
 	%
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		handle_upload(OsmSeasonFk, FrpSeasonFk)
+		handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType)
 	end,
 
 
@@ -278,7 +281,7 @@ handle_upload() ->
 
 
 
-handle_upload(OsmSeasonFk, FrpSeasonFk) ->
+handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType) ->
 
 
 	%
@@ -291,13 +294,38 @@ handle_upload(OsmSeasonFk, FrpSeasonFk) ->
 		get,
 		[FrpSeasonFk]
 	),
+	FrpSeasonType = itf:val(FrpSeasonDoc, type),
+
+
+	%
+	% get regular season doc
+	%
+	FrpSeasonDoc1 = case FrpSeasonType of
+		"revaluation" ->
+			RegularSeasonId = itf:val(FrpSeasonDoc, revaluation_for_exam_season),
+			{ok, FrpSeasonDocRegular} = rpc:call(
+				itxnode:frp(),
+				ep_core_exam_season_api,
+				get,
+				[RegularSeasonId]
+			),
+			FrpSeasonDocRegular;
+		_ ->
+			FrpSeasonDoc
+	end,
+
+
+	%
+	% season should match
+	%
 	?ASSERT(
 		(
-			(itf:val(OsmSeasonDoc, name) == itf:val(FrpSeasonDoc, name)) and
-			(itf:val(OsmSeasonDoc, type) == itf:val(FrpSeasonDoc, type)) and
-			(itf:val(OsmSeasonDoc, state) == itf:val(FrpSeasonDoc, state))
+			(itf:idval(OsmSeasonDoc) == itf:idval(FrpSeasonDoc1)) and
+			(itf:val(OsmSeasonDoc, name) == itf:val(FrpSeasonDoc1, name)) and
+			(itf:val(OsmSeasonDoc, type) == itf:val(FrpSeasonDoc1, type)) and
+			(itf:val(OsmSeasonDoc, state) == itf:val(FrpSeasonDoc1, state))
 		),
-		"Error! Season mismatch. Name, type and state should match between OSM & FRP seasons."
+		"Error! Season mismatch. id, Name, type and state should match between OSM & FRP seasons."
 	),
 
 
@@ -322,14 +350,14 @@ handle_upload(OsmSeasonFk, FrpSeasonFk) ->
 	% handle upload of each exam doc
 	%
 	lists:foreach(fun(Doc) ->
-		handle_upload(OsmSeasonFk, FrpSeasonFk, Doc)
+		handle_upload(OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc)
 	end, Docs).
 
 
 
 
 
-handle_upload(_OsmSeasonFk, FrpSeasonFk, Doc) ->
+handle_upload(_OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc) ->
 
 	%
 	% init
@@ -368,7 +396,7 @@ handle_upload(_OsmSeasonFk, FrpSeasonFk, Doc) ->
 				SubjectCode, Pattern
 			]));
 		[MatchingSubjectDoc] ->
-			handle_upload_marks(FrpSeasonFk, Doc, MatchingSubjectDoc);
+			handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, Doc, MatchingSubjectDoc);
 		_ ->
 			dig:log(error, io_lib:format("Error! Subject (~s, ~s) has multiple documents on result processing system", [
 				SubjectCode, Pattern
@@ -379,13 +407,14 @@ handle_upload(_OsmSeasonFk, FrpSeasonFk, Doc) ->
 
 
 
-handle_upload_marks(FrpSeasonFk, OsmExamDoc, MatchingSubjectDoc) ->
+handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectDoc) ->
 
 	%
 	% init
 	%
+	FrpSeasonFk = itf:idval(FrpSeasonDoc),
+	FrpSeasonType = itf:val(FrpSeasonDoc, type),
 	ExamId = itf:idval(OsmExamDoc),
-	MarkTypeId = end_exam_marks,
 	SubjectId = itf:idval(MatchingSubjectDoc),
 	SubjectCode = itf:val(OsmExamDoc, anptestcourseid),
 	Pattern = itf:val(OsmExamDoc, exam_pattern),
@@ -393,9 +422,19 @@ handle_upload_marks(FrpSeasonFk, OsmExamDoc, MatchingSubjectDoc) ->
 
 
 	%
+	% decide marktype to upload based on exam season type
+	%
+	MarkTypeId = case FrpSeasonType of
+		"revaluation" ->
+			revaluation_marks;
+		_ ->
+			end_exam_marks
+	end,
+
+	%
 	% get results data
 	%
-	{CsvDataSize, CsvData} = ep_osm_exam_api:csv_frp(ExamId),
+	{CsvDataSize, CsvData} = ep_osm_exam_api:csv_frp(ExamId, OsmEvaluatorType),
 
 
 	%
@@ -416,7 +455,9 @@ handle_upload_marks(FrpSeasonFk, OsmExamDoc, MatchingSubjectDoc) ->
 			% update state
 			%
 			FsToSave = [
-				fields:build(result_upload_status, "uploaded")
+				fields:build(result_upload_status, io_lib:format("uploaded ~s, ~p", [
+					OsmEvaluatorType, MarkTypeId
+				]))
 			],
 			{ok, _} = ep_osm_exam_api:save(
 				FsToSave, ep_osm_exam:fs(all), ExamId
