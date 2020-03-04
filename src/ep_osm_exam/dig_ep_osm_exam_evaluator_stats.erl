@@ -90,7 +90,8 @@ init() ->
 fetch(D, From, Size, [
 	#field {id=osm_exam_fk}
 	] = Fs) ->
-	dig_ep_osm_exam_evaluation_stats:fetch(D, From, Size, Fs);
+	{D1, Results} = dig_ep_osm_exam_evaluation_stats:fetch(D, From, Size, Fs),
+	{D1#dig {actions=[]}, Results};
 
 
 %..............................................................................

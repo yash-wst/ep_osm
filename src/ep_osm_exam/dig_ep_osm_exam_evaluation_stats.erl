@@ -96,6 +96,10 @@ fetch(D, _From, _Size, [
 	% init
 	%
 	TFs = anptests:get(ExamId),
+	SeasonName = ep_core_exam_season_api:getname(itf:val(TFs, season_fk)),
+	FacultyName = ep_core_faculty_api:getname(itf:val(TFs, faculty_code_fk)),
+	ProgramName = ep_core_program_api:getname(itf:val(TFs, program_code_fk)),
+	SubjectName = ep_core_subject_api:getname(itf:val(TFs, subject_code_fk)),
 
 
 	%
@@ -138,22 +142,28 @@ fetch(D, _From, _Size, [
 		% get stats per profile
 		%
 		[
+			#dcell {val=SeasonName},
+			#dcell {val=FacultyName},
+			#dcell {val=ProgramName},
+			#dcell {val=SubjectName},
 			#dcell {
 				val=#link {
 					new=true,
 					body=itl:blockquote([
-						itf:val(ProfileDoc, fullname),
-						itf:val(ProfileDoc, mobile),
-						itf:val(ProfileDoc, email)
+						itf:val(ProfileDoc, fullname)
 					]),
 					url=io_lib:format("/anptest?mode=status_~s&anptestid=~s&profileid=~s", [
 						Role, ExamId, ProfileId
 					])
 				},
-				val_export=io_lib:format("~s / ~s", [
-					itf:val(ProfileDoc, mobile),
-					itf:val(ProfileDoc, fullname)
-				])
+				val_export=itf:val(ProfileDoc, fullname)
+			},
+			#dcell {
+				type=label,
+				val=itf:val(ProfileDoc, mobile)
+			},
+			#dcell {
+				val=itf:val(ProfileDoc, email)
 			},
 			#dcell {
 				val=?LN(?L2A(itf:val(ProfileDoc, profiletype)))
@@ -179,7 +189,13 @@ fetch(D, _From, _Size, [
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Profile"},
+		#dcell {type=header, val="Season"},
+		#dcell {type=header, val="Faculty"},
+		#dcell {type=header, val="Program"},
+		#dcell {type=header, val="Subject"},
+		#dcell {type=header, val="Fullname"},
+		#dcell {type=header, val="Mobile"},
+		#dcell {type=header, val="Email"},
 		#dcell {type=header, val="Role"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
