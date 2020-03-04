@@ -29,6 +29,25 @@ heading() ->
 
 
 %------------------------------------------------------------------------------
+% fields
+%------------------------------------------------------------------------------
+
+f(reset_beyond_days = I) ->
+	itf:dropdown(?F(I, "Inactive Days"), itf:options([
+		?F('5'),
+		?F('10')
+	]));
+
+
+f(reset_booklet_state = I) ->
+	itf:dropdown(?F(I, "Reset Booklet State"), itf:options([
+		?F(reset_from_active_to_yet_to_start, "Active to Yet To Start"),
+		?F(reset_from_moderation_to_completed, "Moderation to Completed")
+	])).
+
+
+
+%------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
@@ -244,7 +263,7 @@ fetch(D, From, Size, []) ->
 		D1#dig {
 			actions=[
 				{show_send_reminder, "Send Reminder", "Send Reminder"},
-				{reset_forgotten_active, "Rest Forgotten Active Booklets", "Rest Forgotten Active Booklets"}
+				{show_reset_booklet_state, "Reset Booklet State", "Reset Booklet State"}
 			]
 		},
 		Results
@@ -448,8 +467,8 @@ dcell_days_since_test(TodaySeconds, Doc) ->
 event({confirmation_yes, reset_forgotten_active}) ->
 	handle_reset_forgotten_active_booklets();
 
-event(reset_forgotten_active) ->
-	itl:confirmation("Are you sure you want to reset forgotten active booklets?", reset_forgotten_active);
+event(reset_booklet_state) ->
+	itl:confirmation("Are you sure you want to reset booklet states?", reset_forgotten_active);
 
 event({confirmation_yes, send_reminder}) ->
 	handle_send_reminder_confirmed();
@@ -459,6 +478,9 @@ event(send_reminder) ->
 
 event(show_send_reminder) ->
 	handle_show_send_reminder();
+
+event(show_reset_booklet_state) ->
+	handle_show_reset_booklet_state();
 
 event({itx, E}) ->
 	ite:event(E).
@@ -484,13 +506,14 @@ handle_reset_forgotten_active_booklets() ->
 	%
 	% init
 	%
-	ForgottenDays = 10,
+	ForgottenDays = ?S2I(wf:q(reset_beyond_days)),
+	{FromState, ToState} = get_reset_from_to_states(wf:q(reset_booklet_state)),
 	Context = wf_context:context(),
 	itl:modal_close(),
 
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		handle_reset_forgotten_active_booklets(ForgottenDays),
+		handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}),
 		dig:log(success, "Task completed")
 	end,
 
@@ -506,7 +529,7 @@ handle_reset_forgotten_active_booklets() ->
 %
 % reset forgotten - exec for each test
 %
-handle_reset_forgotten_active_booklets(ForgottenDays) ->
+handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}) ->
 
 	%
 	% init
@@ -539,10 +562,10 @@ handle_reset_forgotten_active_booklets(ForgottenDays) ->
 
 		#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 			anpcandidates:db(itf:idval(Doc)), [
-				fields:build(anpstate, "anpstate_active")
+				fields:build(anpstate, FromState)
 			], 0, ?INFINITY
 		),
-		handle_reset_forgotten_active_booklets(Doc, TenDaysBeforeToday, CandidateDocs)
+		handle_reset_forgotten_active_booklets(Doc, TenDaysBeforeToday, CandidateDocs, {FromState, ToState})
 	end, Docs).
 
 
@@ -550,9 +573,9 @@ handle_reset_forgotten_active_booklets(ForgottenDays) ->
 %
 % reset forgotten - identify docs
 %
-handle_reset_forgotten_active_booklets(_ExamDoc, _TenDaysBeforeToday, []) ->
+handle_reset_forgotten_active_booklets(_ExamDoc, _TenDaysBeforeToday, [], _States) ->
 	skip;
-handle_reset_forgotten_active_booklets(ExamDoc, TenDaysBeforeToday, CandidateDocs) ->
+handle_reset_forgotten_active_booklets(ExamDoc, TenDaysBeforeToday, CandidateDocs, {FromState, ToState}) ->
 
 	%
 	% init
@@ -579,16 +602,16 @@ handle_reset_forgotten_active_booklets(ExamDoc, TenDaysBeforeToday, CandidateDoc
 				LastCommentDate < TenDaysBeforeToday
 		end
 	end, CandidateDocs),
-	handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset).
+	handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset, {FromState, ToState}).
 
 
 
 %
 % reset forgotten - reset
 %
-handle_reset_forgotten_active_booklets_reset(_ExamDb, []) ->
+handle_reset_forgotten_active_booklets_reset(_ExamDb, [], _States) ->
 	skip;
-handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset) ->
+handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset, {_FromState, ToState}) ->
 	%
 	% reset
 	%
@@ -599,7 +622,7 @@ handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset) ->
 			anpstate
 		]),
 		Fs1 ++ [
-			fields:build(anpstate, "anpstate_yettostart")
+			fields:build(anpstate, ToState)
 		]
 	end, CandidateDocsToReset),
 
@@ -823,6 +846,31 @@ handle_show_send_reminder() ->
 
 
 
+%..............................................................................
+%
+% handle - show reset booklet state
+%
+%..............................................................................
+
+handle_show_reset_booklet_state() ->
+
+	%
+	% build
+	%
+	Fs = [
+		f(reset_booklet_state),
+		f(reset_beyond_days)
+	],
+	Es = itl:get(?CREATE, Fs, ite:get(reset_booklet_state, "Reset State"), table),
+
+
+	%
+	% layout
+	%
+	dig_mm:handle_show_action("Reset Booklet State", Es).
+
+
+
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
@@ -952,6 +1000,14 @@ get_class_days_since_test(_) ->
 	"".
 
 
+
+%
+% get reset states
+%
+get_reset_from_to_states("reset_from_active_to_yet_to_start") ->
+	{"anpstate_active", "anpstate_yettostart"};
+get_reset_from_to_states("reset_from_moderation_to_completed") ->
+	{"anpstate_moderation", "anpstate_completed"}.
 
 %------------------------------------------------------------------------------
 % end
