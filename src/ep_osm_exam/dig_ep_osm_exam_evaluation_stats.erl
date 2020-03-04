@@ -77,6 +77,10 @@ get() ->
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
 		],
+		actions=[
+			{show_send_reminder, "Send Reminder", "Send Reminder"},
+			{show_reset_booklet_state, "Reset Booklet State", "Reset Booklet State"}
+		],
 		size=25
 	}.
 
@@ -256,18 +260,7 @@ fetch(D, From, Size, []) ->
 		fields:build(teststatus, ?ACTIVE)
 	],
 
-	{D1, Results} = fetch(D, From, Size, Fs),
-
-
-	{
-		D1#dig {
-			actions=[
-				{show_send_reminder, "Send Reminder", "Send Reminder"},
-				{show_reset_booklet_state, "Reset Booklet State", "Reset Booklet State"}
-			]
-		},
-		Results
-	};
+	fetch(D, From, Size, Fs);
 
 
 
@@ -541,7 +534,12 @@ handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}) ->
 	%
 	% get active tests
 	%
-	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, [fields:build(teststatus, ?ACTIVE)]),
+	SearchFs = filters(),
+	?ASSERT(
+		SearchFs /= [],
+		"Please select at least one search filter before proceeding"
+	),
+	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, SearchFs),
 	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
 
 
@@ -1008,6 +1006,15 @@ get_reset_from_to_states("reset_from_active_to_yet_to_start") ->
 	{"anpstate_active", "anpstate_yettostart"};
 get_reset_from_to_states("reset_from_moderation_to_completed") ->
 	{"anpstate_moderation", "anpstate_completed"}.
+
+
+
+%
+% get filters
+%
+filters() ->
+	Dig = helper:state(dig),
+	dig:get_nonempty_fs(Dig#dig.filters).
 
 %------------------------------------------------------------------------------
 % end
