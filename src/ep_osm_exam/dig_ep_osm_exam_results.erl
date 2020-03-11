@@ -113,7 +113,7 @@ get() ->
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
 			fields:get(exam_pattern),
-			itf:hidden(osm_exam_fk),
+			itf:build(itf:hidden(osm_exam_fk), wf:q(id)),
 			f(exportids)
 		],
 		size=100,
@@ -144,6 +144,17 @@ init() ->
 %------------------------------------------------------------------------------
 % function - fetch
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% [osm_exam_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=exportids}
+]) ->
+	{D, []};
+
 
 %..............................................................................
 %
@@ -292,9 +303,14 @@ fetch(D, From, Size, Fs) ->
 			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
 			#dcell {
 				val=itl:blockquote([
-					itf:val(Doc, anptestcourseid)
-				]),
-				postback={filter, itf:build(?OSMEXM(osm_exam_fk), ExamId)}
+					#link {
+						new=true,
+						url=io_lib:format("/~p?id=~s", [
+							wf:page_module(), ExamId
+						]),
+						text=itf:val(Doc, anptestcourseid)
+					}
+				])
 			}
 		]
 
