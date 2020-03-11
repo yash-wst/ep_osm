@@ -616,7 +616,7 @@ handle_reset_forgotten_active_booklets_reset(ExamDb, CandidateDocsToReset, {_Fro
 	dig:log(warning, io_lib:format("~p booklets will be reset", [length(CandidateDocsToReset)])),
 	LoLFs = lists:map(fun(CandidateDoc) ->
 		Fs = helper_api:doc2fields({ok, CandidateDoc}),
-		Fs1 = fields:listdelete(Fs, anpcandidate:fids_reset() ++ [
+		Fs1 = fields:listdelete(Fs, get_fs_to_reset(ToState) ++ [
 			anpstate
 		]),
 		Fs1 ++ [
@@ -1015,6 +1015,16 @@ get_reset_from_to_states("reset_from_moderation_to_completed") ->
 filters() ->
 	Dig = helper:state(dig),
 	dig:get_nonempty_fs(Dig#dig.filters).
+
+
+
+%
+% get fs to reset
+%
+get_fs_to_reset("anpstate_yettostart") ->
+	anpcandidate:fids_reset();
+get_fs_to_reset(_) ->
+	[].
 
 %------------------------------------------------------------------------------
 % end
