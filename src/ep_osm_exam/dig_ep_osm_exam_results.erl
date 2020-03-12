@@ -116,7 +116,7 @@ get() ->
 			itf:build(itf:hidden(osm_exam_fk), wf:q(id)),
 			f(exportids)
 		],
-		size=100,
+		size=25,
 		actions=[
 			{export_results_bulk, "Bulk Export Results", "Bulk Export Results"}
 		],

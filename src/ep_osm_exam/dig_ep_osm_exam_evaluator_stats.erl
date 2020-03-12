@@ -50,7 +50,7 @@ get() ->
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
 			fields:get(exam_pattern),
-			itf:hidden(osm_exam_fk)
+			itf:build(itf:hidden(osm_exam_fk), wf:q(id))
 		],
 		size=10,
 		actions=[
@@ -169,9 +169,15 @@ fetch(D, From, Size, Fs) ->
 			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
 			#dcell {
 				val=itl:blockquote([
-					itf:val(Doc, anptestcourseid)
+					#link {
+						new=true,
+						url=io_lib:format("/~p?id=~s", [
+							wf:page_module(), itf:idval(Doc)
+						]),
+						text=itf:val(Doc, anptestcourseid)
+					}
 				]),
-				postback={filter, itf:build(?OSMEXM(osm_exam_fk), itf:idval(Doc))}
+				val_export=itf:val(Doc, anptestcourseid)
 			}
 
 		] ++ lists:map(fun(RoleId) ->
@@ -414,6 +420,7 @@ handle_export_evaluator_stats_bulk(Fs, Dir, From) ->
 		%
 		% init
 		%
+		timer:sleep(1000),
 		dig:log(warning, io_lib:format("Processing ... ~s", [itf:val(Doc, testname)])),
 
 
