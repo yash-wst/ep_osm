@@ -171,7 +171,6 @@ fetch(D, From, Size, [
 	% init
 	%
 	ExportIds1 = string:tokens(ExportIds, "\n"),
-	Db = anpcandidates:db(ExamId),
 	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
 	SeasonId = itf:val(ExamDoc, season_fk),
 	ProgramId = itf:val(ExamDoc, program_code_fk),
@@ -191,13 +190,13 @@ fetch(D, From, Size, [
 	%
 	% get total count
 	%
-	Count = db:count(Db),
+	Count = anpcandidates:getdocs_count(ExamId),
 
 
 	%
 	% get docs
 	%
-	Docs = anpcandidates:getdocs(Db, From, Size),
+	Docs = anpcandidates:getdocs_from_to(ExamId, From, Size),
 
 
 	%
