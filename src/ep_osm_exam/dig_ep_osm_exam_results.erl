@@ -406,11 +406,13 @@ val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, Doc, _RdsDoc, Id) when
 	end;
 val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, _Doc, {ok, RdsDoc}, Id) when
 	Id == "prn";
-	Id == "booklet_number" ->
+	Id == "booklet_number";
+	Id == "sticker_uid" ->
 	itf:val(RdsDoc, f(Id));
 val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, _Doc, error, Id) when
 	Id == "prn";
-	Id == "booklet_number" ->
+	Id == "booklet_number";
+	Id == "sticker_uid" ->
 	[];
 val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, Doc, _RdsDoc, Id) ->
 	itf:val(Doc, f(Id)).
