@@ -23,6 +23,8 @@ heading() ->
 % records
 %------------------------------------------------------------------------------
 
+-define(BATCH_SIZE, 100).
+
 
 %------------------------------------------------------------------------------
 % ids
@@ -49,9 +51,6 @@ exportids() -> [
 %------------------------------------------------------------------------------
 % fields
 %------------------------------------------------------------------------------
-
-f(exportids) ->
-	itf:build(itf:textarea(?F(exportids, "Export IDs")), string:join(exportids(), "\n"));
 
 f("season_" ++ Id) ->
 	F = ?COREXS(?L2A(Id)),
@@ -113,8 +112,7 @@ get() ->
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
 			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), wf:q(id)),
-			f(exportids)
+			itf:build(itf:hidden(osm_exam_fk), wf:q(id))
 		],
 		size=25,
 		actions=[
@@ -122,6 +120,15 @@ get() ->
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
+		],
+		instructions=[
+			{ok, "You can add, remove and change the order of export by updating exportids shown below"},
+			{ok, string:join(exportids(), ",\n")},
+			{ok, #link {
+				new=true,
+				text="Change export format",
+				url="/dig_config?keyid=ep_osm_result_exportids"
+			}}
 		]
 	}.
 
@@ -147,11 +154,10 @@ init() ->
 
 %..............................................................................
 %
-% [osm_exam_fk]
+% []
 %
 %..............................................................................
 fetch(D, _From, _Size, [
-	#field {id=exportids}
 ]) ->
 	{D, []};
 
@@ -162,15 +168,20 @@ fetch(D, _From, _Size, [
 %
 %..............................................................................
 fetch(D, From, Size, [
-	#field {id=osm_exam_fk, uivalue=ExamId},
-	#field {id=exportids, uivalue=ExportIds}
+	#field {id=osm_exam_fk, uivalue=ExamId}
 ]) ->
 
 
 	%
 	% init
 	%
-	ExportIds1 = string:tokens(ExportIds, "\n"),
+	DefaultExportIds = string:join(exportids(), ","),
+	ExportIds = string:tokens(
+		itxconfigs:get2(ep_osm_result_exportids, DefaultExportIds), ","
+	),
+	ExportIds1 = lists:map(fun(Id) ->
+		helper:trim(Id)
+	end, ExportIds),
 	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
 	SeasonId = itf:val(ExamDoc, season_fk),
 	ProgramId = itf:val(ExamDoc, program_code_fk),
@@ -263,8 +274,7 @@ fetch(D, From, Size, Fs) ->
 	%
 	% get active tests
 	%
-	Fs1 = itf:fs_delete(Fs, #field{id=exportids}),
-	Docs = ep_osm_exam_api:fetch(From, Size, Fs1),
+	Docs = ep_osm_exam_api:fetch(From, Size, Fs),
 
 
 	%
@@ -352,7 +362,14 @@ exports() -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	dig:dig(?MODULE:get()).
+	[
+		dig:dig(?MODULE:get()),
+		#link {
+			new=true,
+			text="Change Export Format",
+			url="/dig_config?keyid=ep_osm_result_exportids"
+		}
+	].
 
 
 
@@ -360,13 +377,153 @@ layout() ->
 % events
 %------------------------------------------------------------------------------
 event({itx, E}) ->
-	ite:event(E).
+	ite:event(E);
+
+event(export_results_bulk) ->
+	handle_export_results_bulk().
 
 
 
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% handle - bulk export results
+%
+%..............................................................................
+
+handle_export_results_bulk() ->
+
+	%
+	% init
+	%
+	D = helper:state(dig),
+	Fs = dig:get_nonempty_fs(D#dig.filters),
+
+
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter."
+	),
+
+	%
+	% create
+	%
+	Context = wf_context:context(),
+	Fun = fun({Fs1, Email}) ->
+		wf_context:context(Context),
+		handle_export_results_bulk(Fs1, Email)
+	end,
+
+
+	%
+	% add to task queue
+	%
+	taskqueue:create(Fun, {Fs, itxauth:email()}),
+	helper_ui:flash("Added to task queue. Please check email for zip file.").
+
+
+
+handle_export_results_bulk(Fs, Email) ->
+
+	%
+	% init
+	%
+	dig:log(info, "Starting task ..."),
+	Uid = helper:uidintstr(),
+	Dir = "/tmp/" ++ Uid,
+
+
+	%
+	% create dir
+	%
+	helper:cmd("mkdir -p ~s", [Dir]),
+
+
+	%
+	% export in batches
+	%
+	done = handle_export_results_bulk(Fs, Dir, 0),
+
+
+	%
+	% zip and mail dir
+	%
+	helper:zip_mail_clean_dir([Email], Dir, "OSM: Results export"),
+	dig:log(success, "Task completed.").
+
+
+
+handle_export_results_bulk(Fs, Dir, From) ->
+
+
+	%
+	% get docs in batches
+	%
+	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter"
+	),
+	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),
+
+
+
+	%
+	% create csv for every test
+	%
+	lists:foreach(fun(Doc) ->
+
+		%
+		% init
+		%
+		timer:sleep(1000),
+		dig:log(warning, io_lib:format("Processing ... ~s", [itf:val(Doc, testname)])),
+
+
+		%
+		% create dig for export
+		%
+		D = #dig {
+			module=?MODULE,
+			filters=[
+				itf:build(itf:hidden(osm_exam_fk), itf:idval(Doc))
+			]
+		},
+
+
+		%
+		% create file
+		%
+		{_Name, FilePath} = handle_export_results_bulk_create_file(Doc, D),
+		helper:cmd("mv ~s ~s", [FilePath, Dir]),
+		dig:log(success, io_lib:format("Created ~s", [FilePath]))
+
+
+	end, Docs),
+
+
+	%
+	% termination condiction
+	%
+	case length(Docs) < ?BATCH_SIZE of
+		true ->
+			done;
+		_ ->
+			handle_export_results_bulk(Fs, Dir, From + ?BATCH_SIZE)
+	end.
+
+
+
+handle_export_results_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
+	{Name, FilePath} = dig:get_filename_path(io_lib:format("~s_~s_~s", [
+		itf:val(Doc, anptestcourseid), itf:val(Doc, testname), dig:export_filename(D)
+	])),
+	dig:handle_export(Name, FilePath, D, Fs).
+
 
 
 
