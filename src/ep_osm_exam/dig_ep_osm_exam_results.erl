@@ -50,12 +50,14 @@ exportids() -> [
 	"subject_name",
 	"prn",
 	"seatnumber",
+	"evaluation_state",
 	"booklet_number",
 	"sticker_uid",
 	"courseid",
 	"evaluator_total",
 	"moderator_total",
 	"revaluator_total",
+	"total",
 	"marks_per_question"
 ].
 
@@ -86,6 +88,9 @@ f("sticker_uid") ->
 f("seatnumber") ->
 	fields:get(anpseatnumber);
 
+f("evaluation_state") ->
+	fields:get(anpstate);
+
 f("evaluator_total") ->
 	fields:get(total_anpevaluator);
 
@@ -94,6 +99,9 @@ f("moderator_total") ->
 
 f("revaluator_total") ->
 	fields:get(total_anprevaluator);
+
+f("total") ->
+	itf:textbox(?F(total, "Decided Total"));
 
 f("courseid") ->
 	fields:get(anptestcourseid);
@@ -202,7 +210,7 @@ fetch(D, From, Size, [
 	ProgramId = itf:val(ExamDoc, program_code_fk),
 	SubjectId = itf:val(ExamDoc, subject_code_fk),
 	SeatNumberMappingId = itxconfigs_cache:get2(osm_images_folder_id, booklet_number),
-
+	ListOfAllQuestions = get_list_of_questions(ExamDoc),
 
 
 	%
@@ -256,19 +264,29 @@ fetch(D, From, Size, [
 			subjectdoc=SubjectDoc,
 			doc=Doc,
 			rdsdoc=dict:find(SeatNumber, RdsDocsDict),
-			listofquestions=[],
-			evaluatorrole=anpevaluator
+			listofquestions=ListOfAllQuestions,
+			evaluatorrole=get_evaluator_role(Doc)
 		},
 
 
 		%
 		% vals
 		%
-		lists:map(fun(Id) ->
-			#dcell {
-				val=val(RecDoc, Id)
-			}
-		end, ExportIds1)
+		lists:foldl(fun
+			("marks_per_question" = Id, Acc) ->
+				MPQVals = val(RecDoc, Id),
+				Acc ++ lists:map(fun(MPQVal) ->
+					#dcell {
+						val=MPQVal
+					}
+				end, MPQVals);
+			(Id, Acc) ->
+				Acc ++ [
+					#dcell {
+						val=val(RecDoc, Id)
+					}
+				]
+		end, [], ExportIds1)
 
 
 	end, Docs),
@@ -277,13 +295,18 @@ fetch(D, From, Size, [
 	%
 	% header
 	%
-	Header = lists:map(fun(Id) ->
-		#field {label=Label} = f(Id),
-		#dcell {
-			type=header,
-			val=Label
-		}
-	end, ExportIds1),
+	Header = lists:foldl(fun
+		("marks_per_question", Acc) ->
+			Acc;
+		(Id, Acc) ->
+			#field {label=Label} = f(Id),
+			Acc ++ [
+				#dcell {
+					type=header,
+					val=Label
+				}
+			]
+	end, [], ExportIds1) ++ get_question_headers(ListOfAllQuestions),
 
 
 	%
@@ -644,6 +667,16 @@ val(#docs {
 	[];
 
 
+val(#docs {
+	doc=Doc
+}, "evaluation_state" = Id) ->
+	?LN(?L2A(itf:val(Doc, f(Id))));
+
+val(#docs {
+	evaluatorrole=Role
+} = RecDoc, "total" = Id) ->
+	val(RecDoc, ?FLATTEN(Role ++ "_" ++ Id));
+
 
 val(#docs {
 	doc=Doc
@@ -653,21 +686,25 @@ val(#docs {
 
 
 %------------------------------------------------------------------------------
-% get - marks per question
+% misc
 %------------------------------------------------------------------------------
 
 
+%
+% get - marks per question
+%
 get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole) ->
 	%
 	% init
 	%
-	MarkingValues = itf:val(Doc, fields:get(EvaluatorRole)),
+	EvaluatorMarkingId = ?L2A(?FLATTEN(io_lib:format("anpmarking_anp~s", [EvaluatorRole]))),
+	MarkingValues = itf:val(Doc, fields:get(EvaluatorMarkingId)),
 	MarkingValuesDict = dict:from_list(MarkingValues),
 
 	%
 	% get values
 	%
-	Vals = lists:foldl(fun({MarkingId, _QuestionId, _MaxMarks}, Acc) ->
+	lists:foldl(fun({MarkingId, _QuestionId, _MaxMarks}, Acc) ->
 		Val = case dict:find(MarkingId, MarkingValuesDict) of
 			{ok, ObtainedMarksFloatStr} ->
 				ObtainedMarks = helper:s2f_v1(ObtainedMarksFloatStr),
@@ -676,8 +713,60 @@ get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole) ->
 				[]
 		end,
 		Acc ++ [Val]
-	end, [], ListOfAllQuestions),
-	string:join(Vals, "-").
+	end, [], ListOfAllQuestions).
+
+
+
+%
+% get - list of questions
+%
+
+get_list_of_questions(TDoc) ->
+	TFs = helper_api:doc2fields({ok, TDoc}),
+	anp_marking:init_marking_rules(TFs),
+	ListofRules = anp_marking:get_marking_rules(),
+	lists:flatten(anp_marking:getquestion_marks_rules(ListofRules)).
+
+
+
+%
+% get - question headers
+%
+get_question_headers(ListOfAllQuestions) ->
+	lists:map(fun({_MarkingId, QuestionId, MaxMarks}) ->
+		#dcell {
+			type=header,
+			val=[
+				#p {style="margin: 0px;", text=QuestionId},
+				#p {style="margin: 0px;", text=helper:n2s(MaxMarks)}
+			],
+			val_export=string:join([QuestionId, helper:n2s(MaxMarks)], " / ")
+		}
+	end, ListOfAllQuestions).
+
+
+
+%
+% get evaluator role
+%
+get_evaluator_role(Doc) ->
+	case {
+		itf:val(Doc, total_anpmoderator_reval),
+		itf:val(Doc, total_anprevaluator),
+		itf:val(Doc, total_anpmoderator),
+		itf:val(Doc, total_anpevaluator)
+	} of
+		{X, _, _, _} when X /= [] ->
+			"moderator_reval";
+		{_, X, _, _} when X /= [] ->
+			"revaluator";
+		{_, _, X, _} when X /= [] ->
+			"moderator";
+		_ ->
+			"evaluator"
+	end.
+
+
 
 %------------------------------------------------------------------------------
 % end
