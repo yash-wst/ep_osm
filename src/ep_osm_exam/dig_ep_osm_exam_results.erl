@@ -239,7 +239,13 @@ fetch(D, From, Size, [
 	SeatNumbers = lists:map(fun(Doc) ->
 		itf:val(Doc, anpseatnumber)
 	end, Docs),
-	RdsDocs = ep_rds_result_api:get_rds_docs(SeasonId, SubjectId, SeatNumbers, SeatNumberMappingId),
+
+	RdsDocs = case code:ensure_loaded(ep_rds_result_api) of
+		{module, ep_rds_result_api} ->
+			ep_rds_result_api:get_rds_docs(SeasonId, SubjectId, SeatNumbers, SeatNumberMappingId);
+		_ ->
+			[]
+	end,
 	RdsDocsDict = helper:get_dict_from_docs(RdsDocs, SeatNumberMappingId),
 
 
