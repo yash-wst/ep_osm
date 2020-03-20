@@ -25,6 +25,17 @@ heading() ->
 
 -define(BATCH_SIZE, 100).
 
+-record(docs, {
+	examdoc,
+	seasondoc,
+	programdoc,
+	subjectdoc,
+	doc,
+	rdsdoc,
+	listofquestions=[],
+	evaluatorrole
+}).
+
 
 %------------------------------------------------------------------------------
 % ids
@@ -44,7 +55,8 @@ exportids() -> [
 	"courseid",
 	"evaluator_total",
 	"moderator_total",
-	"revaluator_total"
+	"revaluator_total",
+	"marks_per_question"
 ].
 
 
@@ -85,6 +97,9 @@ f("revaluator_total") ->
 
 f("courseid") ->
 	fields:get(anptestcourseid);
+
+f("marks_per_question") ->
+	itf:textbox(?F(marks_per_question, "Marks Per Question"));
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -225,15 +240,37 @@ fetch(D, From, Size, [
 	% layout results
 	%
 	Results = lists:map(fun(Doc) ->
+
+		%
+		% init
+		%
 		SeatNumber = itf:val(Doc, anpseatnumber),
+
+		%
+		% build docs record
+		%
+		RecDoc = #docs {
+			examdoc=ExamDoc,
+			seasondoc=SeasonDoc,
+			programdoc=ProgramDoc,
+			subjectdoc=SubjectDoc,
+			doc=Doc,
+			rdsdoc=dict:find(SeatNumber, RdsDocsDict),
+			listofquestions=[],
+			evaluatorrole=anpevaluator
+		},
+
+
+		%
+		% vals
+		%
 		lists:map(fun(Id) ->
 			#dcell {
-				val=val(
-					ExamDoc, SeasonDoc, ProgramDoc, SubjectDoc,
-					Doc, dict:find(SeatNumber, RdsDocsDict), Id
-				)
+				val=val(RecDoc, Id)
 			}
 		end, ExportIds1)
+
+
 	end, Docs),
 
 
@@ -362,14 +399,7 @@ exports() -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	[
-		dig:dig(?MODULE:get()),
-		#link {
-			new=true,
-			text="Change Export Format",
-			url="/dig_config?keyid=ep_osm_result_exportids"
-		}
-	].
+	dig:dig(?MODULE:get()).
 
 
 
@@ -533,24 +563,56 @@ handle_export_results_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
 
 
 %
-% val
+% vals
 %
-val(ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, _Doc, _RdsDoc, Id) when
+val(#docs {
+	doc=Doc,
+	listofquestions=ListOfAllQuestions,
+	evaluatorrole=EvaluatorRole
+}, Id) when
+	Id == "marks_per_question" ->
+	get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole);
+
+
+
+val(#docs {
+	examdoc=ExamDoc
+}, Id) when
 	Id == "courseid" ->
 	itf:val(ExamDoc, f(Id));
-val(_ExamDoc, SeasonDoc, _ProgramDoc, _SubjectDoc, _Doc, _RdsDoc, Id) when
+
+
+
+val(#docs {
+	seasondoc=SeasonDoc
+}, Id) when
 	Id == "season_name";
 	Id == "season_code" ->
 	itf:val(SeasonDoc, f(Id));
-val(_ExamDoc, _SeasonDoc, ProgramDoc, _SubjectDoc, _Doc, _RdsDoc, Id) when
+
+
+
+val(#docs {
+	programdoc=ProgramDoc
+}, Id) when
 	Id == "program_name";
 	Id == "program_code" ->
 	itf:val(ProgramDoc, f(Id));
-val(_ExamDoc, _SeasonDoc, _ProgramDoc, SubjectDoc, _Doc, _RdsDoc, Id) when
+
+
+
+val(#docs {
+	subjectdoc=SubjectDoc
+}, Id) when
 	Id == "subject_name";
 	Id == "subject_code" ->
 	itf:val(SubjectDoc, f(Id));
-val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, Doc, _RdsDoc, Id) when
+
+
+
+val(#docs {
+	doc=Doc
+}, Id) when
 	Id == "evaluator_total";
 	Id == "moderator_total";
 	Id == "revaluator_total" ->
@@ -560,18 +622,62 @@ val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, Doc, _RdsDoc, Id) when
 			[];
 		_ -> helper:i2s(helper:ceiling(helper:s2f_v1(Val)))
 	end;
-val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, _Doc, {ok, RdsDoc}, Id) when
+
+
+
+val(#docs {
+	rdsdoc={ok, RdsDoc}
+}, Id) when
 	Id == "prn";
 	Id == "booklet_number";
 	Id == "sticker_uid" ->
 	itf:val(RdsDoc, f(Id));
-val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, _Doc, error, Id) when
+
+
+
+val(#docs {
+	rdsdoc=error
+}, Id) when
 	Id == "prn";
 	Id == "booklet_number";
 	Id == "sticker_uid" ->
 	[];
-val(_ExamDoc, _SeasonDoc, _ProgramDoc, _SubjectDoc, Doc, _RdsDoc, Id) ->
+
+
+
+val(#docs {
+	doc=Doc
+}, Id) ->
 	itf:val(Doc, f(Id)).
+
+
+
+%------------------------------------------------------------------------------
+% get - marks per question
+%------------------------------------------------------------------------------
+
+
+get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole) ->
+	%
+	% init
+	%
+	MarkingValues = itf:val(Doc, fields:get(EvaluatorRole)),
+	MarkingValuesDict = dict:from_list(MarkingValues),
+
+	%
+	% get values
+	%
+	Vals = lists:foldl(fun({MarkingId, _QuestionId, _MaxMarks}, Acc) ->
+		Val = case dict:find(MarkingId, MarkingValuesDict) of
+			{ok, ObtainedMarksFloatStr} ->
+				ObtainedMarks = helper:s2f_v1(ObtainedMarksFloatStr),
+				lists:flatten(io_lib:format("~.2f", [ObtainedMarks]));
+			error ->
+				[]
+		end,
+		Acc ++ [Val]
+	end, [], ListOfAllQuestions),
+	string:join(Vals, "-").
 
 %------------------------------------------------------------------------------
 % end
