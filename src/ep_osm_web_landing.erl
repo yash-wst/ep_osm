@@ -5,7 +5,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 main() ->
-	#template {file="./site/templates/bare_entry.html"}.
+	#template {file="lib/itx/priv/static/templates/html/entry.html"}.
 
 title() ->
 	"Examination Processes - On Screen Marking System".
@@ -22,7 +22,6 @@ layout() ->
 
 layout_nav() ->
 	[
-		#h3 {class="mycenter font-weight-bold", text=configs:get(customer_text)},
 		#panel {class="mycenter", body=[
 			#link {class="mylabel", text="Home", url="/ep_osm_web_landing"},
 			#link {class="mylabel", text="Evaluator Login", url="/login"},
