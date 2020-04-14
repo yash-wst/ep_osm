@@ -14,6 +14,7 @@
 -define(APPOSM_EVALUATOR, "anpevaluator").
 -define(APPOSM_MODERATOR, "anpmoderator").
 -define(APPOSM_REVALUATOR, "anprevaluator").
+-define(APPOSM_MODERATOR_REVAL, "anpmoderator_reval").
 
 
 %------------------------------------------------------------------------------
