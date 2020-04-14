@@ -19,7 +19,6 @@ heading() ->
 access(_, ?APPOSM_EVALUATOR) -> true;
 access(_, ?APPOSM_MODERATOR) -> true;
 access(_, ?APPOSM_REVALUATOR) -> true;
-access(_, ?APPOSM_REVALUATOR) -> true;
 access(_, ?APPOSM_MODERATOR_REVAL) -> true;
 access(_, _) -> false.
 
