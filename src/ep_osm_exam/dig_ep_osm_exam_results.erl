@@ -552,6 +552,7 @@ handle_export_results_bulk(Fs, Dir, From) ->
 		%
 		D = #dig {
 			module=?MODULE,
+			size=1000,
 			filters=[
 				itf:build(itf:hidden(osm_exam_fk), itf:idval(Doc))
 			]
