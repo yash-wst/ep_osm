@@ -57,6 +57,7 @@ exportids() -> [
 	"evaluator_total",
 	"moderator_total",
 	"revaluator_total",
+	"moderator_reval_total",
 	"total",
 	"marks_per_question"
 ].
@@ -99,6 +100,9 @@ f("moderator_total") ->
 
 f("revaluator_total") ->
 	fields:get(total_anprevaluator);
+
+f("moderator_reval_total") ->
+	fields:get(total_anpmoderator_reval);
 
 f("total") ->
 	itf:textbox(?F(total, "Decided Total"));
@@ -644,7 +648,8 @@ val(#docs {
 }, Id) when
 	Id == "evaluator_total";
 	Id == "moderator_total";
-	Id == "revaluator_total" ->
+	Id == "revaluator_total";
+	Id == "moderator_reval_total" ->
 	Val = itf:val(Doc, f(Id)),
 	case Val of
 		[] ->
