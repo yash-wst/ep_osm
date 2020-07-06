@@ -23,19 +23,21 @@ layout() ->
 layout_nav() ->
 	[
 		#panel {class="mycenter", body=[
-			#link {class="mylabel", text="Home", url="/ep_osm_web_landing"},
-			#link {class="mylabel", text="Evaluator Login", url="/login"},
-			#link {class="mylabel", text="Controller Login", url="/itxlogin"},
-			#link {class="mylabel", text="DTP Login", url="/itxlogin"},
-			#hr{}
+			#link {class="btn btn-link", text="Home", url="/ep_osm_web_landing"},
+			#link {class="btn btn-link", text="Admin Login", url="/login"},
+			#link {class="btn btn-link", text="Evaluator Login", url="/login"},
+			#link {class="btn btn-link", text="Controller Login", url="/itxlogin"},
+			#link {class="btn btn-link", text="DTP Login", url="/itxlogin"}
 		]}
     ].
 
 layout_body() ->
-	[
-		#p {class="lead mycenter", text="Notices"},
-		layout:g(8, 2, body())
-	].
+	#panel {
+		style="padding-top: 2rem;",
+		body=[
+			layout:g(8, 2, body())
+		]
+	}.
 
 
 
@@ -48,7 +50,10 @@ body(Html, ?ADMIN) ->
 	itl:get(?EDIT, [F], ite:get(edit), simple);
 
 body([], _) ->
-	[];
+	itl:section(#p {
+		class="mycenter",
+		text="Welcome to On-Screen Marking System"
+	});
 body(Html, _) ->
 	itl:section(Html).
 

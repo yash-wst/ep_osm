@@ -415,8 +415,8 @@ layout_upload_form(BundleDoc, _) ->
 		helper:uidintstr()
 	])),
 
-	RedirectUrl = ?FLATTEN(io_lib:format("~s/~p?id=~s&digx=~s&objectkey=~s", [
-		customer:get(mainserver_url),
+	RedirectUrl = ?FLATTEN(io_lib:format("https://~s/~p?id=~s&digx=~s&objectkey=~s", [
+		wf:host(),
 		?MODULE,
 		wf:q(id),
 		wf:q(digx),
