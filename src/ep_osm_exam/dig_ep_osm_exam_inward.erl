@@ -416,7 +416,7 @@ layout_upload_form(BundleDoc, _) ->
 	])),
 
 	RedirectUrl = ?FLATTEN(io_lib:format("https://~s/~p?id=~s&digx=~s&objectkey=~s", [
-		wf:host(),
+		wf:header(host),
 		?MODULE,
 		wf:q(id),
 		wf:q(digx),
