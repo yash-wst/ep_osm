@@ -38,7 +38,7 @@ fi
 #
 # convert all jpegs into pdf
 #
-convert -limit memory 32MiB -limit map 64MiB $FNAMES combined.pdf
+convert -limit memory 32MiB -limit map 64MiB -size 900x1800 $FNAMES combined.pdf
 
 
 #
