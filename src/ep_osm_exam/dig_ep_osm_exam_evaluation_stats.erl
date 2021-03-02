@@ -796,8 +796,8 @@ handle_send_reminder() ->
 
 
 
-	case AuditDocs of
-		[] ->
+	case length(AuditDocs) < itxconfigs_cache:get2(ep_osm_evaluation_reminders, 2) of
+		true ->
 			%
 			% get active tests
 			%
