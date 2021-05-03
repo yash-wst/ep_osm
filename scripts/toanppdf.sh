@@ -13,7 +13,7 @@ FNAMES=${10}
 
 
 CPDF=`pwd`/lib/itx/scripts/cpdf/cpdf
-SDIR=`pwd`/scripts
+SDIR=`pwd`/lib/ep_osm/scripts
 TMP=/tmp
 DIR=$TMP/$TID/$SNO
 mkdir -p $DIR
@@ -30,7 +30,7 @@ cd $DIR
 # add evaluator canvas marking to images if specified
 #
 if [ "true" == "$SHOW_MARKING" ]; then
-	node $SDIR/anp/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT
+	node $SDIR/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT
 fi
 
 
