@@ -26,14 +26,23 @@ oex.createImages = function(list) {
 	}
 };
 
-oex.createPNG = function(imageName, imageJson) {
+oex.createPNG = function(imageName, imageJson0) {
 
-	// console.log(imageName);
-	// console.log(imageJson);
+	//
+	// init
+	//
+	var Width = 1300;
+	var Height = 900;
+	var canvas = new fabric.StaticCanvas(null, {width:Width, height:Height});
+	imageJson = JSON.parse(imageJson0);
+	imageJson.backgroundImage.width = null;
+	imageJson.backgroundImage.height = null;
 
-	var canvas = new fabric.StaticCanvas(null, {width:900,height:1800});
 
 	canvas.loadFromJSON(imageJson, function() {
+
+		canvas.backgroundImage.scaleToWidth(Width);
+		canvas.backgroundImage.scaleToHeight(Height);
 		canvas.renderAll();
 
 		var out = fs.createWriteStream(imageName);
