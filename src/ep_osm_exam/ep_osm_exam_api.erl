@@ -239,6 +239,48 @@ get_evaluation_stats(TestId, Role) ->
 
 
 
+get_evaluator_answerpaper_count(TestId, Role, ProfileId, AnswerPaperState) ->
+
+	%
+	% init
+	%
+	ViewName = case Role of
+		"anpevaluator" ->
+			"state_assigned";
+		_ ->
+			"state_assigned_" ++ Role
+	end,
+	SK = [?L2B(AnswerPaperState), ?L2B(ProfileId)],
+	EK = [?L2B(AnswerPaperState), ?L2B(ProfileId)],
+
+
+
+	%
+	% query
+	%
+	Res = try
+		itxview:get_stats(
+			anpcandidates:db(TestId), ViewName, SK, EK, 1
+		)
+	catch error:{badmatch,{error,not_found}} ->
+		anptests:setup(TestId),
+		itxview:get_stats(
+			anpcandidates:db(TestId), ViewName, SK, EK, 1
+		)
+	end,
+
+
+	%
+	% return
+	%
+	case Res of
+		[] ->
+			0;
+		[{[AnswerPaperState], Count}] ->
+			Count
+	end.
+
+
 %------------------------------------------------------------------------------
 % stats - bundle evaluation
 %------------------------------------------------------------------------------
