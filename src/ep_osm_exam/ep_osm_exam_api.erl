@@ -302,6 +302,36 @@ get_bundle_evaluation_stats(TestId) ->
 	end.
 
 
+%------------------------------------------------------------------------------
+% eva
+%------------------------------------------------------------------------------
+
+getstats_evaldate_profileid(TestId, Evaldate, ProfileId) ->
+
+	%
+	% init
+	%
+	ViewName = "eval_date_assigned",
+	SK = [?L2B(Evaldate), ?L2B(ProfileId)],
+	EK = [?L2B(Evaldate), ?L2B(ProfileId)],
+
+
+
+	%
+	% query
+	%
+	try
+		itxview:get_stats(
+			anpcandidates:db(TestId), ViewName, SK, EK, 2
+		)
+	catch error:{badmatch,{error,not_found}} ->
+		anptests:setup(TestId),
+		itxview:get_stats(
+			anpcandidates:db(TestId), ViewName, SK, EK, 2
+		)
+	end.
+
+
 
 
 %------------------------------------------------------------------------------
