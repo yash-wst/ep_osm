@@ -139,7 +139,7 @@ get() ->
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
 			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), wf:q(id))
+			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
 		],
 		size=25,
 		actions=[

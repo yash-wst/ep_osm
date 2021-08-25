@@ -72,7 +72,7 @@ get() ->
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
 			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), wf:q(id))
+			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
@@ -277,7 +277,7 @@ fetch(D, From, Size, Fs) ->
 	%
 	Today = helper:date_today_str(),
 	TodaySeconds = helper:date_d2epoch(Today),
-	Size1 = case wf:q(size) of
+	Size1 = case itxcontext:q(size) of
 		undefined ->
 			Size;
 		Size0 ->
