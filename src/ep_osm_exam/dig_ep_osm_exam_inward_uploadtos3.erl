@@ -26,7 +26,12 @@ upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath0) ->
 		%
 		% init
 		%
-		wf_context:context(Context),
+		case Context of
+			undefined ->
+				skip;
+			_ ->
+				wf_context:context(Context)
+		end,
 
 
 		%

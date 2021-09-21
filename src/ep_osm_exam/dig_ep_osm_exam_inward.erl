@@ -634,6 +634,30 @@ finish_upload_event_inward(_Id, Filename, Fileloc, _Node) ->
 	dig_ep_osm_exam_inward_uploadtos3:upload(S3Dir, DirNamesToUpload, Filename, Fileloc).
 
 
+
+finish_upload_event_inward_minijob(ObjectKey) ->
+
+	%
+	% init
+	%
+	ExamId = wf:q(osm_exam_fk),
+	OsmBundleId = wf:q(osm_bundle_fk),
+	{ok, ExamDoc} = anptests:getdoc(ExamId),
+	S3Dir = itf:val(ExamDoc, aws_s3_dir),
+
+
+	{ok, Doc} = minijob_ep_osm_exam_uploadtos3:create_and_run([
+		itf:build(?OSMEXM(osm_exam_fk), ExamId),
+		itf:build(?OSMBDL(osm_bundle_fk), OsmBundleId),
+		itf:build(minijob_ep_osm_exam_uploadtos3:f(objectkey), ObjectKey),
+		itf:build(minijob_ep_osm_exam_uploadtos3:f(aws_s3_dir), S3Dir)
+	]),
+
+
+	minijob_status:show_status(Doc).
+
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
@@ -643,6 +667,7 @@ event(export_bundle_dir) ->
 
 event({browser_to_s3_completed, _BundleDoc, ObjectKey}) ->
 	finish_upload_event_inward(undefined, ObjectKey, undefined, undefined);
+	% finish_upload_event_inward_minijob(ObjectKey);
 
 
 event(action_import) ->
