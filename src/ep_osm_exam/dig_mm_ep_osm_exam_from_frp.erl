@@ -427,9 +427,9 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	%
 	case OsmExamDocs of
 		[] ->
-			S3Dir = ?FLATTEN(io_lib:format("~s/~s", [
+			S3Dir = ep_osm_exam_api:s3dir(
 				itf:val(OsmSeasonDoc, code), SubjectCode
-			])),
+			),
 			FsToCreate = [
 				fields:build(season_fk, SeasonId),
 				fields:build(aws_s3_dir, S3Dir),

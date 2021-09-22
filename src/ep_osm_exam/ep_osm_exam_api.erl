@@ -420,6 +420,30 @@ csv_frp_marks(Str) ->
 
 
 
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+s3dir(SeasonCode, SubjectCode) ->
+	?ASSERT(
+		SeasonCode /= [],
+		"season code is empty!"
+	),
+
+	?ASSERT(
+		SubjectCode /= [],
+		"season code is empty!"
+	),
+
+
+	S3Dir = ?FLATTEN(io_lib:format("~s/~s/~s", [
+		db_domain:host(), SeasonCode, SubjectCode
+	])),
+
+
+	S3Dir.
+
+
 
 
 %------------------------------------------------------------------------------

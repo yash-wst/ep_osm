@@ -432,10 +432,9 @@ handle_import_csv_to_fs(List) ->
 		{ok, FacDoc} = dict:find(FacultyCode, DictFac),
 		{ok, PgmDoc} = dict:find(ProgramCode, DictPgm),
 		{ok, SubDoc} = dict:find(SubjectCode, DictSub),
-		S3Dir = ?FLATTEN(io_lib:format("~s/~s", [
-			SeasonCode,
-			itf:val(SubDoc, subject_code)
-		])),
+		S3Dir = ep_osm_exam_api:s3dir(
+			SeasonCode, itf:val(SubDoc, subject_code)
+		),
 
 
 		%
