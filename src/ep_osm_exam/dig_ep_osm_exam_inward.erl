@@ -666,8 +666,13 @@ event(export_bundle_dir) ->
 	handle_export_bundle_dir(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
 
 event({browser_to_s3_completed, _BundleDoc, ObjectKey}) ->
-	finish_upload_event_inward(undefined, ObjectKey, undefined, undefined);
-	% finish_upload_event_inward_minijob(ObjectKey);
+	case configs:getbool(dig_import_via_minijob, false) of
+		true ->
+			finish_upload_event_inward(undefined, ObjectKey, undefined, undefined);
+		false ->
+			finish_upload_event_inward_minijob(ObjectKey)
+	end;
+
 
 
 event(action_import) ->
