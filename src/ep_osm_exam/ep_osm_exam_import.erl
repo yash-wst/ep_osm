@@ -28,7 +28,7 @@ handle_import_validate(List) ->
 
 handle_import_validate_seasonid() ->
 
-	SeasonId = wf:q(import_season_fk),
+	SeasonId = get_import_season_fk(),
 	?ASSERT(
 		import_validation,
 		((SeasonId /= []) and (SeasonId /= undefined)),
@@ -389,8 +389,7 @@ handle_import_csv_to_fs(List) ->
 	%
 	% init
 	%
-	SeasonId = wf:q(import_season_fk),
-	?D(SeasonId),
+	SeasonId = get_import_season_fk(),
 	{ok, SeasonDoc} = ep_core_exam_season_api:get(SeasonId),
 	SeasonCode = itf:val(SeasonDoc, code),
 	?ASSERT(
@@ -500,6 +499,14 @@ get_docs_dict(List, Index, CodeType, FetchFn) ->
 
 
 
+
+
+%
+% get import season fk
+%
+
+get_import_season_fk() ->
+	minijobcontext:q(import_season_fk).
 
 
 %------------------------------------------------------------------------------
