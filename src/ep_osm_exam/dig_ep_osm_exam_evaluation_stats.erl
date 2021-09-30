@@ -644,11 +644,29 @@ handle_send_reminder_confirmed() ->
 	%
 	% init
 	%
-	Context = wf_context:context(),
-	itl:modal_close(),
 	"profiletype_" ++ ProfileType = wf:q(osm_profiletype),
 	RoleId = ?L2A(ProfileType),
 
+
+	case configs:getbool(process_via_minijob, false) of
+		false ->
+			itl:modal_close(),
+			handle_send_reminder_confirmed_via_taskqueue(RoleId);
+		true ->
+			handle_send_reminder_confirmed_via_minijob(RoleId)
+	end.
+
+
+
+handle_send_reminder_confirmed_via_minijob(RoleId) ->
+	{ok, Doc} = minijob_send_reminders_to_osm_evaluators:create_and_run([
+		fields:build(osm_profiletype, wf:q(osm_profiletype))
+	]),
+	minijob_status:show_status(Doc).
+
+
+handle_send_reminder_confirmed_via_taskqueue(RoleId)->
+	Context = wf_context:context(),
 	Fun = fun([]) ->
 		wf_context:context(Context),
 		handle_send_reminder_confirmed(RoleId),
@@ -682,7 +700,6 @@ handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, [fields:build(teststatus, ?ACTIVE)]),
 	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
 
-
 	%
 	% create audit before sending
 	%
@@ -690,7 +707,7 @@ handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 		log=?ITXAUDIT_LOG_REMINDER_SENT,
 		refid1=?A2L(?MODULE),
 		refid2=helper:date_today_str(),
-		refid3=wf:q(osm_profiletype)
+		refid3=minijobcontext:q(osm_profiletype)
 	}),
 
 
