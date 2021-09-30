@@ -123,6 +123,21 @@ access(_, ?APPOSM_ADMIN) -> true;
 access(_, _) -> false.
 
 
+%------------------------------------------------------------------------------
+% fs
+%------------------------------------------------------------------------------
+
+fs(search) -> [
+	?COREXS(season_fk),
+	?CORFAC(faculty_code_fk),
+	?CORPGM(program_code_fk),
+	?CORSUB(subject_code_fk),
+	fields:get(anptestcourseid),
+	fields:get(teststatus),
+	fields:get(exam_pattern),
+	itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
+].
+
 
 %------------------------------------------------------------------------------
 % function - get
@@ -131,16 +146,7 @@ access(_, _) -> false.
 get() ->
 	#dig {
 		module=?MODULE,
-		filters=[
-			?COREXS(season_fk),
-			?CORFAC(faculty_code_fk),
-			?CORPGM(program_code_fk),
-			?CORSUB(subject_code_fk),
-			fields:get(anptestcourseid),
-			fields:get(teststatus),
-			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
-		],
+		filters=fs(search),
 		size=25,
 		actions=[
 			{export_results_bulk, "Bulk Export Results", "Bulk Export Results"}
@@ -459,6 +465,30 @@ event(export_results_bulk) ->
 %..............................................................................
 
 handle_export_results_bulk() ->
+	case configs:getbool(process_via_minijob, false) of
+		false ->
+			handle_export_results_bulk_taskqueue();
+		true ->
+			handle_export_results_bulk_minijob()
+	end.
+
+
+
+%
+% minijo
+%
+handle_export_results_bulk_minijob() ->
+	Filters = itf:uivalue(fs(search)),
+	Fs = dig:get_nonempty_fs(Filters),
+	{ok, Doc} = minijob_osm_result_export:create_and_run(Fs),
+	minijob_status:show_status(Doc).
+
+
+
+%
+% taskqueue
+%
+handle_export_results_bulk_taskqueue() ->
 
 	%
 	% init
