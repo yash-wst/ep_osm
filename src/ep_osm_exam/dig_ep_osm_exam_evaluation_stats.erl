@@ -48,6 +48,22 @@ f(reset_booklet_state = I) ->
 
 
 %------------------------------------------------------------------------------
+% fs
+%------------------------------------------------------------------------------
+
+fs(search) -> [
+	?COREXS(season_fk),
+	?CORFAC(faculty_code_fk),
+	?CORPGM(program_code_fk),
+	?CORSUB(subject_code_fk),
+	fields:get(anptestcourseid),
+	fields:get(teststatus),
+	fields:get(exam_pattern),
+	itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
+].
+
+
+%------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
@@ -64,16 +80,7 @@ get() ->
 	#dig {
 		description="Evaluation Statistics",
 		module=?MODULE,
-		filters=[
-			?COREXS(season_fk),
-			?CORFAC(faculty_code_fk),
-			?CORPGM(program_code_fk),
-			?CORSUB(subject_code_fk),
-			fields:get(anptestcourseid),
-			fields:get(teststatus),
-			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
-		],
+		filters=fs(search),
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
 		],
@@ -496,6 +503,40 @@ event({itx, E}) ->
 %
 handle_reset_forgotten_active_booklets() ->
 
+	SearchFs = filters(),
+	?ASSERT(
+		SearchFs /= [],
+		"Please select at least one search filter before proceeding"
+	),
+
+
+	case configs:getbool(process_via_minijob, false) of
+		true ->
+			handle_reset_forgotten_active_booklets_via_minijob();
+		false ->
+			handle_reset_forgotten_active_booklets_via_taskqueue()
+	end.
+
+
+
+%
+% minijob
+%
+handle_reset_forgotten_active_booklets_via_minijob() ->
+	Fs = [
+		itf:build(f(reset_beyond_days), wf:q(reset_beyond_days)),
+		itf:build(f(reset_booklet_state), wf:q(reset_booklet_state))
+	] ++ filters(),
+	{ok, Doc} = minijob_reset_osm_booklet_state:create_and_run(Fs),
+	minijob_status:show_status(Doc).
+
+
+
+%
+% taskqueue
+%
+handle_reset_forgotten_active_booklets_via_taskqueue() ->
+
 	%
 	% init
 	%
@@ -504,9 +545,19 @@ handle_reset_forgotten_active_booklets() ->
 	Context = wf_context:context(),
 	itl:modal_close(),
 
+
+	%
+	% get active tests
+	%
+	SearchFs = filters(),
+	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, SearchFs),
+	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
+
+
+
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}),
+		handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}, Docs),
 		dig:log(success, "Task completed")
 	end,
 
@@ -522,7 +573,7 @@ handle_reset_forgotten_active_booklets() ->
 %
 % reset forgotten - exec for each test
 %
-handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}) ->
+handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}, Docs) ->
 
 	%
 	% init
@@ -530,17 +581,6 @@ handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}) ->
 	Today = helper:date_today_str(),
 	TenDaysBeforeToday = helper:date_str_offset(Today, -ForgottenDays),
 
-
-	%
-	% get active tests
-	%
-	SearchFs = filters(),
-	?ASSERT(
-		SearchFs /= [],
-		"Please select at least one search filter before proceeding"
-	),
-	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, SearchFs),
-	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
 
 
 	%
