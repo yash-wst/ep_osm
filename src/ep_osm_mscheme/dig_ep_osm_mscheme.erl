@@ -43,6 +43,9 @@ get() ->
 		filters=[
 			?OSMMSC(name),
 			?OSMMSC(state)
+		],
+		actions=[
+			{action_new, "+ New", "+ New"}
 		]
 	}.
 
@@ -140,6 +143,9 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(action_new) ->
+	helper:redirect("/ep_osm_mscheme?mode=create");
 
 event({confirmation_yes, {clone, Id}}) ->
 	handle_clone_confirmed(Id);

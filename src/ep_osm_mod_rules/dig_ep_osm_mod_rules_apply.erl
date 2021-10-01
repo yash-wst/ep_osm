@@ -71,7 +71,7 @@ init() ->
 %
 %..............................................................................
 fetch(D, _From, _Size, []) ->
-	{D, []};
+	{D, [{error, "Please select a filter to see results."}]};
 
 fetch(D, From, Size, Fs) ->
 

@@ -69,7 +69,10 @@ get() ->
 		mode=?VIEW,
 		module=?MODULE,
 		filters=ep_osm_mod_rules:fs(search),
-		size=25
+		size=25,
+		actions=[
+			{apply_rule, "Apply Rule", "Apply Rule"}
+		]
 	}.
 
 
@@ -113,6 +116,10 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(apply_rule) ->
+	helper:redirect("/dig_ep_osm_mod_rules_apply");
+
 event(E) ->
 	dig_mm:event(E).
 
