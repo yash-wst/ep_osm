@@ -11,6 +11,7 @@
 -define(APPOSM_SCANUPLOADER, "osmscanuploader").
 -define(APPOSM_CONTROLLER, "osmcontroller").
 
+-define(APPOSM_OSMADMIN, "osmadmin").
 -define(APPOSM_EVALUATOR, "anpevaluator").
 -define(APPOSM_MODERATOR, "anpmoderator").
 -define(APPOSM_REVALUATOR, "anprevaluator").

@@ -10,7 +10,7 @@
 %------------------------------------------------------------------------------
 
 main() ->
-	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"}).
+	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
 	?LN("Scanning Statistics").

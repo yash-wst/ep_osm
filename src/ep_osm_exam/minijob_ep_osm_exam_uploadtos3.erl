@@ -10,7 +10,7 @@
 %------------------------------------------------------------------------------
 
 main() ->
-	ita:auth(itx, ?MODULE, #template {file="lib/itx/priv/static/templates/html/entered.html"}).
+	ita:auth(itx, ?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered.html"})).
 
 title() ->
 	?LN("minijob_ep_osm_exam_uploadtos3").

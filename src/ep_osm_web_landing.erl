@@ -5,7 +5,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 main() ->
-	#template {file="lib/itx/priv/static/templates/html/entry.html"}.
+	?AKIT(#template {file="lib/itx/priv/static/templates/html/entry.html"}).
 
 title() ->
 	"Examination Processes - On Screen Marking System".

@@ -4,7 +4,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 main() ->
-	ita:auth(?APPOSM, ?MODULE, #template {file="lib/ep_osm/priv/static/templates/html/ep_osm_eval.html"}).
+	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/ep_osm/priv/static/templates/html/ep_osm_eval.html"})).
 
 title() ->
 	?LN("Evaluation View").
