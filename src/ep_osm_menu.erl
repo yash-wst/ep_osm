@@ -83,12 +83,12 @@ menu(?APPOSM_MODERATOR_REVAL) ->
 
 menu(?APPOSM_CONTROLLER) ->
 	[
-		{?LN("OSM Exams"), [
-			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Statistics")},
-			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Exam Evaluation Statistics")},
-			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Exam Evaluator Statistics")},
-			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Statistics")},
-			{dig_ep_osm_exam_verification, ?VIEW, ?LN("Exam Verification")},
+		{topmenu, [
+			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Status")},
+			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")},
+			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Evaluation Status")},
+			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Evaluator Status")},
+			{dig_ep_osm_exam_verification, ?VIEW, ?LN("Verification")},
 			{dig_rds_payments, ?VIEW, ?LN("Payments")}
 		]}
 	];

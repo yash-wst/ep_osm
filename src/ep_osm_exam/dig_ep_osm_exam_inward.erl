@@ -49,6 +49,7 @@ f(osm_exam_fk = I) ->
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
+access(_, ?APPOSM_CONTROLLER) -> true;
 access(_, ?APPOSM_RECEIVER) -> true;
 access(_, ?APPOSM_SCANUPLOADER) -> true;
 access(_, _) -> false.
