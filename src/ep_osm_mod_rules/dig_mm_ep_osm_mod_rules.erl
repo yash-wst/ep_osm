@@ -56,6 +56,7 @@ fields(ep_osm_mod_rules, _Fs) ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, _) -> false.
 
 

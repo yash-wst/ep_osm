@@ -32,6 +32,7 @@ form() ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -44,7 +45,10 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=anptest:fs(search),
-		size=25
+		size=25,
+		config=[
+			{responsive_type, collapse}
+		]
 	}.
 
 
@@ -90,15 +94,14 @@ fetch(D, From, Size, Fs) ->
 		%
 		% layout cells
 		%
-		FsDoc = itf:d2f(Doc, anptest:fs(search)),
+		FsDoc = itf:d2f(Doc, anptest:fs(form)),
 		FsIndex = itf:d2f(Doc, anptest:fs(index)),
- 		[
-			#dcell {val=helper_ui:layout_slinks(anptest, FsIndex)}
-
-		] ++ lists:map(fun(F) ->
+		lists:map(fun(F) ->
 			#dcell {val=itl:render(F)}
 		end, FsDoc) ++ [
 			#dcell {val=layout_files(Doc)}
+		] ++ [
+			#dcell {val=helper_ui:layout_slinks(anptest, FsIndex)}
 		]
 
 	end, Docs),
@@ -107,12 +110,12 @@ fetch(D, From, Size, Fs) ->
 	%
 	% header
 	%
-	Header = [
-		#dcell {type=header, val="Actions"}
-	] ++ lists:map(fun(#field {label=Label}) ->
+	Header = lists:map(fun(#field {label=Label}) ->
 		#dcell {type=header, val=Label}
-	end, anptest:fs(search)) ++ [
-		#dcell {type=header, val="Files"}
+	end, anptest:fs(form)) ++ [
+		#dcell {type=header, val="Files"},
+		#dcell {type=header, val="Actions"}
+
 	],
 
 	{

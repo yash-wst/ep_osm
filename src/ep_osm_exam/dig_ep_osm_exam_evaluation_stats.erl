@@ -67,6 +67,7 @@ fs(search) -> [
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, ?APPOSM_CONTROLLER) -> true;
 access(_, _) -> false.
 

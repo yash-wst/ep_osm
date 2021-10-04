@@ -32,6 +32,12 @@ profile_module() ->
 			?L2A(Module)
 	end.
 
+digmm_links(Doc) ->
+	Module = profile_module(),
+	Fs = itf:d2f(Doc, [itf:id()]),
+	helper_ui:layout_slinks(Module, Fs).
+
+
 %------------------------------------------------------------------------------
 % records
 %------------------------------------------------------------------------------
@@ -65,6 +71,7 @@ fields(ProfileModule, _Fs) ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -76,9 +83,13 @@ access(_, _) -> false.
 get() ->
 	ProfileModule = profile_module(),
 	#dig {
+		mode=?VIEW,
 		module=?MODULE,
 		filters=ProfileModule:fs(search),
-		size=25
+		size=25,
+		config=[
+			{responsive_type, collapse}
+		]
 	}.
 
 

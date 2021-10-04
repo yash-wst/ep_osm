@@ -54,6 +54,7 @@ fields(ep_osm_scanuploader, _Fs) ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -64,7 +65,6 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?VIEW,
 		module=?MODULE,
 		filters=ep_osm_scanuploader:fs(search),
 		size=25

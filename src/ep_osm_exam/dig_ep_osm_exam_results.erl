@@ -120,6 +120,7 @@ f(Id) ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, _) -> false.
 
 

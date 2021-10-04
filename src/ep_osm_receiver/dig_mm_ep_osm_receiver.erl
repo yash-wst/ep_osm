@@ -54,6 +54,7 @@ fields(ep_osm_receiver, _Fs) ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, Role) -> ?D(Role), false.
 
 
@@ -64,7 +65,6 @@ access(_, Role) -> ?D(Role), false.
 
 get() ->
 	#dig {
-		mode=?VIEW,
 		module=?MODULE,
 		filters=ep_osm_receiver:fs(search),
 		size=25

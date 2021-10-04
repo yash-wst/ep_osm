@@ -54,6 +54,7 @@ fields(ep_osm_cap, _Fs) ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -64,7 +65,6 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?VIEW,
 		module=?MODULE,
 		filters=ep_osm_cap:fs(basic),
 		size=25
