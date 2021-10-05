@@ -43,7 +43,10 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=anptest:fs(search),
-		size=25
+		size=25,
+		config=[
+			{responsive_type, collapse}
+		]
 	}.
 
 
@@ -104,7 +107,7 @@ fetch(D, From, Size, Fs) ->
 		%
 		% layout cells
 		%
-		FsDoc = itf:d2f(ExamDoc, anptest:fs(search)),
+		FsDoc = itf:d2f(ExamDoc, anptest:fs(form)),
 		lists:map(fun(F) ->
 			#dcell {val=itl:render(F)}
 		end, FsDoc) ++ [
@@ -128,7 +131,7 @@ fetch(D, From, Size, Fs) ->
 	%
 	Header = lists:map(fun(#field {label=Label}) ->
 		#dcell {type=header, val=Label}
-	end, anptest:fs(search)) ++ [
+	end, anptest:fs(form)) ++ [
 		#dcell {type=header, val="Inward Complete"},
 		#dcell {type=header, val="Scanning Complete"},
 		#dcell {type=header, val="Upload Complete"},

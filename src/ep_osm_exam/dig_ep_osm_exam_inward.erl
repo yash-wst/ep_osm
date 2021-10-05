@@ -386,27 +386,6 @@ layout_inward_form() ->
 %
 %..............................................................................
 
-layout_upload_form(BundleDoc, ObjectKey) when ObjectKey /= undefined, ObjectKey /= [] ->
-
-	%
-	% before processing check if object exists
-	%
-	try
-		_Infos = helper_s3:info_dir(
-			configs:get(aws_s3_bucket, []),
-			"browser_to_s3/" ++ ObjectKey
-		),
-
-		wf:wire(#event{type=timer, delay=100, postback={browser_to_s3_completed, BundleDoc, ObjectKey}}),
-		#span {text=[]}
-
-	catch
-		E:M ->
-			?D({E, M}),
-			layout_upload_form(BundleDoc, undefined)
-	end;
-
-
 layout_upload_form(BundleDoc, _) ->
 
 	%
@@ -499,13 +478,14 @@ layout_action_inward_form(BundleDoc) ->
 	% init
 	%
 	User = itxauth:user(),
+	handle_uploaded_zip_file(),
 
 	%
 	% action
 	%
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
 		{User, []} -> [
-			{form, layout_inward_form(), "Inward Form: (enter barcode or seat number and hit enter)"}
+			{inward_form, "Inward Form", "Inward Form"}
 		];
 		_ -> [
 		]
@@ -584,7 +564,7 @@ layout_action_uploading(BundleDoc) ->
 	%
 	case {itf:val(BundleDoc, qualityby), itf:val(BundleDoc, uploadstate)} of
 		{User, "assigned"} -> [
-			{form, layout_upload_form(BundleDoc, wf:q(objectkey)), "Upload: (zip bundle directory and upload)"},
+			{upload_form, "Upload Form", "Upload Form"},
 			{upload_completed, "Uploading Completed", "Uploading Completed"}
 		];
 		_ -> [
@@ -664,14 +644,28 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 % events
 %------------------------------------------------------------------------------
 
+event(upload_form) ->
+	{ok, BundleDoc} = ep_osm_bundle_api:get(wf:q(osm_bundle_fk)),
+	dig_mm:handle_show_action(
+		"Upload: (zip bundle directory and upload)",
+		layout_upload_form(BundleDoc, undefined)
+	);
+
+
+event(inward_form) ->
+	dig_mm:handle_show_action(
+		"Inward Form: (enter barcode or seat number and hit enter)",
+		layout_inward_form()
+	);
+
 event(export_bundle_dir) ->
 	handle_export_bundle_dir(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
 
 event({browser_to_s3_completed, _BundleDoc, ObjectKey}) ->
 	case configs:getbool(process_via_minijob, false) of
-		true ->
-			finish_upload_event_inward(undefined, ObjectKey, undefined, undefined);
 		false ->
+			finish_upload_event_inward(undefined, ObjectKey, undefined, undefined);
+		true ->
 			finish_upload_event_inward_minijob(ObjectKey)
 	end;
 
@@ -1414,6 +1408,46 @@ handle_create_bundle(ExamId) ->
 		_ ->
 			helper_ui:flash(error, "Sorry, could not create bundle!")
 	end.
+
+
+
+%..............................................................................
+%
+% handle - uploaded zip file
+%
+%..............................................................................
+
+handle_uploaded_zip_file() ->
+
+	%
+	% init
+	%
+	ObjectKey = wf:q(objectkey),
+
+
+	%
+	% before processing check if object exists
+	%
+	try
+		_Infos = helper_s3:info_dir(
+			configs:get(aws_s3_bucket, []),
+			"browser_to_s3/" ++ ObjectKey
+		),
+
+		wf:wire(#event{
+			type=timer,
+			delay=100,
+			postback={browser_to_s3_completed, undefined, ObjectKey}
+		})
+
+	catch
+		E:M ->
+			?D({E, M})
+	end.
+
+
+
+
 
 
 %------------------------------------------------------------------------------
