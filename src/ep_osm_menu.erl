@@ -104,8 +104,12 @@ menu(?APPOSM_SCANUPLOADER) ->
 
 menu(?APPOSM_RECEIVER) ->
 	[
+		{?LN("Profiles"), [
+			{dig_mm_ep_osm_scanuploader, ?VIEW, ?LN("Scanner & Uploader")}
+		]},
 		{topmenu, [
-			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")}
+			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")},
+			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")}
 		]}
 	];
 

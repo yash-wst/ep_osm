@@ -55,6 +55,7 @@ fields(ep_osm_scanuploader, _Fs) ->
 %------------------------------------------------------------------------------
 access(_, ?ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
+access(_, ?APPOSM_RECEIVER) -> true;
 access(_, _) -> false.
 
 

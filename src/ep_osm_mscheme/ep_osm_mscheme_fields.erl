@@ -19,7 +19,7 @@ f(list_of_widgets = I) ->
 	]);
 
 f(osm_mscheme_fk = I) ->
-	F = itf:textbox_picker(?F(I, "Marking Scheme")),
+	F = itf:textbox_picker(?F(I, "Marking Scheme", test_settings)),
 	F#field {
 		validators=[],
 		options=options(I)
