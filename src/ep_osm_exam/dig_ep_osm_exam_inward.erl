@@ -242,25 +242,33 @@ fetch(D, _From, _Size, [
 
 		[
 			#dcell {val=itf:val(BDoc, number)},
-			#dcell {val=itl:render(itf:d2f(BDoc, ?OSMBDL(createdon)))},
 			#dcell {
 				bgcolor=get_bgcolor(inwardstate, InwardState, ScanningState, UploadState),
 				val=[
-					itf:val(BDoc, inwardstate),
+					itx:format("~s ~s", [
+						itf:val(BDoc, inwardstate),
+						itf:val(BDoc, inward_date)
+					]),
 					layout_user_info(dict:find(itf:val(BDoc, createdby), ProfileDocsDict))
 				]
 			},
 			#dcell {
 				bgcolor=get_bgcolor(scanningstate, InwardState, ScanningState, UploadState),
 				val=[
-					itf:val(BDoc, scanningstate),
+					itx:format("~s ~s", [
+						itf:val(BDoc, scanningstate),
+						itf:val(BDoc, scanned_date)
+					]),
 					layout_dtp_by(scannedby, BDoc, ProfileDocsDict)
 				]
 			},
 			#dcell {
 				bgcolor=get_bgcolor(uploadstate, InwardState, ScanningState, UploadState),
 				val=[
-					itf:val(BDoc, uploadstate),
+					itx:format("~s ~s", [
+						itf:val(BDoc, uploadstate),
+						itf:val(BDoc, uploaded_date)
+					]),
 					layout_dtp_by(qualityby, BDoc, ProfileDocsDict)
 				]
 			},
@@ -293,7 +301,6 @@ fetch(D, _From, _Size, [
 	%
 	Header = [
 		#dcell {type=header, val="Bundle Number"},
-		#dcell {type=header, val="Created On"},
 		#dcell {type=header, val="Inward"},
 		#dcell {type=header, val="Scan"},
 		#dcell {type=header, val="QC / Uploader"},
@@ -892,6 +899,7 @@ handle_inward_completed() ->
 	%
 	FsToSave = [
 		itf:build(?OSMBDL(inwardstate), "completed"),
+		itf:build(?OSMBDL(inward_date), helper:date_today_str()),
 		itf:build(?OSMBDL(bundle_size), ?I2S(length(get_bundle_docs())))
 	],
 
@@ -1005,7 +1013,8 @@ handle_uploading_completed() ->
 	% fs to save
 	%
 	FsToSave = [
-		itf:build(?OSMBDL(uploadstate), "completed")
+		itf:build(?OSMBDL(uploadstate), "completed"),
+		itf:build(?OSMBDL(uploaded_date), helper:date_today_str())
 	],
 
 
@@ -1039,7 +1048,8 @@ handle_scanning_completed() ->
 	% fs to save
 	%
 	FsToSave = [
-		itf:build(?OSMBDL(scanningstate), "completed")
+		itf:build(?OSMBDL(scanningstate), "completed"),
+		itf:build(?OSMBDL(scanned_date), helper:date_today_str())
 	],
 
 

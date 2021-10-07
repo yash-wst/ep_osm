@@ -95,6 +95,18 @@ f(uploadstate = I) ->
 f(bundle_size = I) ->
 	itf:textbox_readonly(?F(I, "Bundle Size"));
 
+
+f(inward_date = I) ->
+	itf:date(?F(I, "Inward Date"));
+
+f(scanned_date = I) ->
+	itf:date(?F(I, "Scanned Date"));
+
+f(uploaded_date = I) ->
+	itf:date(?F(I, "Uploaded Date"));
+
+
+
 f(O) -> throw(O).
 
 %------------------------------------------------------------------------------

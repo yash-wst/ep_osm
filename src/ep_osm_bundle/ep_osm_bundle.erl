@@ -35,8 +35,10 @@ fs(basic) -> [
 	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
 	?OSMBDL(uploadstate),
-	?OSMBDL(bundle_size)
-
+	?OSMBDL(bundle_size),
+	?OSMBDL(inward_date),
+	?OSMBDL(scanned_date),
+	?OSMBDL(uploaded_date)
 ];
 
 fs(index) -> [
@@ -48,7 +50,10 @@ fs(index) -> [
 	?OSMBDL(qualityby),
 	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate)
+	?OSMBDL(uploadstate),
+	?OSMBDL(inward_date),
+	?OSMBDL(scanned_date),
+	?OSMBDL(uploaded_date)
 ];
 
 fs(form) -> [
@@ -56,7 +61,10 @@ fs(form) -> [
 	?OSMBDL(number),
 	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate)
+	?OSMBDL(uploadstate),
+	?OSMBDL(inward_date),
+	?OSMBDL(scanned_date),
+	?OSMBDL(uploaded_date)
 ];
 
 fs(view) ->

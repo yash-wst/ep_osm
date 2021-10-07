@@ -76,7 +76,10 @@ get() ->
 			?OSMBDL(createdby),
 			?OSMBDL(inwardstate),
 			?OSMBDL(scanningstate),
-			?OSMBDL(uploadstate)
+			?OSMBDL(uploadstate),
+			?OSMBDL(inward_date),
+			?OSMBDL(scanned_date),
+			?OSMBDL(uploaded_date)
 		],
 		size=25
 	}.
