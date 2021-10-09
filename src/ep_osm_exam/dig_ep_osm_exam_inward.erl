@@ -129,6 +129,7 @@ fetch(D, _From, _Size, [
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
 	),
+	CandidateDocs1 = sort_candidate_docs(CandidateDocs),
 
 
 
@@ -142,7 +143,7 @@ fetch(D, _From, _Size, [
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
-	end, CandidateDocs),
+	end, CandidateDocs1),
 
 
 	%
@@ -813,6 +814,7 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
 	),
+	CandidateDocs1 = sort_candidate_docs(CandidateDocs),
 	{_, CandidateDirs} = lists:foldl(fun(CandidateDoc, {AccIndex, Acc}) ->
 		{
 			AccIndex + 1,
@@ -820,7 +822,7 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 				string:join([?I2S(AccIndex), itf:val(CandidateDoc, anpseatnumber)], ".")
 			]
 		}
-	end, {1, []}, CandidateDocs),
+	end, {1, []}, CandidateDocs1),
 
 
 	%
@@ -1179,13 +1181,14 @@ handle_export_bundle_csv(ExamId, BundleId) ->
 	%
 	% layout dig cells
 	%
+	CandidateDocs1 = sort_candidate_docs(CandidateDocs),
 	Results = lists:map(fun(CDoc) ->
 		[
 			#dcell {val=SubjectCode},
 			#dcell {val=BundleNumber},
 			#dcell {val=itf:val(CDoc, anpseatnumber)}
 		]
-	end, CandidateDocs),
+	end, CandidateDocs1),
 
 
 	%
@@ -1264,7 +1267,8 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
 	),
-	ListOfCandidateDocs = helper:list_split(CandidateDocs, 5),
+	CandidateDocs1 = sort_candidate_docs(CandidateDocs),
+	ListOfCandidateDocs = helper:list_split(CandidateDocs1, 5),
 	Results = lists:map(fun(CDocs) ->
 		lists:map(fun(CDoc) ->
 			UId = itf:val(CDoc, anp_paper_uid),
@@ -1366,7 +1370,8 @@ handle_inward(UId, SNo) ->
 		itf:build(itf:textbox(?F(anpseatnumber)), ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)),
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
 		itf:build(itf:textbox(?F(anpcentercode)), BundleNumber),
-		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
+		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
+		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
 	],
 	case anpcandidates:save(ExamDb, FsToSave) of
 		{ok, _} ->
@@ -1551,7 +1556,19 @@ get_bundle_docs(ExamId, OsmBundleId) ->
 	%
 	% return docs
 	%
-	BundleDocs.
+	sort_candidate_docs(BundleDocs).
+
+
+
+sort_candidate_docs(Docs) ->
+	lists:sort(fun(A, B) ->
+		case {itf:val(A, timestamp_inward), itf:val(B, timestamp_inward)} of
+			{Ai, Bi} when Ai == []; Bi == [] ->
+				true;
+			{Ai, Bi} ->
+				?S2I(Ai) < ?S2I(Bi)
+		end
+	end, Docs).
 
 
 
