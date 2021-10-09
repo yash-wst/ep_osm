@@ -10,7 +10,7 @@
 %------------------------------------------------------------------------------
 
 savebulk(LoLofFields) ->
-	ExamDb = anpcandidates:db(wf:q(osm_exam_fk)),
+	ExamDb = anpcandidates:db(minijobcontext:q(osm_exam_fk)),
 	anpcandidates:savebulk(ExamDb, LoLofFields).
 
 
@@ -106,7 +106,7 @@ handle_import_validate_bundles_not_completed(List) ->
 	%
 	% init
 	%
-	ExamId = wf:q(osm_exam_fk),
+	ExamId = minijobcontext:q(osm_exam_fk),
 
 
 	%
@@ -239,7 +239,7 @@ handle_import_validate_batch_anpseatnumber(List) ->
 	%
 	% init
 	%
-	ExamId = wf:q(osm_exam_fk),
+	ExamId = minijobcontext:q(osm_exam_fk),
 
 
 	%
@@ -283,7 +283,7 @@ handle_import_ensure_bundle_exists(List) ->
 	%
 	% init
 	%
-	ExamId = wf:q(osm_exam_fk),
+	ExamId = minijobcontext:q(osm_exam_fk),
 
 
 	%
@@ -370,7 +370,7 @@ handle_import_csv_to_fs(List) ->
 	%
 	% init
 	%
-	ExamId = wf:q(osm_exam_fk),
+	ExamId = minijobcontext:q(osm_exam_fk),
 
 
 	%

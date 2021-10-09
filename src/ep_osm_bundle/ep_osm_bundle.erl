@@ -90,6 +90,7 @@ fs(grid) ->
 
 fs(import) -> [
 	?ITXF({sep, #pre {text="subject_code,bundle_number,anpseatnumber"}}),
+	itf:hidden(?F(osm_exam_fk)),
 	itf:attachment()
 ];
 
