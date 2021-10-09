@@ -25,7 +25,7 @@ module(import) ->
 	profile_anpevaluator_import.
 
 profile_module() ->
-	case wf:q(mode) of
+	case minijobcontext:q(mode) of
 		undefined ->
 			profile_anpevaluator;
 		Module ->
