@@ -30,7 +30,8 @@ menu(?APPOSM_ADMIN) ->
 			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Status")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")},
 			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Evaluation Status")},
-			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Evaluator Status")}
+			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Evaluator Status")},
+			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Scanning Report")}
 		]}
 	];
 
@@ -60,7 +61,8 @@ menu(?APPOSM_ANPADMIN) ->
 			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Status")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")},
 			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Evaluation Status")},
-			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Evaluator Status")}
+			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Evaluator Status")},
+			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Scanning Report")}
 		]}
 	];
 
@@ -109,6 +111,7 @@ menu(?APPOSM_RECEIVER) ->
 		]},
 		{topmenu, [
 			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")},
+			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Scanning Report")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")}
 		]}
 	];
