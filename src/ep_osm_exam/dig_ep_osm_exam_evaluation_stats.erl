@@ -127,10 +127,18 @@ fetch(D, _From, _Size, [
 	% init
 	%
 	TFs = anptests:get(ExamId),
-	SeasonName = ep_core_exam_season_api:getname(itf:val(TFs, season_fk)),
-	FacultyName = ep_core_faculty_api:getname(itf:val(TFs, faculty_code_fk)),
-	ProgramName = ep_core_program_api:getname(itf:val(TFs, program_code_fk)),
-	SubjectName = ep_core_subject_api:getname(itf:val(TFs, subject_code_fk)),
+	
+
+
+	%
+	% spfs cells
+	%
+	{SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict} =
+		ep_core_helper:get_sfps_dicts([TFs]),
+	SFPSCells = ep_core_dig_helper:get_sfps_cells(
+		TFs, {SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict},
+		#dcell {show_ui=false}
+	),
 
 
 	%
@@ -172,11 +180,7 @@ fetch(D, _From, _Size, [
 		%
 		% get stats per profile
 		%
-		[
-			#dcell {val=SeasonName},
-			#dcell {val=FacultyName},
-			#dcell {val=ProgramName},
-			#dcell {val=SubjectName},
+		SFPSCells ++ [
 			#dcell {
 				val=#link {
 					new=true,
@@ -220,10 +224,10 @@ fetch(D, _From, _Size, [
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Season"},
-		#dcell {type=header, val="Faculty"},
-		#dcell {type=header, val="Program"},
-		#dcell {type=header, val="Subject"},
+		#dcell {type=header, show_ui=false, val="Season"},
+		#dcell {type=header, show_ui=false, val="Faculty"},
+		#dcell {type=header, show_ui=false, val="Program"},
+		#dcell {type=header, show_ui=false, val="Subject"},
 		#dcell {type=header, val="Fullname"},
 		#dcell {type=header, val="Mobile"},
 		#dcell {type=header, val="Email"},
@@ -302,10 +306,8 @@ fetch(D, From, Size, Fs) ->
 	%
 	% build dicts
 	%
-	SeasonDocsDict = ep_core_exam_season_api:get_dict(Docs),
-	FacultyDocsDict = ep_core_faculty_api:get_dict(Docs),
-	ProgramDocsDict = ep_core_program_api:get_dict(Docs),
-	SubjectDocsDict = ep_core_subject_api:get_dict(Docs),
+	{SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict} =
+		ep_core_helper:get_sfps_dicts(Docs),
 
 
 	%
@@ -325,10 +327,10 @@ fetch(D, From, Size, Fs) ->
 		%
 		% init
 		%
-		SeasonDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, season_fk), SeasonDocsDict),
-		FacultyDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, faculty_code_fk), FacultyDocsDict),
-		ProgramDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, program_code_fk), ProgramDocsDict),
-		SubjectDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, subject_code_fk), SubjectDocsDict),
+		SFPSCells = ep_core_dig_helper:get_sfps_cells(
+			Doc, {SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict},
+			#dcell {show_ui=false}
+		),
 
 
 		%
@@ -341,35 +343,9 @@ fetch(D, From, Size, Fs) ->
 		%
 		% layout test
 		%
-		[
-			#dcell {
-				val=itl:blockquote(SeasonDoc, [?COREXS(name), ?COREXS(state)]),
-				val_export=?FLATTEN(itf:val(SeasonDoc, name))
-			},
-			#dcell {
-				val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)]),
-				val_export=itf:val(FacultyDoc, faculty_code) ++ " / " ++ itf:val(FacultyDoc, faculty_name)
-			},
-			#dcell {
-				val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)]),
-				val_export=itf:val(ProgramDoc, program_code) ++ " / " ++ itf:val(ProgramDoc, program_name)
-			},
-			#dcell {
-				val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)]),
-				val_export=itf:val(SubjectDoc, subject_code) ++ " / " ++ itf:val(SubjectDoc, subject_name)
-			},
-			#dcell {
-				val=itl:blockquote([
-					#link {
-						new=true,
-						url=io_lib:format("/~p?id=~s", [
-							wf:page_module(), itf:idval(Doc)
-						]),
-						text=itf:val(Doc, anptestcourseid)
-					}
-				]),
-				val_export=itf:val(Doc, anptestcourseid)
-			},
+		SFPSCells ++ [
+			#dcell {type=label, val=itf:val(Doc, anptestcourseid)},
+			#dcell {type=label, val=itf:val(Doc, testname)},
 			dcell_days_since_test(TodaySeconds, Doc)
 
 		] ++ lists:map(fun(State) ->
@@ -383,7 +359,9 @@ fetch(D, From, Size, Fs) ->
 					bgcolor=get_class(State, Val),
 					val=Val
 				}
-		end, states())
+		end, states()) ++ [
+			dcell_exam_actions(Doc)
+		]
 
 
 	end, AllStats),
@@ -403,15 +381,17 @@ fetch(D, From, Size, Fs) ->
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Season"},
-		#dcell {type=header, val="Faculty"},
-		#dcell {type=header, val="Program"},
-		#dcell {type=header, val="Subject"},
-		#dcell {type=header, val="Test Id"},
+		#dcell {type=header, show_ui=false, val="Season"},
+		#dcell {type=header, show_ui=false, val="Faculty"},
+		#dcell {type=header, show_ui=false, val="Program"},
+		#dcell {type=header, show_ui=false, val="Subject"},
+		#dcell {type=header, val="Exam Id"},
+		#dcell {type=header, val="Exam Name"},
 		#dcell {type=header, val="Days"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
 	end, states()) ++ [
+		#dcell {type=header, val="Action"},
 		#dcell {type=header, val="Total"}
 	],
 
@@ -459,6 +439,21 @@ dcell_days_since_test(TodaySeconds, Doc) ->
 			#span {style="font-size: 0.7em; white-space: nowrap;", text=Testdate}
 		]
 	}.
+
+
+
+%
+% dcell - exam actions
+%
+dcell_exam_actions(Doc) ->
+
+	Fs = itf:d2f(Doc, [itf:id()]),
+	Links = helper_ui:layout_slinks(anptest, Fs),
+	#dcell {
+		val_export="",
+		val=Links
+	}.
+
 
 
 %------------------------------------------------------------------------------
@@ -948,29 +943,29 @@ states() ->
 get_class(State, Number) when Number > 0 ->
 	case State of
 		"anpstate_not_uploaded" ->
-			"bg-info";
+			"table-info";
 		"anpstate_yettostart" ->
-			"bg-warning";
+			"table-warning";
 		"anpstate_active" ->
-			"bg-danger";
+			"table-danger";
 		"anpstate_completed" ->
-			"bg-success";
+			"table-success";
 		"anpstate_moderation" ->
-			"bg-danger";
+			"table-danger";
 		"anpstate_moderation_completed" ->
-			"bg-success";
+			"table-success";
 		"anpstate_revaluation" ->
-			"bg-danger";
+			"table-danger";
 		"anpstate_revaluation_completed" ->
-			"bg-success";
+			"table-success";
 		"anpstate_moderation_reval" ->
-			"bg-danger";
+			"table-danger";
 		"anpstate_moderation_reval_completed" ->
-			"bg-success";
+			"table-success";
 		"anpstate_evaluation_rejected" ->
-			"bg-danger";
+			"table-danger";
 		"anpstate_discarded" ->
-			"bg-info"
+			"table-info"
 	end;
 
 
@@ -1047,11 +1042,11 @@ get_days_since_test(TodaySeconds, TestDate) ->
 % get class days since test
 %
 get_class_days_since_test(DaysSinceTest) when DaysSinceTest > 45 ->
-	"bg-danger";
+	"table-danger";
 get_class_days_since_test(DaysSinceTest) when DaysSinceTest > 35 ->
-	"bg-warning";
+	"table-warning";
 get_class_days_since_test(DaysSinceTest) when DaysSinceTest > 25 ->
-	"bg-info";
+	"table-info";
 get_class_days_since_test(_) ->
 	"".
 
