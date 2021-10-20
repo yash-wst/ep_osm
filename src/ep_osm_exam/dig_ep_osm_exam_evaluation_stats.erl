@@ -346,6 +346,7 @@ fetch(D, From, Size, Fs) ->
 		SFPSCells ++ [
 			#dcell {type=label, val=itf:val(Doc, anptestcourseid)},
 			#dcell {type=label, val=itf:val(Doc, testname)},
+			#dcell {type=label, val=anptests:testtotalmarks(Doc)},
 			dcell_days_since_test(TodaySeconds, Doc)
 
 		] ++ lists:map(fun(State) ->
@@ -387,6 +388,7 @@ fetch(D, From, Size, Fs) ->
 		#dcell {type=header, show_ui=false, val="Subject"},
 		#dcell {type=header, val="Exam Id"},
 		#dcell {type=header, val="Exam Name"},
+		#dcell {type=header, val="Total Marks"},
 		#dcell {type=header, val="Days"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
