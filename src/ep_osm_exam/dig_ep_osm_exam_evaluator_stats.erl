@@ -13,7 +13,7 @@ main() ->
 	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
-	?LN("OSM Exam Evaluation Statistics").
+	?LN("OSM Evaluator Statistics").
 
 heading() ->
 	title().
@@ -67,7 +67,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("OSM Exam Evaluation Statistics").
+	?LN("OSM Evaluator Statistics").
 
 
 
@@ -130,10 +130,8 @@ fetch(D, From, Size, Fs) ->
 	%
 	% build dicts
 	%
-	SeasonDocsDict = ep_core_exam_season_api:get_dict(Docs),
-	FacultyDocsDict = ep_core_faculty_api:get_dict(Docs),
-	ProgramDocsDict = ep_core_program_api:get_dict(Docs),
-	SubjectDocsDict = ep_core_subject_api:get_dict(Docs),
+	{SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict} =
+		ep_core_helper:get_sfps_dicts(Docs),
 
 
 	%
@@ -146,10 +144,10 @@ fetch(D, From, Size, Fs) ->
 		% init
 		%
 		TFs = helper_api:doc2fields({ok, Doc}),
-		SeasonDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, season_fk), SeasonDocsDict),
-		FacultyDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, faculty_code_fk), FacultyDocsDict),
-		ProgramDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, program_code_fk), ProgramDocsDict),
-		SubjectDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, subject_code_fk), SubjectDocsDict),
+		SFPSCells = ep_core_dig_helper:get_sfps_cells(
+			Doc, {SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict},
+			#dcell {show_ui=false}
+		),
 
 
 
@@ -163,66 +161,41 @@ fetch(D, From, Size, Fs) ->
 		%
 		% layout test
 		%
-		[
-			#dcell {val=itl:blockquote(SeasonDoc, [?COREXS(name), ?COREXS(state)])},
-			#dcell {val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)])},
-			#dcell {val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)])},
-			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
-			#dcell {
-				val=itl:blockquote([
-					#link {
-						new=true,
-						url=io_lib:format("/~p?id=~s", [
-							wf:page_module(), itf:idval(Doc)
-						]),
-						text=itf:val(Doc, anptestcourseid)
-					}
-				]),
-				val_export=itf:val(Doc, anptestcourseid)
-			}
-
+		SFPSCells ++ [
+			#dcell {type=label, val=itf:val(Doc, anptestcourseid)},
+			#dcell {type=label, val=itf:val(Doc, testname)}
 		] ++ lists:map(fun(RoleId) ->
 				ProfileIds = anpcandidates:get_evaluators_for_test(TFs, RoleId),
-				Val = layout_cell(RoleId, StatsDict, ProfileIds),
-				#dcell {
-					val_export=length(helper:unique(ProfileIds)),
-					val=Val
-				}
+				ProfileIdsUnique = helper:unique(ProfileIds),
+				layout_cell(RoleId, StatsDict, ProfileIdsUnique)
 		end, [
 			anpevaluator,
 			anpmoderator,
 			anprevaluator,
 			anpmoderator_reval
-		])
+		]) ++ [
+			dig_ep_osm_exam_evaluation_stats:dcell_exam_actions(Doc)
+		]
 
 
 	end, Docs),
 
 
 	%
-	% sort results
-	%
-	ResultsSorted = lists:sort(fun(A, B) ->
-		#dcell {val=YetToStartA} = lists:nth(7, A),
-		#dcell {val=YetToStartB} = lists:nth(7, B),
-		YetToStartA > YetToStartB
-	end, Results),
-
-
-	%
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Season"},
-		#dcell {type=header, val="Faculty"},
-		#dcell {type=header, val="Program"},
-		#dcell {type=header, val="Subject"},
-		#dcell {type=header, val="Test Id"},
-		#dcell {type=header, val=layout_cell_header(anpevaluator)},
-		#dcell {type=header, val=layout_cell_header(anpmoderator)},
-		#dcell {type=header, val=layout_cell_header(anprevaluator)},
-		#dcell {type=header, val=layout_cell_header(anpmoderator_reval)},
-		#dcell {type=header, val="Total"}
+		#dcell {type=header, show_ui=false, val="Season"},
+		#dcell {type=header, show_ui=false, val="Faculty"},
+		#dcell {type=header, show_ui=false, val="Program"},
+		#dcell {type=header, show_ui=false, val="Subject"},
+		#dcell {type=header, val="Exam Id"},
+		#dcell {type=header, val="Exam Name"},
+		#dcell {type=header, val="Number of " ++ ?LN(anpevaluator)},
+		#dcell {type=header, val="Number of " ++ ?LN(anpmoderator)},
+		#dcell {type=header, val="Number of " ++ ?LN(anprevaluator)},
+		#dcell {type=header, val="Number of " ++ ?LN(anpmoderator_reval)},
+		#dcell {type=header, val="Action"}
 	],
 
 
@@ -234,7 +207,7 @@ fetch(D, From, Size, Fs) ->
 		D#dig {
 			total=?INFINITY
 		},
-		[Header] ++ dig:append_total_cells(ResultsSorted)
+		[Header] ++ Results
 	}.
 
 
@@ -255,33 +228,6 @@ layout() ->
 
 
 
-
-
-%..............................................................................
-%
-% layout cell header
-%
-%..............................................................................
-
-layout_cell_header(RoleId) ->
-	#table {
-		rows=[
-			#tablerow {cells=[
-				#tablecell {
-					colspan=?CASE_IF_THEN_ELSE(RoleId, anpevaluator, 6, 2),
-					text=?LN(RoleId)
-				}
-			]},
-			#tablerow {cells=lists:map(fun(State) ->
-				#tablecell {
-					text=?LN(?L2A(?A2L(State) ++ "_min"))
-				}
-			end, states(RoleId))}
-		]
-	}.
-
-
-
 %..............................................................................
 %
 % layout cell
@@ -298,23 +244,10 @@ layout_cell(RoleId, StatsDict, ProfileIds) ->
 		Acc + get_val(Val)
 	end, 0, states(RoleId)),
 
-	#table {
-		rows=[
-			#tablerow {cells=[
-				#tablecell {
-					class="mycenter " ++ get_class_evaluator(length(ProfileIds), TotalPapers),
-					colspan=?CASE_IF_THEN_ELSE(RoleId, anpevaluator, 6, 2),
-					text=length(helper:unique(ProfileIds))
-				}
-			]},
-			#tablerow {cells=lists:map(fun(State) ->
-				Val = dict:find([?A2L(State)], StatsDict),
-				#tablecell {
-					class=get_class(Val),
-					text=get_val(Val)
-				}
-			end, states(RoleId))}
-		]
+
+	#dcell {
+		bgcolor=get_class_evaluator(length(ProfileIds), TotalPapers),
+		val=length(ProfileIds)
 	}.
 
 
@@ -476,9 +409,9 @@ handle_export_evaluator_stats_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
 % get class evaluator
 %
 get_class_evaluator(TotalEvaluators, _) when TotalEvaluators > 0 ->
-	"bg-success";
+	"table-success";
 get_class_evaluator(0, TotalPapers) when TotalPapers > 0 ->
-	"bg-danger";
+	"table-danger";
 get_class_evaluator(_, _) ->
 	[].
 
@@ -486,7 +419,7 @@ get_class_evaluator(_, _) ->
 % get class
 %
 get_class({ok, Number}) when Number > 0 ->
-	"bg-info";
+	"table-info";
 get_class(_) ->
 	[].
 
