@@ -164,6 +164,9 @@ get() ->
 				text="Change export format",
 				url="/dig_config?keyid=ep_osm_result_exportids"
 			}}
+		],
+		config=[
+			{responsive_type, scroll}
 		]
 	}.
 
