@@ -53,7 +53,7 @@ get() ->
 			fields:get(exam_pattern),
 			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
 		],
-		size=10,
+		size=25,
 		actions=[
 			{export_evaluator_stats_bulk, "Bulk Export Evaluator Stats", "Bulk Export Evaluator Stats"}
 		],

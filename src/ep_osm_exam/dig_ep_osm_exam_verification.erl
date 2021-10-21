@@ -97,7 +97,7 @@ init() ->
 %
 %..............................................................................
 fetch(D, _From, _Size, []) ->
-	{D, []};
+	{D, [{custom, #p {text="Please select a filter and search"}}]};
 
 
 
