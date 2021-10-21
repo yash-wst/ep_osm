@@ -46,8 +46,8 @@ get() ->
 		module=?MODULE,
 		filters=anptest:fs(search),
 		size=25,
-		config=[
-			{responsive_type, collapse}
+		events=[
+			ite:button(export, "CSV", {itx, {dig, export}})
 		]
 	}.
 
@@ -86,22 +86,49 @@ fetch(D, From, Size, Fs) ->
 		Rec#db2_find {sort=anptest:fs(search)}
 	),
 
+
+
+	%
+	% build dicts
+	%
+	{SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict} =
+		ep_core_helper:get_sfps_dicts(Docs),
+
 	%
 	% layout results
 	%
 	Results = lists:map(fun(Doc) ->
 
 		%
-		% layout cells
+		% init
 		%
 		FsDoc = itf:d2f(Doc, anptest:fs(form)),
 		FsIndex = itf:d2f(Doc, anptest:fs(index)),
-		lists:map(fun(F) ->
+
+
+		%
+		% sfps cells
+		%
+		SFPSCells = ep_core_dig_helper:get_sfps_cells(
+			Doc, {SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict},
+			#dcell {show_ui=false}
+		),
+
+
+		%
+		% layout
+		%
+		SFPSCells ++ lists:map(fun(F) ->
 			#dcell {val=itl:render(F)}
 		end, FsDoc) ++ [
-			#dcell {val=layout_files(Doc)}
+			#dcell {
+				show_csv=false,
+				val=layout_files(Doc)}
 		] ++ [
-			#dcell {val=helper_ui:layout_slinks(anptest, FsIndex)}
+			#dcell {
+				show_csv=false,
+				val=helper_ui:layout_slinks(anptest, FsIndex)
+			}
 		]
 
 	end, Docs),
@@ -110,11 +137,16 @@ fetch(D, From, Size, Fs) ->
 	%
 	% header
 	%
-	Header = lists:map(fun(#field {label=Label}) ->
+	Header = [
+		#dcell {type=header, show_ui=false, val="Season"},
+		#dcell {type=header, show_ui=false, val="Faculty"},
+		#dcell {type=header, show_ui=false, val="Program"},
+		#dcell {type=header, show_ui=false, val="Subject"}
+	] ++ lists:map(fun(#field {label=Label}) ->
 		#dcell {type=header, val=Label}
 	end, anptest:fs(form)) ++ [
-		#dcell {type=header, val="Files"},
-		#dcell {type=header, val="Actions"}
+		#dcell {type=header, show_csv=false, val="Files"},
+		#dcell {type=header, show_csv=false, val="Actions"}
 
 	],
 
