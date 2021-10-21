@@ -1033,9 +1033,13 @@ get_evaluation_stats0(TestDocs) ->
 get_days_since_test(_TodaySeconds, []) ->
 	[];
 get_days_since_test(TodaySeconds, TestDate) ->
-	TestdateSeconds = helper:date_d2epoch(TestDate),
-	DiffSeconds = TodaySeconds - TestdateSeconds,
-	DiffSeconds div (60*60*24).
+	try
+		TestdateSeconds = helper:date_d2epoch(TestDate),
+		DiffSeconds = TodaySeconds - TestdateSeconds,
+		DiffSeconds div (60*60*24)
+	catch _:_ ->
+		error
+	end.
 
 
 
