@@ -109,7 +109,7 @@ fetch(D, _From, _Size, [
 			#dcell {
 				val=itl:blockquote([
 					itf:val(SeasonDoc, name),
-					itf:val(SeasonDoc, state)
+					?LN(?L2A(itf:val(SeasonDoc, state)))
 				]),
 				postback={filter, itf:build(?COREXS(season_fk), SeasonId)}
 			}

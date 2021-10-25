@@ -95,7 +95,7 @@ fetch(D, _From, _Size, [
 			#dcell {
 				val=itl:blockquote([
 					itf:val(SeasonDoc, name),
-					itf:val(SeasonDoc, state)
+					?LN(?L2A(itf:val(SeasonDoc, state)))
 				]),
 				postback={filter, [
 					itf:build(?COREXS(season_fk), SeasonId)
@@ -392,6 +392,20 @@ fetch(D, _From, _Size, [
 		[Header] ++ Results
 	};
 
+
+
+%..............................................................................
+%
+% [season_fk, faculty_code_fk, program_code_fk, subject_code_fk]
+%
+%..............................................................................
+fetch(D, From, Size, [
+	#field {id=season_fk},
+	#field {id=faculty_code_fk},
+	#field {id=program_code_fk},
+	#field {id=subject_code_fk}
+] = Fs) ->
+	dig_ep_osm_exam:fetch(D, From, Size, Fs);
 
 
 %..............................................................................
