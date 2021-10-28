@@ -8,11 +8,17 @@
 %------------------------------------------------------------------------------
 
 layout() ->
+	layout(configs:get(ep_osm, false)).
+
+layout(true) ->
 	Key = {?MODULE, layout},
 	layout:grow([
 		widget_evaluation_stats(),
 		itxdoc_cache:get(Key, fun layout_from_db/0, 10)
-	]).
+	]);
+layout(false) ->
+	[].
+
 
 layout_from_db() ->
 	[
