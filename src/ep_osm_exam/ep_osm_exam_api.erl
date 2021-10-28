@@ -172,6 +172,42 @@ get_stats([
 % stats - evaluation
 %------------------------------------------------------------------------------
 
+%
+% get consolidated evaluation stats of active tests
+%
+get_stats_consolidated_evaluation_count_of_active_tests() ->
+
+	%
+	% get tests
+	%
+	Tests = anptests:active(),
+
+
+	%
+	% acc
+	%
+	DictFin = lists:foldl(fun(T, Acc) ->
+
+		%
+		% get test stats
+		%
+		TestId = fields:getuivalue(T, '_id'),
+		TestStats = get_evaluation_stats1(TestId),
+		
+		lists:foldl(fun({[State], Count}, Acc1) ->
+			dict:update_counter(State, Count, Acc1)
+		end, Acc, TestStats)
+
+
+	end, dict:new(), Tests),
+
+
+	%
+	% return
+	%
+	dict:to_list(DictFin).
+
+
 
 get_evaluation_stats0(TestId) ->
 	SK = [<<"">>, <<"">>],
@@ -189,6 +225,28 @@ get_evaluation_stats0(TestId) ->
 	end.
 
 
+get_evaluation_stats1(TestId) ->
+	SK = [<<"">>, <<"">>],
+	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
+
+	lists:foldl(fun(Viename, Acc) ->
+		Acc ++
+		try
+			itxview:get_stats(
+				anpcandidates:db(TestId), Viename, SK, EK, 1
+			)
+		catch error:{badmatch,{error,not_found}} ->
+			anptests:setup(TestId),
+			itxview:get_stats(
+				anpcandidates:db(TestId), Viename, SK, EK, 1
+			)
+		end
+	end, [], [
+		"state_assigned",
+		"state_assigned_anpmoderator",
+		"state_assigned_anprevaluator",
+		"state_assigned_anpmoderator_reval"
+	]).
 
 get_evaluation_stats(TestId) ->
 	SK = [<<"">>, <<"">>],

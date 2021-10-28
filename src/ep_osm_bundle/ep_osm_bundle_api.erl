@@ -156,6 +156,44 @@ get_stats(SeasonId) ->
 
 
 
+get_stats_of_active_seasons() ->
+
+	%
+	% get active seasons
+	%
+	ActiveSeasonIds = lists:map(fun({Id, _Name}) ->
+		Id
+	end, ep_core_exam_season_api:list_active()),
+
+
+	%
+	% get stats
+	%
+	Stats = ep_osm_bundle_api:get_stats(),
+
+
+	%
+	% acc stats
+	%
+	Dict = lists:foldl(fun({[State, SeasonId], Count}, Acc) ->
+		case lists:member(SeasonId, ActiveSeasonIds) of
+			true ->
+				dict:update_counter(State, Count, Acc);
+			false ->
+				Acc
+		end
+	end, dict:new(), Stats),
+
+
+	%
+	% return
+	%
+	dict:to_list(Dict).
+
+
+
+
+
 
 %------------------------------------------------------------------------------
 % misc

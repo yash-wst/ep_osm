@@ -1085,6 +1085,30 @@ get_fs_to_reset("anpstate_yettostart") ->
 get_fs_to_reset(_) ->
 	[].
 
+
+
+%
+% number of reminders sent today
+%
+number_of_reminders_sent_today() -> 
+
+	%
+	% init
+	%
+	Date = helper:date_today_str(),
+
+
+	%
+	% check if reminder already sent today
+	%
+	#db2_find_response {docs=AuditDocs} = db2_find:get_by_fs(
+		itxaudit_api:db(), [
+			itf:build(?ITXAUD(log), ?ITXAUDIT_LOG_REMINDER_SENT),
+			itf:build(?ITXAUD(refid1), ?A2L(?MODULE)),
+			itf:build(?ITXAUD(refid2), Date)
+		]
+	),
+	length(AuditDocs).
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
