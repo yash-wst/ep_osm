@@ -150,13 +150,35 @@ widget_evaluation_stats() ->
 widget_evaluation_stats(Title, Stats, States) ->
 
 	Data = lists:map(fun(State) ->
-		{?LN(State), proplists:get_value(?A2L(State), Stats, 0)}
+		{
+			?LN(State),
+			proplists:get_value(?A2L(State), Stats, 0),
+			color(State)
+		}
 	end, States),
 	Es = akit_chart:doughnut(helper:uidintstr(), Data),
 	akit_card:layout(Title, Es).
 
 
 
+color(anpstate_yettostart) ->
+	'rgb(59, 125, 221)';
+color(anpstate_active) ->
+	'#fcb92c';
+color(anpstate_completed) ->
+	'#1cbb8c';
+color(anpstate_moderation) ->
+	'#fcb92c';
+color(anpstate_moderation_completed) ->
+	'#1cbb8c';
+color(anpstate_revaluation) ->
+	'#fcb92c';
+color(anpstate_revaluation_completed) ->
+	'#1cbb8c';
+color(anpstate_evaluation_rejected) ->
+	'#dc3545';
+color(_) ->
+	''.
 
 %------------------------------------------------------------------------------
 % end
