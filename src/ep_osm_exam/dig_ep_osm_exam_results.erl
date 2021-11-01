@@ -335,6 +335,10 @@ fetch(D, From, Size, [
 	%
 	{
 		D#dig {
+			description=itx:format("~s, ~s", [
+				itf:val(ExamDoc, anptestcourseid),
+				itf:val(ExamDoc, testname)
+			]),
 			total=Count,
 			actions=[]
 		},
@@ -361,10 +365,8 @@ fetch(D, From, Size, Fs) ->
 	%
 	% build dicts
 	%
-	SeasonDocsDict = ep_core_exam_season_api:get_dict(Docs),
-	FacultyDocsDict = ep_core_faculty_api:get_dict(Docs),
-	ProgramDocsDict = ep_core_program_api:get_dict(Docs),
-	SubjectDocsDict = ep_core_subject_api:get_dict(Docs),
+	{SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict} =
+		ep_core_helper:get_sfps_dicts(Docs),
 
 
 	%
@@ -377,30 +379,33 @@ fetch(D, From, Size, Fs) ->
 		% init
 		%
 		ExamId = itf:idval(Doc),
-		SeasonDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, season_fk), SeasonDocsDict),
-		FacultyDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, faculty_code_fk), FacultyDocsDict),
-		ProgramDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, program_code_fk), ProgramDocsDict),
-		SubjectDoc = helper:get_doc_or_empty_doc_from_dict(itf:val(Doc, subject_code_fk), SubjectDocsDict),
+		FsDoc = itf:d2f(Doc, anptest:fs(form)),
+
+		%
+		% sfps cells
+		%
+		SFPSCells = ep_core_dig_helper:get_sfps_cells(
+			Doc, {SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict},
+			#dcell {show_ui=false}
+		),
+
 
 
 		%
 		% layout test
 		%
-		[
-			#dcell {val=itl:blockquote(SeasonDoc, [?COREXS(name), ?COREXS(state)])},
-			#dcell {val=itl:blockquote(FacultyDoc, [?CORFAC(faculty_code), ?CORFAC(faculty_name)])},
-			#dcell {val=itl:blockquote(ProgramDoc, [?CORPGM(program_code), ?CORPGM(program_name)])},
-			#dcell {val=itl:blockquote(SubjectDoc, [?CORSUB(subject_code), ?CORSUB(subject_name)])},
+		SFPSCells ++ lists:map(fun(F) ->
+			#dcell {val=itl:render(F)}
+		end, FsDoc) ++ [
 			#dcell {
-				val=itl:blockquote([
-					#link {
-						new=true,
-						url=io_lib:format("/~p?id=~s", [
-							wf:page_module(), ExamId
-						]),
-						text=itf:val(Doc, anptestcourseid)
-					}
-				])
+				show_csv=false,
+				val=#link {
+					new=true,
+					url=io_lib:format("/~p?id=~s", [
+						wf:page_module(), ExamId
+					]),
+					text="Results"
+				}
 			}
 		]
 
@@ -412,12 +417,17 @@ fetch(D, From, Size, Fs) ->
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Season"},
-		#dcell {type=header, val="Faculty"},
-		#dcell {type=header, val="Program"},
-		#dcell {type=header, val="Subject"},
-		#dcell {type=header, val="Course ID"}
+		#dcell {type=header, show_ui=false, val="Season"},
+		#dcell {type=header, show_ui=false, val="Faculty"},
+		#dcell {type=header, show_ui=false, val="Program"},
+		#dcell {type=header, show_ui=false, val="Subject"}
+	] ++ lists:map(fun(#field {label=Label}) ->
+		#dcell {type=header, val=Label}
+	end, anptest:fs(form)) ++ [
+		#dcell {type=header, show_csv=false, val="Actions"}
+
 	],
+
 
 
 
