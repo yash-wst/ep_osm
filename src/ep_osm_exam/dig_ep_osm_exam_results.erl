@@ -335,10 +335,7 @@ fetch(D, From, Size, [
 	%
 	{
 		D#dig {
-			description=itx:format("~s, ~s", [
-				itf:val(ExamDoc, anptestcourseid),
-				itf:val(ExamDoc, testname)
-			]),
+			description=itl:render(itf:d2f_doc(ExamDoc, ?OSMEXM(osm_exam_fk))),
 			total=Count,
 			actions=[]
 		},

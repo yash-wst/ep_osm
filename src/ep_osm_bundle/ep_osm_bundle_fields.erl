@@ -10,10 +10,12 @@
 f(osm_exam_fk = I) ->
 	F = itf:textbox_picker(?F(I, "OSM Exam")),
 	F#field {
+		module=anptest,
 		options=#search {
 			title=?LN("Select OSM Exam"),
 			db=anptests:getdb(),
 			displayfs=[
+				fields:get(anptestcourseid),
 				fields:get(testname)
 			],
 			filterfs=anptest:fs(search),
