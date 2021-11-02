@@ -21,6 +21,7 @@ f(list_of_widgets = I) ->
 f(osm_mscheme_fk = I) ->
 	F = itf:textbox_picker(?F(I, "Marking Scheme", test_settings)),
 	F#field {
+		module=ep_osm_mscheme,
 		validators=[],
 		options=options(I)
 	};

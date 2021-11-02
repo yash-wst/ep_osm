@@ -93,6 +93,8 @@ layout(?CREATE, _) ->
 %
 %..............................................................................
 
+layout(?VIEW, Id) when Id /= []; Id /= undefined ->
+	layout(?EDIT, Id);	
 layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 
 
