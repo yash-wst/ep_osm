@@ -9,6 +9,9 @@
 % events
 %------------------------------------------------------------------------------
 
+event({clicked, export_marker, WUId}) ->
+	handle_clicked_export_marker(WUId);
+
 event({insert_widget, undefined, {widget, _, _, _} = Widget}) ->
 	handle_add_widget(?OSMMSC(Widget));
 
@@ -133,6 +136,71 @@ handle_save_and_reload(Id, FsToSave) ->
 			helper_ui:flash(error, "failed!", 5)
 	end.
 
+
+%..............................................................................
+%
+% handle clicked - export marker
+%
+%..............................................................................
+
+handle_clicked_export_marker(WUId) when is_atom(WUId) ->
+	handle_clicked_export_marker(?A2L(WUId));
+handle_clicked_export_marker(WUId) ->
+
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+	ExportMarkerList = itf:val(Doc, ?OSMMSC(list_of_export_markers)),
+	FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
+
+	%
+	% FsSave
+	%
+	ExportMarkerList1 = lists:keydelete(WUId, 1, ExportMarkerList),
+	ExportMarkerList2 = case wf:q(WUId) of
+		undefined ->
+			ExportMarkerList1;
+		"on" ->
+			ExportMarkerList1 ++ [{WUId, "on"}]
+	end,
+
+
+	%
+	% save
+	%
+	FsToSave = [
+		FList,
+		itf:build(?OSMMSC(list_of_export_markers), ExportMarkerList2)
+	],
+	case ep_osm_mscheme_api:save(FsToSave, ep_osm_mscheme:fs(all), Id) of
+		{ok, _} ->
+			helper_ui:flash(success, get_msg(WUId, wf:q(WUId)), 5);
+		_ ->
+			helper_ui:flash(error, "failed! please reload page.")
+	end.
+
+
+
+
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+%
+% get message
+%
+get_msg(WUId, undefined) ->
+	itx:format("~s, ~s", [
+		ep_osm_mscheme_fields:get_question_id_from_wuid(?L2A(WUId)),
+		"OFF"
+	]);
+get_msg(WUId, "on") ->
+	itx:format("~s, ~s", [
+		ep_osm_mscheme_fields:get_question_id_from_wuid(?L2A(WUId)),
+		"ON"
+	]).
 
 
 %------------------------------------------------------------------------------

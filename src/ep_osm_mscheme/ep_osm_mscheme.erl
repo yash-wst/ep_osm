@@ -30,7 +30,8 @@ access(_, _) -> false.
 fs(basic) -> [
 	?OSMMSC(name),
 	?OSMMSC(state),
-	?OSMMSC(list_of_widgets)
+	?OSMMSC(list_of_widgets),
+	?OSMMSC(list_of_export_markers)
 ];
 
 fs(index) -> [
@@ -103,6 +104,7 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 	%
 	Id = wf:q(id),
 	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+	setdoc(Doc),
 
 
 
@@ -129,7 +131,7 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 		layout_actions(),
 		itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), tableonly)
 	],
-	layout:g(6, 3, Es);
+	layout:g(7, ?AKIT({layout, card, Es}));
 
 
 
@@ -140,7 +142,7 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 %..............................................................................
 
 layout(?UPDATE, Id) when Id /= []; Id /= undefined ->
-	layout:g(6, 3, itxdocument:layout(?UPDATE, ?MODULE, Id));
+	layout:g(7, itxdocument:layout(?UPDATE, ?MODULE, Id));
 
 layout(_, _) ->
 	[].
@@ -487,6 +489,18 @@ links(Id) ->
 %------------------------------------------------------------------------------
 import(List) ->
 	?D(List).
+
+
+
+%
+% set doc
+%
+setdoc(Doc) ->
+	helper:state({?MODULE, doc}, Doc).
+
+getdoc() ->
+	helper:state({?MODULE, doc}).
+
 
 
 %------------------------------------------------------------------------------

@@ -26,6 +26,8 @@ f(osm_mscheme_fk = I) ->
 		options=options(I)
 	};
 
+f(list_of_export_markers = I) ->
+	itf:list2(?F(I, "Export Markers"));
 
 
 %------------------------------------------------------------------------------
@@ -307,7 +309,7 @@ renderer({WUId, ?WTYPE_QUESTION, _}) ->
 
 
 		EsVisible = layout:grow([
-			layout:g(2, layout_wuid(WUId)),
+			layout:g(3, layout_wuid(WUId)),
 			layout:g(3, itl:render(Mode, FWname1)),
 			layout:g(3, itl:render(Mode, FWmarks)),
 			layout:g(3, layout_actions(WUId, F))
@@ -430,7 +432,7 @@ renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 		%
 		{
 			nolabel,
-			itl:section(EsSubFields)
+			section(EsSubFields)
 		}
 	end;
 
@@ -448,7 +450,7 @@ renderer({WUId, _, _}) ->
 		%
 		EsSubFields = #panel {
 			body=[
-				layout:g(2, layout_wuid(WUId)),
+				layout:g(3, layout_wuid(WUId)),
 				layout_actions(WUId, F),
 				itl:render(Mode, Subfields)
 			]
@@ -460,7 +462,7 @@ renderer({WUId, _, _}) ->
 		%
 		{
 			nolabel,
-			itl:section(EsSubFields)
+			section(EsSubFields)
 		}
 	end.
 
@@ -488,26 +490,8 @@ event({insert, WUId, #field {} = F}) ->
 
 
 %------------------------------------------------------------------------------
-% misc
+% layout
 %------------------------------------------------------------------------------
-
-%
-% nid
-%
-nid(A, B) when is_atom(B) ->
-	nid(A, ?A2L(B));
-nid(A, B) when is_list(B) ->
-	?L2A(?A2L(A) ++ "_" ++ B).
-
-
-%
-% uid
-%
-uid() ->
-	helper:uidintstr().
-
-uid(Id) ->
-	?L2A(?FLATTEN(io_lib:format("~s_~s", [Id, uid()]))).
 
 
 
@@ -538,9 +522,60 @@ layout_actions(WUId, F) -> [
 %
 layout_wuid(WUId) ->
 	#span {
-		class="font-weight-bold lead",
-		text=get_question_id_from_wuid(WUId)
+		class="font-weight-bold",
+		body=[
+			get_question_id_from_wuid(WUId),
+			layout_wuid_marker_export(WUId)
+		]
 	}.
+
+
+
+layout_wuid_marker_export(WUId) ->
+
+	%
+	% get doc and set value
+	%
+	Doc = ep_osm_mscheme:getdoc(),
+	ExportMarkerList = itf:val(Doc, ?OSMMSC(list_of_export_markers)),
+	IsChecked = proplists:get_value(?A2L(WUId), ExportMarkerList, false),
+
+
+	#span {
+		class="mx-2",
+		body=[
+			#checkbox {
+				title="Show in results?",
+				id=WUId,
+				checked=IsChecked,
+				postback={clicked, export_marker, WUId},
+				delegate=ep_osm_mscheme_handler
+			}
+		]
+	}.
+
+
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+%
+% nid
+%
+nid(A, B) when is_atom(B) ->
+	nid(A, ?A2L(B));
+nid(A, B) when is_list(B) ->
+	?L2A(?A2L(A) ++ "_" ++ B).
+
+
+%
+% uid
+%
+uid() ->
+	helper:uidintstr().
+
+uid(Id) ->
+	?L2A(?FLATTEN(io_lib:format("~s_~s", [Id, uid()]))).
 
 
 
@@ -581,6 +616,15 @@ marks_per_question() ->
 	catch _:_ ->
 		[]
 	end.
+
+
+
+%
+% section
+%
+section(Es) ->
+	#panel {class="it-section", body=Es}.
+
 
 %------------------------------------------------------------------------------
 % end
