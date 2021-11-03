@@ -265,7 +265,7 @@ options(osm_mscheme_fk) ->
 	#search {
 		title=?LN("Select Marking Scheme"),
 		db=ep_osm_mscheme_api:db(),
-		displayfs=ep_osm_mscheme:fs(grid),
+		displayfs=ep_osm_mscheme:fs(displayfs),
 		filterfs=[
 			f(name),
 			f(state)

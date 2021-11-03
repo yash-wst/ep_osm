@@ -59,6 +59,12 @@ fs(search) ->
 fs(grid) ->
 	fs(basic);
 
+fs(displayfs) -> [
+	?OSMMSC(name),
+	?OSMMSC(state)
+];
+
+
 fs(import) -> [
 	itf:attachment()
 ];
