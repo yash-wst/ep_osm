@@ -46,25 +46,26 @@ fs(grid) ->
 	fs(basic);
 
 fs(import) ->
-	Ids = [
-		"faculty_code",
-		"faculty_name",
-		"program_code",
-		"program_name",
-		"program_pattern",
-		"subject_code",
-		"subject_name",
-		"subject_pattern",
-		"testname",
-		"anptestcourseid",
-		"testtotalmarks",
-		"testduration",
-		"pages_per_booklet",
-		"startdate"
+	Vals = [
+		["faculty_code", "Faculty will be created if not found"],
+		["faculty_name", ""],
+		["program_code", "Program will be created if not found"],
+		["program_name", ""],
+		["program_pattern", ""],
+		["subject_code", "Subject will be created if not found"],
+		["subject_name", ""],
+		["subject_pattern", ""],
+		["testname", "Exam name"],
+		["anptestcourseid", "Exam code"],
+		["testtotalmarks", "Total marks"],
+		["testduration", "Exam duration in minutes"],
+		["pages_per_booklet", "Number of pages in the booklet used for this exam"],
+		["startdate", "Date of exam"]
 	],
-	ImportFormat = string:join(Ids, ",\n"),
+	Es = dig:layout_vals(#dig{}, Vals, ["Field", "Description"]),
+
 	[
-		?ITXF({sep, #pre {text=ImportFormat}}),
+		?ITXF({sep, Es}),
 		?COREXS(season_fk, #field {id=import_season_fk}),
 		itf:attachment()
 	];
