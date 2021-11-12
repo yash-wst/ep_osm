@@ -38,12 +38,16 @@ f({wtype, I}) ->
 	itf:hidden(?F(I, "Widget Type"));
 
 f({wid, I}) ->
-	itf:hidden(?F(I, "Widget Id"));
+	F = itf:textbox_readonly(?F(I, "Widget Id")),
+	F#field {renderer=fun renderer_wid/3};
 
 f({wname, I}) ->
 	f({wname, I, undefined});
 
-f({wname, I, WType}) when WType == ?WTYPE_QUESTION ->
+f({wname, I, WType}) when
+	WType == ?WTYPE_QUESTION;
+	WType == ?WTYPE_GROUP;
+	WType == ?WTYPE_RULE ->
 	itf:textbox(?F(I, "Name"));
 f({wname, I, _WType})  ->
 	itf:textbox_readonly(?F(I, "Name"));
@@ -445,15 +449,24 @@ renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 renderer({WUId, _, _}) ->
 	fun(Mode, _Event, #field {subfields=Subfields} = F) ->
 
+
+		[FWType, FWId, FWname, _FWmarks, FWLow] = Subfields,
+
+		EsVisible = layout:grow([
+			layout:g(3, layout_wuid(WUId)),
+			layout:g(3, itl:render(Mode, FWname)),
+			layout:g(3, itl:render(Mode, FWId)),
+			layout:g(3, layout_actions(WUId, F))
+		]),
+
+
 		%
-		% render subfields
+		% render hidden fields
 		%
-		EsSubFields = #panel {
-			body=[
-				layout:g(3, layout_wuid(WUId)),
-				layout_actions(WUId, F),
-				itl:render(Mode, Subfields)
-			]
+		EsHiddenFields = #panel {
+			body=lists:map(fun(Fi) ->
+				itl:render(Mode, Fi)
+			end, [FWType, FWLow])
 		},
 
 
@@ -462,9 +475,35 @@ renderer({WUId, _, _}) ->
 		%
 		{
 			nolabel,
-			section(EsSubFields)
+			[
+				EsVisible,
+				EsHiddenFields
+			]
 		}
 	end.
+
+
+%..............................................................................
+%
+% renderer - wid
+%
+%..............................................................................
+
+renderer_wid(_, _, #field {id=I, label=L, uivalue=Val}) ->
+	
+	ValLabel = case Val of
+		"any" ++ _ ->
+			string:to_upper(Val);
+		_ ->
+			[]
+	end,
+
+	{L, [
+		#hidden {id=I, text=Val},
+		#span {class="fw-bold", text=ValLabel}
+	]}.
+
+
 
 
 %------------------------------------------------------------------------------
@@ -542,7 +581,7 @@ layout_wuid_marker_export(WUId) ->
 
 
 	#span {
-		class="mx-2",
+		class="pull-sm-right float-end",
 		body=[
 			#checkbox {
 				title="Show in results?",
