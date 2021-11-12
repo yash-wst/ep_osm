@@ -193,12 +193,12 @@ handle_clicked_export_marker(WUId) ->
 %
 get_msg(WUId, undefined) ->
 	itx:format("~s, ~s", [
-		ep_osm_mscheme_fields:get_question_id_from_wuid(?L2A(WUId)),
+		?L2A(WUId),
 		"OFF"
 	]);
 get_msg(WUId, "on") ->
 	itx:format("~s, ~s", [
-		ep_osm_mscheme_fields:get_question_id_from_wuid(?L2A(WUId)),
+		?L2A(WUId),
 		"ON"
 	]).
 
