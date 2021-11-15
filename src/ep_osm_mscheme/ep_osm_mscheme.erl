@@ -334,6 +334,276 @@ handle_convert_widget_to_tuple(_, #field {id=Id, subfields=[#field {uivalue=?WTY
 		handle_convert_widgets_to_tuples(?WTYPE_RULE, FWLow#field.subfields)
 	}.
 
+
+
+%..............................................................................
+%
+% handle - create calc dict
+%
+%..............................................................................
+
+handle_get_marks_per_question(Doc, CDoc, EvaluatorRole) ->
+	List = handle_convert_doc_to_rules_calc(Doc, CDoc, EvaluatorRole),
+	handle_convert_doc_to_rules_calc_1([], List).
+
+
+handle_convert_doc_to_rules_calc_1(Acc, []) ->
+	Acc;
+handle_convert_doc_to_rules_calc_1(Acc, [{Id, Name, _Rule, Path, Total} | Tail]) ->
+	Acc1 = Acc ++ [{Id, Name, Total}],
+	Acc2 = handle_convert_doc_to_rules_calc_1(Acc1, Path),
+	handle_convert_doc_to_rules_calc_1(Acc2, Tail).
+
+
+
+handle_convert_doc_to_rules_calc(Doc, CDoc, EvaluatorRole) ->
+
+	%
+	% init
+	%
+	MVals = itf:val(CDoc, fields:get(EvaluatorRole)),
+	MDict = dict:from_list(MVals),
+
+
+	%
+	% compute scores
+	%
+	FList = itf:d2f(Doc, ?OSMMSC({list_of_widgets, list_of_widgets})),
+	handle_convert_widgets_to_tuples_calc(
+		MDict, undefined, [], FList#field.subfields
+	).
+
+
+
+handle_convert_widgets_to_tuples_calc(
+	MDict,
+	ParentType,
+	ParentId,
+	ListOfWidgets
+) ->
+	lists:map(fun(W) ->
+		handle_convert_widget_to_tuple_calc(MDict, ParentType, ParentId, W)
+	end, ListOfWidgets).
+
+
+
+handle_convert_widget_to_tuple_calc(
+	MDict,
+	ParentType,
+	ParentId,
+	#field {id=Id, subfields=[#field {uivalue=?WTYPE_QUESTION} | _] = Subfields}
+) ->
+
+	%
+	% init
+	%
+	[_FWType, _FWId, FWname, _FWmarks, _FWLow] = Subfields,
+	Name = helper:replace_these_with_that(itf:val(FWname), [" "], "_"),
+
+
+	%
+	% ids
+	%
+	CurrentId = case ParentType of
+		undefined ->
+			?WTYPE_RULE ++ ?WTYPE_GROUP ++ ?A2L(Id);
+		?WTYPE_RULE ->
+			?WTYPE_RULE ++ ?WTYPE_GROUP ++ ?WTYPE_QUESTION ++ ?A2L(Id);
+		?WTYPE_GROUP ->
+			[]
+	end,
+	ParentIdNext = get_parentid_next(ParentId, CurrentId),
+	QuestionId = string:join([ParentIdNext, Name], "_"),
+
+	%
+	% return
+	%
+	{
+		Id,
+		itf:val(FWname),
+		"sum",
+		[],
+		getval(QuestionId, MDict)	
+	};
+
+
+
+handle_convert_widget_to_tuple_calc(
+	MDict,
+	ParentType,
+	ParentId,
+	#field {id=Id, subfields=[#field {uivalue=?WTYPE_GROUP} | _] = Subfields}
+) ->
+
+	%
+	% init
+	%
+	[_FWType, _FWId, FWname, _FWmarks, FWLow] = Subfields,
+
+
+	%
+	% ids
+	%
+	CurrentId = case ParentType of
+		?WTYPE_RULE ->
+			itx:format("~s~s", [?WTYPE_GROUP, Id]);
+		_ ->
+			itx:format("~s~s~s_~s~s", [
+				?WTYPE_RULE, ?WTYPE_GROUP, Id, ?WTYPE_GROUP, Id
+			])
+	end,
+	ParentIdNext = get_parentid_next(ParentId, CurrentId),
+
+
+
+	%
+	% path
+	%
+	Rule = "sum",
+	Path = handle_convert_widgets_to_tuples_calc(
+		MDict, ?WTYPE_GROUP, ParentIdNext, FWLow#field.subfields
+	),
+
+
+	%
+	% return tuple
+	%
+	{
+		Id,
+		itf:val(FWname),
+		Rule,
+		Path,
+		calc(Rule, Path)
+	};
+
+
+
+handle_convert_widget_to_tuple_calc(
+	MDict,
+	_ParentType,
+	ParentId,
+	#field {id=Id, subfields=[#field {uivalue=?WTYPE_RULE} | _] = Subfields}
+) ->
+
+	%
+	% init
+	%
+	[_FWType, FWId, FWname, _FWmarks, FWLow] = Subfields,
+
+
+	%
+	% ids
+	%
+	CurrentId = itx:format("~s~s", [?WTYPE_RULE, Id]),
+	ParentIdNext = get_parentid_next(ParentId, CurrentId),
+
+
+
+	%
+	% path
+	%
+	Rule = itf:val(FWId),
+	Path = handle_convert_widgets_to_tuples_calc(
+		MDict, ?WTYPE_RULE, ParentIdNext, FWLow#field.subfields
+	),
+
+
+
+	%
+	% return tuple
+	%
+	{
+		Id,
+		itf:val(FWname),
+		Rule,
+		Path,
+		calc(Rule, Path)
+	}.
+
+
+%
+% calc
+%
+calc("any" ++ Length, List) ->
+
+	%
+	% assume last element in each tuple is marks value
+	% create list just of marks
+	%
+	List1 = lists:map(fun({_Id, _Name, _Rule, _Path, Marks}) ->
+		Marks
+	end, List),
+
+
+	%
+	% sort in decending order
+	%
+	List2 = lists:sort(fun(A, B) ->
+		A > B
+	end, List1),
+
+
+	%
+	% get first N elements of anyN from the list
+	%
+	N = list_to_integer(Length),
+	List3 = lists:sublist(List2, N),
+
+
+	%
+	% return sum
+	%
+	lists:sum(List3);
+
+
+calc("sum", List) ->
+
+	%
+	% assume last element in each tuple is marks value
+	% create list just of marks
+	%
+	List1 = lists:map(fun({_Id, _Name, _Rule, _Path, Marks}) ->
+		Marks
+	end, List),
+
+
+	%
+	% return sum
+	%
+	lists:sum(List1);
+
+
+
+calc(Rule, List) ->
+	?D({Rule, List}),
+	throw({Rule, List}).
+
+
+
+%
+% get dict val
+%
+getval(QuestionId, MDict) ->
+	case dict:find(QuestionId, MDict) of
+		{ok, Val} ->
+			helper:s2f_v1(Val);
+		_ ->
+			0
+	end.
+
+
+%
+% get parent id
+%
+get_parentid_next(ParentId, []) ->
+	ParentId;
+get_parentid_next([], CurrentId) ->
+	CurrentId;
+get_parentid_next(ParentId, CurrentId) ->
+	string:join([ParentId, CurrentId], "_").
+
+
+
 %..............................................................................
 %
 % handle - view marking scheme layout

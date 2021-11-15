@@ -30,6 +30,7 @@ heading() ->
 	seasondoc,
 	programdoc,
 	subjectdoc,
+	mschemedoc,
 	doc,
 	rdsdoc,
 	listofquestions=[],
@@ -59,7 +60,8 @@ exportids() -> [
 	"revaluator_total",
 	"moderator_reval_total",
 	"total",
-	"marks_per_question"
+	"marks_per_question",
+	"marks_per_marked_question"
 ].
 
 
@@ -112,6 +114,10 @@ f("courseid") ->
 
 f("marks_per_question") ->
 	itf:textbox(?F(marks_per_question, "Marks Per Question"));
+
+
+f("marks_per_marked_question") ->
+	itf:textbox(?F(marks_per_marked_question, "Marks Per Marked Question"));
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -224,6 +230,7 @@ fetch(D, From, Size, [
 	SeasonId = itf:val(ExamDoc, season_fk),
 	ProgramId = itf:val(ExamDoc, program_code_fk),
 	SubjectId = itf:val(ExamDoc, subject_code_fk),
+	MSchemeId = itf:val(ExamDoc, osm_mscheme_fk),
 	SeatNumberMappingId = itxconfigs_cache:get2(osm_images_folder_id, booklet_number),
 	ListOfAllQuestions = get_list_of_questions(ExamDoc),
 
@@ -234,6 +241,7 @@ fetch(D, From, Size, [
 	SeasonDoc = itx:okdoc(ep_core_exam_season_api:get(SeasonId)),
 	ProgramDoc = itx:okdoc(ep_core_program_api:get(ProgramId)),
 	SubjectDoc = itx:okdoc(ep_core_subject_api:get(SubjectId)),
+	MSchemeDoc = itx:okdoc(ep_osm_mscheme_api:get(MSchemeId)),
 
 
 	%
@@ -283,6 +291,7 @@ fetch(D, From, Size, [
 			seasondoc=SeasonDoc,
 			programdoc=ProgramDoc,
 			subjectdoc=SubjectDoc,
+			mschemedoc=MSchemeDoc,
 			doc=Doc,
 			rdsdoc=dict:find(SeatNumber, RdsDocsDict),
 			listofquestions=ListOfAllQuestions,
@@ -294,7 +303,9 @@ fetch(D, From, Size, [
 		% vals
 		%
 		lists:foldl(fun
-			("marks_per_question" = Id, Acc) ->
+			(Id, Acc) when 
+				Id == "marks_per_question";
+				Id == "marks_per_marked_question" ->
 				MPQVals = val(RecDoc, Id),
 				Acc ++ lists:map(fun(MPQVal) ->
 					#dcell {
@@ -317,8 +328,10 @@ fetch(D, From, Size, [
 	% header
 	%
 	Header = lists:foldl(fun
-		("marks_per_question", Acc) ->
-			Acc;
+		(Id, Acc) when 
+			Id == "marks_per_question";
+			Id == "marks_per_marked_question" ->
+			Acc ++ get_question_headers(Id, MSchemeDoc, ListOfAllQuestions);
 		(Id, Acc) ->
 			#field {label=Label} = f(Id),
 			Acc ++ [
@@ -327,7 +340,7 @@ fetch(D, From, Size, [
 					val=Label
 				}
 			]
-	end, [], ExportIds1) ++ get_question_headers(ListOfAllQuestions),
+	end, [], ExportIds1),
 
 
 	%
@@ -643,6 +656,18 @@ handle_export_results_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
 %
 val(#docs {
 	doc=Doc,
+	evaluatorrole=EvaluatorRole,
+	mschemedoc=MSchemeDoc
+}, Id) when
+	Id == "marks_per_marked_question" ->
+	get_marks_per_marked_question(
+		MSchemeDoc, Doc, EvaluatorRole
+	);
+
+
+
+val(#docs {
+	doc=Doc,
 	listofquestions=ListOfAllQuestions,
 	evaluatorrole=EvaluatorRole
 }, Id) when
@@ -743,6 +768,30 @@ val(#docs {
 % misc
 %------------------------------------------------------------------------------
 
+%
+% get - marks per marked question
+%
+get_marks_per_marked_question(MSchemeDoc, Doc, EvaluatorRole) ->
+	%
+	% init
+	%
+	EvaluatorMarkingId = ?L2A(?FLATTEN(io_lib:format("anpmarking_anp~s", [EvaluatorRole]))),
+	List = ep_osm_mscheme:handle_get_marks_per_question(MSchemeDoc, Doc, EvaluatorMarkingId),
+	MarkedQuestions = itf:val(MSchemeDoc, ?OSMMSC(list_of_export_markers)),
+
+	%
+	% lists map
+	%
+	lists:map(fun({Id, "on"}) ->
+		IdAtom = ?L2A(Id),
+		case lists:keyfind(IdAtom, 1, List) of
+			{IdAtom, _QName, Marks} ->
+				helper:f2s_v1(Marks);
+			false ->
+				"error"
+		end
+	end, MarkedQuestions).
+
 
 %
 % get - marks per question
@@ -786,7 +835,28 @@ get_list_of_questions(TDoc) ->
 %
 % get - question headers
 %
-get_question_headers(ListOfAllQuestions) ->
+get_question_headers("marks_per_marked_question", MSchemeDoc, _ListOfAllQuestions) ->
+
+	EvaluatorMarkingId = anpmarking_anpevaluator,
+	List = ep_osm_mscheme:handle_get_marks_per_question(MSchemeDoc, {[]}, EvaluatorMarkingId),
+	MarkedQuestions = itf:val(MSchemeDoc, ?OSMMSC(list_of_export_markers)),
+
+	%
+	% lists map
+	%
+	lists:map(fun({Id, "on"}) ->
+		IdAtom = ?L2A(Id),
+		QuestionLabel = case lists:keyfind(IdAtom, 1, List) of
+			{_IdAtom, QName, _Marks} ->
+				QName;
+			false ->
+				"error"
+		end,
+		#dcell {val=QuestionLabel}
+	end, MarkedQuestions);
+
+
+get_question_headers("marks_per_question", _, ListOfAllQuestions) ->
 	lists:map(fun({_MarkingId, QuestionId, MaxMarks}) ->
 		#dcell {
 			type=header,
