@@ -398,7 +398,7 @@ renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 		%
 		% init
 		%
-		[_FWType, _FWId, _FWname, _FWmarks, FWLow] = Subfields,
+		[_FWType, FWId, FWname, _FWmarks, FWLow] = Subfields,
 		Separator =	#p {class="font-weight-bold mycenter", text="(OR)"},
 
 
@@ -421,14 +421,12 @@ renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 		%
 		% render subfields
 		%
-		EsSubFields = #panel {
-			body=[
-				layout_wuid(WUId),
-				layout_actions(WUId, F),
-				#p {class=EsClass, text=EsText},
-				helper:join(EsFields, Separator)
-			]
-		},
+		EsSubFields = layout:grow([
+				layout:g(3, layout_wuid(WUId)),
+				layout:g(3, itl:render(Mode, FWname)),
+				layout:g(3, itl:render(Mode, FWId)),
+				layout:g(3, layout_actions(WUId, F))
+		]),
 
 
 		%
@@ -436,7 +434,11 @@ renderer({WUId, ?WTYPE_RULE, ?WID_OR}) ->
 		%
 		{
 			nolabel,
-			section(EsSubFields)
+			section([
+				EsSubFields,
+				#p {class=EsClass, text=EsText},
+				helper:join(EsFields, Separator)
+			])
 		}
 	end;
 

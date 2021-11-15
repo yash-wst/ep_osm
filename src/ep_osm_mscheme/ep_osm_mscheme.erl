@@ -524,6 +524,8 @@ handle_convert_widget_to_tuple_calc(
 %
 % calc
 %
+calc("or", List) ->
+	calc("any1", List);
 calc("any" ++ Length, List) ->
 
 	%
