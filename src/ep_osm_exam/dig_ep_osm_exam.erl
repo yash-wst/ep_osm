@@ -48,6 +48,11 @@ get() ->
 		size=25,
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
+		],
+		actions=[
+			{action_import, "+ Import", "+ Import"},
+			{action_import_student_data, "Import Student Data", "Import Student Data"},
+			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."}
 		]
 	}.
 
@@ -152,11 +157,7 @@ fetch(D, From, Size, Fs) ->
 
 	{
 		D#dig {
-			total=?INFINITY,
-			actions=[
-				{action_import, "+ Import", "+ Import"},
-				{action_uploadzip, "Upload Zip", "Upload Zip"}
-			]
+			total=?INFINITY
 		},
 		[Header] ++ Results
 	}.
@@ -266,7 +267,7 @@ event({browser_to_s3_completed, ObjectKey}) ->
 	handle_objectkey_upload_completed(ObjectKey);
 
 event(action_uploadzip) ->
-	handle_action_uploadzip();
+	dig_mm:handle_show_action("Upload Zip", layout_upload_form());
 
 event({download, DocId, AttachmentName}) ->
 	attachment:download(anptests:getdb(), DocId, AttachmentName);
@@ -323,51 +324,6 @@ handle_objectkey(ObjectKey) when ObjectKey /=[], ObjectKey /= undefined ->
 
 handle_objectkey(_) ->
 	ok.
-
-
-
-%..............................................................................
-%
-% handle - action upload zip
-%
-%..............................................................................
-
-handle_action_uploadzip() ->
-	%
-	% build header
-	%
-	EsHeader = [
-		#button {
-			class="btn btn-sm btn-primary-outline pull-sm-right",
-			text="Close",
-			actions=[
-				#event {
-					type=click,
-					actions=#update {target=panel_actions, elements=[]}
-				}
-			]
-		},
-		#p {
-			class="font-weight-bold",
-			text="Upload Zip"
-		}
-	],
-
-
-	%
-	% build form
-	%
-	Es = [
-		layout_upload_form()
-	],
-
-
-	%
-	% show form
-	%
-	Es1 = itl:section(EsHeader, Es),
-	wf:update(panel_actions, Es1).
-
 
 
 
