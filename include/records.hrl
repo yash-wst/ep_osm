@@ -38,6 +38,9 @@
 -define(OSMCON(Id), itf:field(ep_osm_controller_fields, Id)).
 -define(OSMCON(Id, Field), itf:field(ep_osm_controller_fields, Id, Field)).
 
+-define(OSMCAN(Id), itf:field(ep_osm_candidate_fields, Id)).
+-define(OSMCAN(Id, Field), itf:field(ep_osm_candidate_fields, Id, Field)).
+
 %
 % entities
 %

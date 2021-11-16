@@ -208,6 +208,15 @@ layout_files(Doc) ->
 
 
 
+%..............................................................................
+%
+% layout - import student data form
+%
+%..............................................................................
+
+layout_import_student_data() ->
+	itl:get(?EDIT, ep_osm_exam:fs(import_student_data), noevent, table).
+
 
 %..............................................................................
 %
@@ -266,6 +275,9 @@ layout_upload_form() ->
 event({browser_to_s3_completed, ObjectKey}) ->
 	handle_objectkey_upload_completed(ObjectKey);
 
+event(action_import_student_data) ->
+	dig_mm:handle_show_action("Import Student Data", layout_import_student_data());
+
 event(action_uploadzip) ->
 	dig_mm:handle_show_action("Upload Zip", layout_upload_form());
 
@@ -277,6 +289,12 @@ event(E) ->
 
 start_upload_event(Event) ->
 	dig_mm:start_upload_event(Event).
+
+finish_upload_event({_,file_import_student_data}, AttachmentName, LocalFileData, _Node) ->
+	dig_mm_import:handle_finish_upload_event(
+		?MODULE, ep_osm_candidate, ep_osm_candidate_api, ep_osm_candidate_import,
+		{file, AttachmentName, LocalFileData}
+	);
 
 finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 	dig_mm:finish_upload_event(Tag, AttachmentName, LocalFileData, Node).

@@ -1,4 +1,4 @@
--module(ep_osm_exam).
+-module(ep_osm_candidate).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -7,13 +7,13 @@ main() ->
 	ita:auth(?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered.html"})).
 
 title() ->
-	?LN("ep_osm_exam").
+	?LN("ep_osm_candidate").
 
 heading() ->
-	?LN("ep_osm_exam").
+	?LN("ep_osm_candidate").
 
 db() ->
-	ep_osm_exam_api:db().
+	"ep_osm_candidate".
 
 %------------------------------------------------------------------------------
 % access
@@ -24,8 +24,8 @@ access(_, _) -> false.
 % fields
 %------------------------------------------------------------------------------
 
-fs(basic) ->
-	fields:getfields(anptest:fids());
+fs(basic) -> 
+	fields:getfields(anpcandidate:fids());
 
 fs(view) ->
 	fs(basic);
@@ -45,49 +45,9 @@ fs(search) ->
 fs(grid) ->
 	fs(basic);
 
-fs(import) ->
-	Vals = [
-		["faculty_code", "Faculty will be created if not found"],
-		["faculty_name", ""],
-		["program_code", "Program will be created if not found"],
-		["program_name", ""],
-		["program_pattern", ""],
-		["subject_code", "Subject will be created if not found"],
-		["subject_name", ""],
-		["subject_pattern", ""],
-		["testname", "Exam name"],
-		["anptestcourseid", "Exam code"],
-		["testtotalmarks", "Total marks"],
-		["testduration", "Exam duration in minutes"],
-		["pages_per_booklet", "Number of pages in the booklet used for this exam"],
-		["startdate", "Date of exam"]
-	],
-	Es = dig:layout_vals(#dig{}, Vals, ["Field", "Description"]),
-
-	[
-		?ITXF({sep, Es}),
-		?COREXS(season_fk, #field {id=import_season_fk}),
-		itf:attachment()
-	];
-
-
-fs(import_student_data) ->
-	Vals = [
-		["subject_code", "Subject must exist"],
-		["subject_name", ""],
-		["subject_pattern", ""],
-		["anpcentercode", "College code"],
-		["anp_paper_uid", "PRN/UID"],
-		["anpseatnumber", "Seat number"],
-		["anpfullname", "Student's full name"]
-	],
-	Es = dig:layout_vals(#dig{}, Vals, ["Field", "Description"]),
-
-	[
-		?ITXF({sep, Es}),
-		?COREXS(season_fk, #field {id=import_season_fk}),
-		itf:attachment(?F(file_import_student_data, "CSV file"))
-	];
+fs(import) -> [
+	itf:attachment()
+];
 
 fs(all) -> [
 	itf:id(),
