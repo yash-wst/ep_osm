@@ -291,6 +291,11 @@ start_upload_event(Event) ->
 	dig_mm:start_upload_event(Event).
 
 finish_upload_event({_,file_import_student_data}, AttachmentName, LocalFileData, _Node) ->
+	SeasonId = wf:q(import_season_fk),
+	?ASSERT(
+		((SeasonId /= []) and (SeasonId /= undefined)),
+		"ERROR: Please select a season under which file is to be uploaded"
+	),
 	dig_mm_import:handle_finish_upload_event(
 		?MODULE, ep_osm_candidate, ep_osm_candidate_api, ep_osm_candidate_import,
 		{file, AttachmentName, LocalFileData}

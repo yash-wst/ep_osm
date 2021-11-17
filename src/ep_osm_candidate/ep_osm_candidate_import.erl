@@ -44,7 +44,7 @@ handle_import_validate(List) ->
 	ok = handle_import_validate_csv_non_empty(List),
 	ok = handle_import_validate_duplicates(List),
 	ok = handle_import_validate_subjects_exist(List),
-	ok = handle_import_validate_student_does_not_exist(List),
+	ok = handle_import_validate_exams_exist(List),
 	ok.
 
 
@@ -138,7 +138,7 @@ handle_import_validate_duplicates(List) ->
 	%
 	Dict = lists:foldl(fun(Csv, Acc) ->
 		[
-			_SubjectCode,
+			SubjectCode,
 			_SubjectName,
 			_SubjectPattern,
 			_CentreCode,
@@ -146,8 +146,8 @@ handle_import_validate_duplicates(List) ->
 			SeatNumber | _
 		] = Csv,
 		
-		Acc1 = dict:update_counter(PRN, 1, Acc),
-		dict:update_counter(SeatNumber, 1, Acc1)
+		Acc1 = dict:update_counter({SubjectCode, PRN}, 1, Acc),
+		dict:update_counter({SubjectCode, SeatNumber}, 1, Acc1)
 	
 	end, dict:new(), List),
 
@@ -189,31 +189,38 @@ handle_import_validate_subjects_exist(List) ->
 	%
 	% get subject codes
 	%
-	SubjectCodes = lists:foldl(fun([SubjectCode | _], Acc) ->
-		Acc ++ [SubjectCode]
+	Subjects = lists:foldl(fun([SubjectCode, _SubjectName, SubjectPattern | _], Acc) ->
+		Acc ++ [{SubjectCode, SubjectPattern}]
 	end, [], List),
+	{SubjectCodes, _SubjectPatterns} = lists:unzip(Subjects),
 	SubjectCodesUnique0 = helper:unique(SubjectCodes),
 	SubjectCodesUnique = remove_empty_str(SubjectCodesUnique0),
+
 
 
 	%
 	% get subject docs
 	%
+	IdFn = fun(Doc) ->
+		{itf:val(Doc, subject_code), itf:val(Doc, pattern)}
+	end,
 	SubjectDocs = ep_core_subject_api:getdocs_by_subject_codes(SubjectCodesUnique),
-	SubjectDocsDict = helper:get_dict_from_docs(SubjectDocs, subject_code),
+	SubjectDocsDict = helper:get_dict_from_docs(SubjectDocs, IdFn),
+
 
 
 	%
 	% find not found
 	%
-	SubjectCodesNotFound = lists:foldl(fun(SubjectCode, Acc) ->
-		case dict:find(SubjectCode, SubjectDocsDict) of
+	SubjectsUnique = helper:unique(Subjects),
+	SubjectCodesNotFound = lists:foldl(fun(Subject, Acc) ->
+		case dict:find(Subject, SubjectDocsDict) of
 			{ok, _} ->
 				Acc;
 			error ->
-				Acc ++ [SubjectCode]
+				Acc ++ [Subject]
 		end
-	end, [], SubjectCodesUnique),
+	end, [], SubjectsUnique),
 
 
 
@@ -227,18 +234,73 @@ handle_import_validate_subjects_exist(List) ->
 	).
 
 
+
+
+%..............................................................................
 %
-% validate student does not exist in db
+% validate exam exist
 %
-handle_import_validate_student_does_not_exist(List) ->
+%..............................................................................
+
+handle_import_validate_exams_exist(List) ->
+
+
+	%
+	% get subject codes
+	%
+	Subjects = lists:foldl(fun([SubjectCode, _SubjectName, SubjectPattern | _], Acc) ->
+		Acc ++ [{SubjectCode, SubjectPattern}]
+	end, [], List),
+	{SubjectCodes, _SubjectPatterns} = lists:unzip(Subjects),
+	SubjectCodesUnique0 = helper:unique(SubjectCodes),
+	SubjectCodesUnique = remove_empty_str(SubjectCodesUnique0),
+
+
+
+	%
+	% get subject docs
+	%
+	IdFn = fun(Doc) ->
+		{itf:val(Doc, subject_code), itf:val(Doc, pattern)}
+	end,
+	SubjectDocs = ep_core_subject_api:getdocs_by_subject_codes(SubjectCodesUnique),
+	SubjectDocsDict = helper:get_dict_from_docs(SubjectDocs, IdFn),
+
+
+
+	%
+	% find exams for each subject
+	%
+	SeasonId = minijobcontext:q(import_season_fk),
+	SubjectsUnique = helper:unique(Subjects),
+	ExamsErrors = lists:foldl(fun(Subject, Acc) ->
+
+		{ok, SubjectDoc} = dict:find(Subject, SubjectDocsDict),
+		ExamDocs = get_exam_docs(SeasonId, itf:idval(SubjectDoc)),
+
+		case ExamDocs of
+			[ExamDoc] ->
+				Acc;
+			[] ->
+				Acc ++ [{Subject, "no exams"}];
+			_ ->
+				Acc ++ [{Subject, "multiple exams"}]
+		end
+
+	end, [], SubjectsUnique),
+
+
+
 	%
 	% assert
 	%
 	?ASSERT(
 		import_validation,
-		false,
-		not_implemented
+		ExamsErrors == [],
+		{exam_errors, ExamsErrors}
 	).
+
+
 
 
 
@@ -301,6 +363,17 @@ remove_empty_str(List) ->
 		S /= []
 	end, List).
 
+
+
+get_exam_docs(SeasonId, SubjectId) ->
+	ep_osm_exam_api:fetch(0, ?INFINITY, [
+			fields:build(season_fk, SeasonId),
+			fields:build(subject_code_fk, SubjectId),
+			fields:build(teststatus, ?SCHEDULED)
+		], [
+			{use_index, ["subject_code_fk"]}
+		]
+	).
 
 %------------------------------------------------------------------------------
 % end
