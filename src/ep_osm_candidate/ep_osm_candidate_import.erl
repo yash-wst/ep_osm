@@ -12,24 +12,61 @@
 savebulk(LoLofFields) ->
 
 	%
-	% build docs
+	% groups by subject
 	%
-	Docs = lists:map(fun(Fs) ->
-		helper_api:fields2doc(Fs)
-	end, LoLofFields),
-	?D(Docs),
+	Dict = lists:foldl(fun({SubjectCode, SubjectPattern, Fs}, Acc) ->
+		dict:append(
+			{SubjectCode, SubjectPattern},
+			helper_api:fields2doc(Fs),
+			Acc
+		)
+	end, dict:new(), LoLofFields),
 
 
 	%
 	% save docs
 	%
+	{Oks, Errors} = lists:foldl(fun(
+		{{SubjectCode, SubjectPattern}, DocsToSave},
+		{AccOks, AccErrors}
+	) ->
+
+		%
+		% get subject doc
+		%
+		SubjectDocs = ep_core_subject_api:getdocs_by_subject_codes(
+			[SubjectCode]
+		),
+		[SubjectDoc] = lists:filter(fun(SubjectDoc) ->
+			itf:val(SubjectDoc, pattern) == SubjectPattern
+		end, SubjectDocs),
+
+
+		%
+		% get exam doc
+		%
+		SeasonId = minijobcontext:q(import_season_fk),
+		SubjectId = itf:idval(SubjectDoc),
+		[ExamDoc] = get_exam_docs(SeasonId, SubjectId),
+
+
+		%
+		% save
+		%
+		Db = anpcandidates:db(itf:idval(ExamDoc)),
+		BatchSize = 100,
+		{ResOks, ResErrors} = db:savebulk(Db, DocsToSave, BatchSize),
+		{AccOks ++ ResOks, AccErrors ++ ResErrors}
+
+
+	end, {[], []}, dict:to_list(Dict)),
 
 
 
 	%
 	% return save res
 	%
-	{[], []}.
+	{Oks, Errors}.
 
 %------------------------------------------------------------------------------
 % handlers
@@ -279,7 +316,7 @@ handle_import_validate_exams_exist(List) ->
 		ExamDocs = get_exam_docs(SeasonId, itf:idval(SubjectDoc)),
 
 		case ExamDocs of
-			[ExamDoc] ->
+			[_ExamDoc] ->
 				Acc;
 			[] ->
 				Acc ++ [{Subject, "no exams"}];
@@ -324,7 +361,7 @@ handle_import_csv_to_fs(List) ->
 	%
 	lists:map(fun([
 		SubjectCode,
-		SubjectName,
+		_SubjectName,
 		SubjectPattern,
 		CentreCode,
 		PRN,
@@ -339,14 +376,15 @@ handle_import_csv_to_fs(List) ->
 			fields:build(anpcentercode, CentreCode),
 			fields:build(anp_paper_uid, PRN),
 			fields:build(anpseatnumber, SeatNumber),
-			fields:build(anpfullname, Fullname)
+			fields:build(anpfullname, Fullname),
+			fields:build(anpstate, "anpstate_not_uploaded")
 		],
 
 
 		%
 		% return final fs to save
 		%
-		FsToSave
+		{SubjectCode, SubjectPattern, FsToSave}
 
 
 	end, List).
