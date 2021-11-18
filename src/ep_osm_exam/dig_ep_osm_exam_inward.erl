@@ -494,9 +494,11 @@ layout_action_inward_form(BundleDoc) ->
 	% action
 	%
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, []} -> [
-			{inward_form, "Inward Form", "Inward Form"}
-		];
+		{User, []} ->
+			event(inward_form),
+			[
+				{inward_form, "Inward Form", "Inward Form"}
+			];
 		_ -> [
 		]
 	end.
