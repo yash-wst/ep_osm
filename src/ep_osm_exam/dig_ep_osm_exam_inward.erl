@@ -578,10 +578,12 @@ layout_action_uploading(BundleDoc) ->
 	% action
 	%
 	case {itf:val(BundleDoc, qualityby), itf:val(BundleDoc, uploadstate)} of
-		{User, "assigned"} -> [
-			{upload_form, "Upload Form", "Upload Form"},
-			{upload_completed, "Uploading Completed", "Uploading Completed"}
-		];
+		{User, "assigned"} ->
+			event({upload_form, BundleDoc}),
+			[
+				{upload_form, "Upload Form", "Upload Form"},
+				{upload_completed, "Uploading Completed", "Uploading Completed"}
+			];
 		_ -> [
 		]
 	end.
@@ -661,6 +663,9 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 
 event(upload_form) ->
 	{ok, BundleDoc} = ep_osm_bundle_api:get(wf:q(osm_bundle_fk)),
+	event({upload_form, BundleDoc});
+
+event({upload_form, BundleDoc}) ->
 	dig_mm:handle_show_action(
 		"Upload: (zip bundle directory and upload)",
 		layout_upload_form(BundleDoc, undefined)
