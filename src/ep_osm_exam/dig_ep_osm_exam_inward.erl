@@ -141,6 +141,7 @@ fetch(D, _From, _Size, [
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
+			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
 	end, CandidateDocs1),
@@ -168,6 +169,7 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Barcode / UID"},
 		#dcell {type=header, val="Seat No."},
 		#dcell {type=header, val="State"},
+		#dcell {type=header, val="Student Name"},
 		#dcell {type=header, val="Remove"}
 	],
 
@@ -1325,7 +1327,6 @@ handle_inward(UId, SNo) ->
 	%
 	ExamId = wf:q(id),
 	OsmBundleId = wf:q(osm_bundle_fk),
-	BundleNumber = OsmBundleId,
 	ExamDb = anpcandidates:db(ExamId),
 
 
@@ -1341,10 +1342,8 @@ handle_inward(UId, SNo) ->
 
 
 
-
 	%
-	% assert -  a document in the osm exam db with same uid or seat number does
-	% not exist already
+	% search for existing docs
 	%
 	FsToSearchCandidate = [
 		itf:build(itf:textbox(?F(anp_paper_uid)), UId),
@@ -1353,38 +1352,76 @@ handle_inward(UId, SNo) ->
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearchCandidate, 0, ?INFINITY
 	),
-	?ASSERT(
-		CandidateDocs == [],
-		io_lib:format("~s, ~s: already exists in the exam database", [
-			UId, SNo
-		])
-	),
+	handle_inward(ExamId, OsmBundleId, UId, SNo, CandidateDocs).
 
 
+
+handle_inward(ExamId, OsmBundleId, UId, SNo, []) ->
 	%
 	% create entry in exam db
 	%
 
+	ExamDb = anpcandidates:db(ExamId),
+	BundleNumber = get_bundle_number_from_cache(OsmBundleId),
 	FsToSave = [
 		itf:build(itf:textbox(?F(anp_paper_uid)), UId),
 		itf:build(itf:textbox(?F(anpseatnumber)), ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)),
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
-		itf:build(itf:textbox(?F(anpcentercode)), BundleNumber),
+		itf:build(itf:textbox(?F(anpcentercode)), "B:" ++ BundleNumber),
 		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
 		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
 	],
 	case anpcandidates:save(ExamDb, FsToSave) of
 		{ok, _} ->
-			wf:wire("
-				obj('anp_paper_uid').value = '';
-				obj('anpseatnumber').value = '';
-				obj('anp_paper_uid').focus();
-				obj('anp_paper_uid').select();
-			"),
-			helper_ui:flash(success, io_lib:format("saved: ~s, ~s", [UId, SNo]), 5);
+			handle_inward_focus_textbox(),
+			helper_ui:flash(success, io_lib:format("Created: ~s, ~s", [UId, SNo]), 5);
 		_ ->
-			helper_ui:flash(error, io_lib:format("error: ~s, ~s", [UId, SNo]))
+			helper_ui:flash(error, io_lib:format("Error!: ~s, ~s", [UId, SNo]))
+	end;
+
+
+handle_inward(ExamId, OsmBundleId, UId, SNo, [Doc]) ->
+
+	%
+	% init
+	%
+	BundleId = itf:val(Doc, osm_bundle_fk),
+	BundleNumber = get_bundle_number_from_cache(OsmBundleId),
+
+	?ASSERT(
+		BundleId == [],
+		io_lib:format("~s, ~s: already exists in bundle ~s", [
+			UId, SNo, BundleNumber
+		])
+	),
+
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
+		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
+	],
+	case ep_osm_candidate_api:update(ExamId, Doc, FsToSave) of
+		{ok, _} ->
+			handle_inward_focus_textbox(),
+			helper_ui:flash(success, io_lib:format("Updated: ~s, ~s, ~s", [
+				UId, SNo, itf:val(Doc, anpfullname)
+			]), 5);
+		_ ->
+			helper_ui:flash(error, io_lib:format("Error!: ~s, ~s", [UId, SNo]))
 	end.
+
+
+
+handle_inward_focus_textbox() ->
+	wf:wire("
+		obj('anp_paper_uid').value = '';
+		obj('anpseatnumber').value = '';
+		obj('anp_paper_uid').focus();
+		obj('anp_paper_uid').select();
+	").
 
 
 
@@ -1433,13 +1470,12 @@ handle_create_bundle(ExamId) ->
 %..............................................................................
 
 handle_uploaded_zip_file() ->
-
-	%
-	% init
-	%
-	ObjectKey = wf:q(objectkey),
+	handle_uploaded_zip_file(wf:q(objectkey)).
 
 
+handle_uploaded_zip_file(undefined) ->
+	ok;
+handle_uploaded_zip_file(ObjectKey) ->
 	%
 	% before processing check if object exists
 	%
@@ -1588,6 +1624,16 @@ get_bgcolor(uploadstate, "completed", "completed", "completed") ->
 	"bg-success";
 get_bgcolor(_, _, _, _) ->
 	[].
+
+
+get_bundle_number_from_cache([]) ->
+	[];
+get_bundle_number_from_cache(BundleId) ->
+	Fun = fun() ->
+		{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+		itf:val(BundleDoc, number)
+	end,
+	itxdoc_cache:get({get_bundle_number_from_cache, BundleId}, Fun).
 
 
 %------------------------------------------------------------------------------

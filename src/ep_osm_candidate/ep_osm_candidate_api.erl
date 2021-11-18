@@ -65,6 +65,13 @@ savebulk(LoLofFields) ->
 % mutate
 %------------------------------------------------------------------------------
 
+update(OsmExamId, Doc = {_}, FsToSave) ->
+	FsAll = ep_osm_candidate:fs(all),
+	FsAll1 = itf:d2f(Doc, FsAll),
+	FsAll2 = itf:fs_merge(FsAll1, FsToSave),
+	db:save(db(OsmExamId), helper_api:fields2doc(FsAll2)).
+
+
 
 %------------------------------------------------------------------------------
 % fetch
