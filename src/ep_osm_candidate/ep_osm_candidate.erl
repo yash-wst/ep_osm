@@ -46,6 +46,7 @@ fs(grid) ->
 	fs(basic);
 
 fs(import) -> [
+	?COREXS(season_fk, #field {id=import_season_fk}),
 	itf:attachment()
 ];
 
