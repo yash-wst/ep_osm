@@ -51,11 +51,35 @@ savebulk(LoLofFields) ->
 
 
 		%
+		% get existing candidate docs
+		%
+		ExistingCandidateDocs = get_existing_candidate_docs(ExamDoc, DocsToSave),
+		ExistingCandidateDocsDict = get_existing_candidate_docs_dict(ExistingCandidateDocs),
+
+
+		%
+		% filter out existing docs
+		%
+		DocsToSave1 = lists:filter(fun(Doc) ->
+
+			PRN = itf:val(Doc, anp_paper_uid),
+			SNO = itf:val(Doc, anpseatnumber),
+		
+			(
+				(dict:find(PRN, ExistingCandidateDocsDict) == error) and
+				(dict:find(SNO, ExistingCandidateDocsDict) == error)
+			)
+
+
+		end, DocsToSave),
+
+
+		%
 		% save
 		%
 		Db = anpcandidates:db(itf:idval(ExamDoc)),
 		BatchSize = 100,
-		{ResOks, ResErrors} = db:savebulk(Db, DocsToSave, BatchSize),
+		{ResOks, ResErrors} = db:savebulk(Db, DocsToSave1, BatchSize),
 		{AccOks ++ ResOks, AccErrors ++ ResErrors}
 
 
@@ -412,6 +436,67 @@ get_exam_docs(SeasonId, SubjectId) ->
 			{use_index, ["subject_code_fk"]}
 		]
 	).
+
+
+
+get_existing_candidate_docs(ExamDoc, DocsToSave) ->
+
+
+	%
+	% init
+	%
+	ExamId = itf:idval(ExamDoc),
+	Db = anpcandidates:db(ExamId),
+
+
+	%
+	% get candidates by PRN
+	%
+	PRNs = lists:map(fun(Doc) ->
+		itf:val(Doc, anp_paper_uid)
+	end, DocsToSave),
+	DocsPRNs = db2_find:getdocs_by_ids(Db, anp_paper_uid, PRNs),
+
+
+	%
+	% get docs by seat number
+	%
+	SeatNumbers = lists:map(fun(Doc) ->
+		itf:val(Doc, anpseatnumber)
+	end, DocsToSave),
+	DocsSeatNumbers = db2_find:getdocs_by_ids(Db, anpseatnumber, SeatNumbers),
+
+	%
+	% return unique
+	%
+	helper:unique(DocsPRNs ++ DocsSeatNumbers).
+
+
+get_existing_candidate_docs_dict(CandidateDocs) ->
+
+	lists:foldl(fun(Doc, Acc) ->
+		PRN = itf:val(Doc, anp_paper_uid),
+		SNO = itf:val(Doc, anpseatnumber),
+
+		Acc1 = case PRN of
+			[] ->
+				Acc;
+			_ ->
+				dict:store(PRN, Doc, Acc)
+		end,
+
+		Acc2 = case SNO of
+			[] ->
+				Acc1;
+			_ ->
+				dict:store(SNO, Doc, Acc1)
+		end,
+
+		Acc2
+
+
+	end, dict:new(), CandidateDocs).
+
 
 %------------------------------------------------------------------------------
 % end

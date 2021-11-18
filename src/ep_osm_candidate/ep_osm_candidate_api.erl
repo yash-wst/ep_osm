@@ -6,6 +6,9 @@
 db() ->
 	throw(does_not_exist).
 
+db(Id) ->
+	anpcandidates:db(Id).
+
 %------------------------------------------------------------------------------
 % get
 %------------------------------------------------------------------------------
@@ -68,8 +71,21 @@ savebulk(LoLofFields) ->
 %------------------------------------------------------------------------------
 
 fetch(From, Size, Filters) ->
-	#db2_find_response {docs=Docs} = db2_find:get_by_fs(db(), Filters, From, Size),
+	fetch(anptestid(), From, Size, Filters).
+
+fetch(ExamId, From, Size, []) ->
+	anpcandidates:getdocs(db(ExamId), From, Size);
+
+fetch(ExamId, From, Size, Filters) ->
+	fetch(ExamId, From, Size, Filters, []).
+
+fetch(ExamId, From, Size, Filters, Configs) ->
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		db(ExamId), Filters, From, Size, Configs
+	),
 	Docs.
+
+
 
 
 %------------------------------------------------------------------------------
@@ -86,6 +102,8 @@ delete_by_field(F = #field {}) ->
 % misc
 %------------------------------------------------------------------------------
 
+anptestid() ->
+	wf:q(anptest:id()).
 
 %------------------------------------------------------------------------------
 % end
