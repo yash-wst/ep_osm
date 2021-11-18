@@ -1402,7 +1402,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, [Doc]) ->
 	%
 	BundleId = itf:val(Doc, osm_bundle_fk),
 	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
-	BundleNumber = get_bundle_number_from_cache(OsmBundleId),
+	BundleNumber = get_bundle_number_from_cache(BundleId),
 
 	?ASSERT(
 		BundleId == [],
