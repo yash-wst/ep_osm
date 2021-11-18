@@ -178,9 +178,12 @@ fetch(D, _From, _Size, [
 	% return
 	%
 	{D#dig {
-		description=io_lib:format("~s / ~s", [
-			itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
-		]),
+		description=#link {
+			url=itx:format("/dig_ep_osm_exam_inward?id=~s", [OsmExamId]),
+			text=io_lib:format("~s / ~s", [
+				itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
+			])
+		},
 		actions=Actions
 	}, [Header] ++ Results};
 
@@ -367,7 +370,7 @@ layout_candidate_remove(BundleDoc, CDoc)  ->
 				remove_candidate,
 				"x",
 				{remove_candidate, itf:idval(CDoc)},
-				"btn btn-sm btn-danger-outline"
+				"btn btn-sm btn-danger-outline btn-outline-danger"
 			);
 		_ ->
 			[]
@@ -1364,7 +1367,11 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, []) ->
 	%
 
 	ExamDb = anpcandidates:db(ExamId),
+	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
 	BundleNumber = get_bundle_number_from_cache(OsmBundleId),
+
+
+
 	FsToSave = [
 		itf:build(itf:textbox(?F(anp_paper_uid)), UId),
 		itf:build(itf:textbox(?F(anpseatnumber)), ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)),
@@ -1374,8 +1381,9 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, []) ->
 		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
 	],
 	case anpcandidates:save(ExamDb, FsToSave) of
-		{ok, _} ->
+		{ok, CandidateDoc} ->
 			handle_inward_focus_textbox(),
+			handle_insert_candidatedoc(BundleDoc, CandidateDoc),
 			helper_ui:flash(success, io_lib:format("Created: ~s, ~s", [UId, SNo]), 5);
 		_ ->
 			helper_ui:flash(error, io_lib:format("Error!: ~s, ~s", [UId, SNo]))
@@ -1388,6 +1396,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, [Doc]) ->
 	% init
 	%
 	BundleId = itf:val(Doc, osm_bundle_fk),
+	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
 	BundleNumber = get_bundle_number_from_cache(OsmBundleId),
 
 	?ASSERT(
@@ -1406,8 +1415,9 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, [Doc]) ->
 		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
 	],
 	case ep_osm_candidate_api:update(ExamId, Doc, FsToSave) of
-		{ok, _} ->
+		{ok, CandidateDoc} ->
 			handle_inward_focus_textbox(),
+			handle_insert_candidatedoc(BundleDoc, CandidateDoc),
 			helper_ui:flash(success, io_lib:format("Updated: ~s, ~s, ~s", [
 				UId, SNo, itf:val(Doc, anpfullname)
 			]), 5);
@@ -1424,6 +1434,18 @@ handle_inward_focus_textbox() ->
 		obj('anp_paper_uid').focus();
 		obj('anp_paper_uid').select();
 	").
+
+
+
+handle_insert_candidatedoc(BundleDoc, CDoc) ->
+	Row = #tablerow {cells=[
+		#tablecell {body=itf:val(CDoc, anp_paper_uid)},
+		#tablecell {body=itf:val(CDoc, anpseatnumber)},
+		#tablecell {body=?LN(?L2A(itf:val(CDoc, anpstate)))},
+		#tablecell {body=itf:val(CDoc, anpfullname)},
+		#tablecell {body=layout_candidate_remove(BundleDoc, CDoc)}
+	]},
+	wf:insert_top(dig:id(table), Row).
 
 
 
@@ -1631,12 +1653,18 @@ get_bgcolor(_, _, _, _) ->
 get_bundle_number_from_cache([]) ->
 	[];
 get_bundle_number_from_cache(BundleId) ->
+	BundleDoc = get_bundle_doc_from_cache(BundleId),
+	itf:val(BundleDoc, number).
+
+
+get_bundle_doc_from_cache([]) ->
+	[];
+get_bundle_doc_from_cache(BundleId) ->
 	Fun = fun() ->
 		{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
-		itf:val(BundleDoc, number)
+		BundleDoc
 	end,
-	itxdoc_cache:get({get_bundle_number_from_cache, BundleId}, Fun).
-
+	itxdoc_cache:get({get_bundle_doc_from_cache, BundleId}, Fun).
 
 %------------------------------------------------------------------------------
 % end
