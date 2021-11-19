@@ -27,6 +27,7 @@ handle_import_validate(List) ->
 	ok = handle_import_validate_csv_non_empty(List),
 	ok = handle_import_validate_bundles_not_completed(List),
 	ok = handle_import_validate_duplicates_seatnumbers(List),
+	ok = handle_import_ensure_exam_dbs(),
 	ok.
 
 
@@ -214,6 +215,22 @@ handle_import_validate_duplicates_seatnumbers(List) ->
 
 
 
+
+%..............................................................................
+%
+% validate exam dbs
+%
+%..............................................................................
+
+handle_import_ensure_exam_dbs() ->
+	ExamId = minijobcontext:q(osm_exam_fk),
+	case db:db_exists(anpcandidates:db(ExamId)) of
+		true ->
+			skip;
+		false ->
+			anptests:setup(ExamId)
+	end,
+	ok.
 
 
 %------------------------------------------------------------------------------
