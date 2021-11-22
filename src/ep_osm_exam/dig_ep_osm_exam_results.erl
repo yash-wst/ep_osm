@@ -785,7 +785,7 @@ get_marks_per_marked_question(MSchemeDoc, Doc, EvaluatorRole) ->
 	lists:map(fun({Id, "on"}) ->
 		IdAtom = ?L2A(Id),
 		case lists:keyfind(IdAtom, 1, List) of
-			{IdAtom, _QName, Marks} ->
+			{IdAtom, _QName, Marks, _MaxMarks} ->
 				helper:f2s_v1(Marks);
 			false ->
 				"error"
@@ -846,13 +846,20 @@ get_question_headers("marks_per_marked_question", MSchemeDoc, _ListOfAllQuestion
 	%
 	lists:map(fun({Id, "on"}) ->
 		IdAtom = ?L2A(Id),
-		QuestionLabel = case lists:keyfind(IdAtom, 1, List) of
-			{_IdAtom, QName, _Marks} ->
-				QName;
+		{QuestionLabel, MaxMarksLabel} = case lists:keyfind(IdAtom, 1, List) of
+			{_IdAtom, QName, _Marks, MaxMarks} ->
+				{QName, itx:format("~.2f", [MaxMarks])};
 			false ->
-				"error"
+				{"error", "error"}
 		end,
-		#dcell {val=QuestionLabel}
+		#dcell {
+			type=header,
+			val=[
+				#p {style="margin: 0px;", text=QuestionLabel},
+				#p {style="margin: 0px;", text=MaxMarksLabel}
+			],
+			val_export=string:join([QuestionLabel, MaxMarksLabel], " / ")
+		}
 	end, MarkedQuestions);
 
 

@@ -349,8 +349,8 @@ handle_get_marks_per_question(Doc, CDoc, EvaluatorRole) ->
 
 handle_convert_doc_to_rules_calc_1(Acc, []) ->
 	Acc;
-handle_convert_doc_to_rules_calc_1(Acc, [{Id, Name, _Rule, Path, Total} | Tail]) ->
-	Acc1 = Acc ++ [{Id, Name, Total}],
+handle_convert_doc_to_rules_calc_1(Acc, [{Id, Name, _Rule, Path, Total, MaxMarks} | Tail]) ->
+	Acc1 = Acc ++ [{Id, Name, Total, MaxMarks}],
 	Acc2 = handle_convert_doc_to_rules_calc_1(Acc1, Path),
 	handle_convert_doc_to_rules_calc_1(Acc2, Tail).
 
@@ -397,7 +397,7 @@ handle_convert_widget_to_tuple_calc(
 	%
 	% init
 	%
-	[_FWType, _FWId, FWname, _FWmarks, _FWLow] = Subfields,
+	[_FWType, _FWId, FWname, FWmarks, _FWLow] = Subfields,
 	Name = helper:replace_these_with_that(itf:val(FWname), [" "], "_"),
 
 
@@ -423,7 +423,8 @@ handle_convert_widget_to_tuple_calc(
 		itf:val(FWname),
 		"sum",
 		[],
-		getval(QuestionId, MDict)	
+		getval(QuestionId, MDict),
+		helper:s2f_v1(itf:val(FWmarks))
 	};
 
 
@@ -473,7 +474,8 @@ handle_convert_widget_to_tuple_calc(
 		itf:val(FWname),
 		Rule,
 		Path,
-		calc(Rule, Path)
+		calc(Rule, Path, total),
+		calc(Rule, Path, max)
 	};
 
 
@@ -517,23 +519,29 @@ handle_convert_widget_to_tuple_calc(
 		itf:val(FWname),
 		Rule,
 		Path,
-		calc(Rule, Path)
+		calc(Rule, Path, total),
+		calc(Rule, Path, max)
 	}.
 
 
 %
 % calc
 %
-calc("or", List) ->
-	calc("any1", List);
-calc("any" ++ Length, List) ->
+calc("or", List, Type) ->
+	calc("any1", List, Type);
+calc("any" ++ Length, List, Type) ->
 
 	%
 	% assume last element in each tuple is marks value
 	% create list just of marks
 	%
-	List1 = lists:map(fun({_Id, _Name, _Rule, _Path, Marks}) ->
-		Marks
+	List1 = lists:map(fun({_Id, _Name, _Rule, _Path, Marks, MaxMarks}) ->
+		case Type of
+			total ->
+				Marks;
+			max ->
+				MaxMarks
+		end
 	end, List),
 
 
@@ -558,14 +566,19 @@ calc("any" ++ Length, List) ->
 	lists:sum(List3);
 
 
-calc("sum", List) ->
+calc("sum", List, Type) ->
 
 	%
 	% assume last element in each tuple is marks value
 	% create list just of marks
 	%
-	List1 = lists:map(fun({_Id, _Name, _Rule, _Path, Marks}) ->
-		Marks
+	List1 = lists:map(fun({_Id, _Name, _Rule, _Path, Marks, MaxMarks}) ->
+		case Type of
+			total ->
+				Marks;
+			max ->
+				MaxMarks
+		end
 	end, List),
 
 
@@ -576,8 +589,8 @@ calc("sum", List) ->
 
 
 
-calc(Rule, List) ->
-	?D({Rule, List}),
+calc(Rule, List, Type) ->
+	?D({Rule, List, Type}),
 	throw({Rule, List}).
 
 
