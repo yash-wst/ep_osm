@@ -1106,6 +1106,8 @@ number_of_reminders_sent_today() ->
 			itf:build(?ITXAUD(log), ?ITXAUDIT_LOG_REMINDER_SENT),
 			itf:build(?ITXAUD(refid1), ?A2L(?MODULE)),
 			itf:build(?ITXAUD(refid2), Date)
+		], 0, ?INFINITY, [
+			{use_index, ["refid2"]}
 		]
 	),
 	length(AuditDocs).
