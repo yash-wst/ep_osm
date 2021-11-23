@@ -180,8 +180,11 @@ fetch(D, _From, _Size, [
 	{D#dig {
 		description=#link {
 			url=itx:format("/dig_ep_osm_exam_inward?id=~s", [OsmExamId]),
-			text=io_lib:format("~s / ~s", [
-				itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
+			text=io_lib:format("~s / ~s / ~s / Bundle: ~s", [
+				itf:val(ExamDoc, anptestcourseid),
+				itf:val(ExamDoc, testname),
+				?LN(?L2A(itf:val(ExamDoc, teststatus))),
+				itf:val(BundleDoc, number)
 			])
 		},
 		actions=Actions
@@ -923,7 +926,7 @@ handle_inward_completed() ->
 	%
 	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), Id) of
 		{ok, _} ->
-			dig:refresh();
+			redirect_to_main();
 		_ ->
 			helper_ui:flash(error, "Sorry, could not save!")
 	end.
@@ -1037,7 +1040,7 @@ handle_uploading_completed() ->
 	%
 	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), Id) of
 		{ok, _} ->
-			dig:refresh();
+			redirect_to_main();
 		_ ->
 			helper_ui:flash(error, "Sorry, could not save!")
 	end.
@@ -1072,7 +1075,7 @@ handle_scanning_completed() ->
 	%
 	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), Id) of
 		{ok, _} ->
-			dig:refresh();
+			redirect_to_main();
 		_ ->
 			helper_ui:flash(error, "Sorry, could not save!")
 	end.
@@ -1671,6 +1674,14 @@ get_bundle_doc_from_cache(BundleId) ->
 	end,
 	itxdoc_cache:get({get_bundle_doc_from_cache, BundleId}, Fun).
 
+
+
+redirect_to_main() ->
+	Url = itx:format("/~p?id=~s", [
+		?MODULE, wf:q(id)
+	]),
+	helper:redirect(Url).
+	
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
