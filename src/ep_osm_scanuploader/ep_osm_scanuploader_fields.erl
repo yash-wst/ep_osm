@@ -6,10 +6,16 @@
 %------------------------------------------------------------------------------
 % fields
 %------------------------------------------------------------------------------
-f(name = I) ->
-	itf:textbox(?F(I));
-f(gender = I) ->
-	itf:dropdown(?F(I), options(I));
+
+
+f(ep_osm_scanuploader_fk = I) ->
+	F = itf:textbox_picker(?F(I, ?LN("DTP Staff"))),
+	F#field {
+		module=ep_osm_scanuploader,
+		options=options(I)
+	};
+
+
 f(O) -> throw(O).
 
 %------------------------------------------------------------------------------
@@ -21,12 +27,21 @@ validator(O) ->
 %------------------------------------------------------------------------------
 % options
 %------------------------------------------------------------------------------
-options(gender) ->
-	itf:options([
-		?F(male),
-		?F(female),
-		?F(other)
-	]).
+
+options(ep_osm_scanuploader_fk) ->
+	#search {
+		datasource=couchdb,
+		title=?LN("Select Scanner / Uploader"),
+		db=ep_osm_scanuploader_api:db(),
+		displayfs=ep_osm_scanuploader:fs(displayfs),
+		filterfs=[
+			?ITXPRF(username),
+			?ITXPRF(mobile),
+			?ITXPRF(email)
+		],
+		size=10
+	}.
+
 
 %------------------------------------------------------------------------------
 % renderers

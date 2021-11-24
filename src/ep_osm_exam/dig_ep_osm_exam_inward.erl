@@ -466,14 +466,38 @@ layout_user_info(_) ->
 %..............................................................................
 
 layout_dtp_by(Type, BundleDoc, ProfileDocsDict) ->
-	layout_dtp_by(itxauth:role(), Type, BundleDoc, ProfileDocsDict, itf:val(BundleDoc, Type)).
+	layout_dtp_by(
+		itxauth:role(),
+		Type,
+		BundleDoc,
+		ProfileDocsDict,
+		itf:val(BundleDoc, Type)
+	).
 
+layout_dtp_by(
+	?APPOSM_RECEIVER,
+	scannedby = Type,
+	BundleDoc,
+	_ProfileDocsDict,
+	[]) ->
+	ite:link(
+		launch_assign_dtp_staff, "Assign", {launch_assign_dtp_staff, Type, BundleDoc}
+	);
 
-layout_dtp_by(Role, Type, BundleDoc, _ProfileDocsDict, []) when Role == ?APPOSM_SCANUPLOADER ->
+layout_dtp_by(
+	Role,
+	Type,
+	BundleDoc,
+	_ProfileDocsDict,
+	[])
+	when Role == ?APPOSM_SCANUPLOADER ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
 	);
-layout_dtp_by(_Role, _Type, _BundleDoc, ProfileDocsDict, Val) ->
+
+layout_dtp_by(
+	_Role,
+	_Type, _BundleDoc, ProfileDocsDict, Val) ->
 	case Val of
 		[] ->
 			[];
@@ -744,6 +768,25 @@ event(scanning_completed) ->
 
 event({confirmation_yes, {Type, BundleDoc}}) ->
 	handle_assign_bundle(Type, BundleDoc);
+
+
+event({confirmation_yes, {assign_dtp_staff, Type, BundleDoc, User}}) ->
+	handle_assign_bundle(Type, BundleDoc, User);
+
+event({itx, {textbox_picker, {pick, ep_osm_scanuploader_fk, Val, _Label}}}) ->
+	{Type, BundleDoc} = helper:state(launch_assign_dtp_staff),
+	{ok, ProfileDoc} = ep_osm_scanuploader_api:get(Val),
+	itl:confirmation(
+		itx:format("Are you sure you want to assign ~s to bundle ~s", [
+			itf:val(ProfileDoc, fullname), itf:val(BundleDoc, number)
+		]),
+		{assign_dtp_staff, Type, BundleDoc, itf:val(ProfileDoc, username)}
+	);
+
+
+event({launch_assign_dtp_staff, Type, BundleDoc}) ->
+	helper:state(launch_assign_dtp_staff, {Type, BundleDoc}),
+	textbox_picker:event({launch, ?OSMSUP(ep_osm_scanuploader_fk)});
 
 
 event({assign_bundle, Type, BundleDoc}) ->
@@ -1092,6 +1135,9 @@ handle_scanning_completed() ->
 %..............................................................................
 
 handle_assign_bundle(Type, BundleDoc) ->
+	handle_assign_bundle(Type, BundleDoc, itxauth:user()).
+
+handle_assign_bundle(Type, BundleDoc, User) ->
 
 	%
 	% init
@@ -1103,7 +1149,7 @@ handle_assign_bundle(Type, BundleDoc) ->
 			uploadstate
 	end,
 	FsToSave = [
-		itf:build(?OSMBDL(Type), itxauth:user()),
+		itf:build(?OSMBDL(Type), User),
 		itf:build(?OSMBDL(StateFId), "assigned")
 	],
 

@@ -61,6 +61,12 @@ fs(form) -> [
 	?OSMCAP(osm_cap_fk)
 ];
 
+fs(displayfs) -> [
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email)
+];
 
 fs(grid) ->
 	fs(basic);
