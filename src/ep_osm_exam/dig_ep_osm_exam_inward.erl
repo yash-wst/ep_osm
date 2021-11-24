@@ -1203,7 +1203,8 @@ handle_export_bundle_csv(ExamId, BundleId) ->
 		[
 			#dcell {val=SubjectCode},
 			#dcell {val=BundleNumber},
-			#dcell {val=itf:val(CDoc, anpseatnumber)}
+			#dcell {val=itf:val(CDoc, anpseatnumber)},
+			#dcell {val=itf:val(CDoc, anpfullname)}
 		]
 	end, CandidateDocs1),
 
@@ -1290,7 +1291,7 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 		lists:map(fun(CDoc) ->
 			UId = itf:val(CDoc, anp_paper_uid),
 			SNo = itf:val(CDoc, anpseatnumber),
-			#dcell {val=?CASE_IF_THEN_ELSE(UId, [], SNo, UId)}
+			#dcell {val=?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)}
 		end, CDocs)
 	end, ListOfCandidateDocs),
 	Table = dig:layout_table(#dig{show_slno=false}, Results),
