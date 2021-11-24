@@ -273,9 +273,12 @@ handle_import_validate_batch_anpseatnumber(List) ->
 	% get candidate docs
 	%
 	CandidateDocs = anpcandidates:getdocs_by_snos(ExamId, SeatNumbersUnique),
+	CandidateDocs1 = lists:filter(fun(CandidateDoc) ->
+		itf:val(CandidateDoc, osm_bundle_fk) /= []
+	end, CandidateDocs),
 	SeatNumbersFound = lists:map(fun(CandidateDoc) ->
 		itf:val(CandidateDoc, anpseatnumber)
-	end, CandidateDocs),
+	end, CandidateDocs1),
 
 	%
 	% assert
@@ -388,6 +391,7 @@ handle_import_csv_to_fs(List) ->
 	% init
 	%
 	ExamId = minijobcontext:q(osm_exam_fk),
+	FsAll = ep_osm_candidate:fs(all),
 
 
 	%
@@ -396,6 +400,17 @@ handle_import_csv_to_fs(List) ->
 	BundleDocs = dig_ep_osm_exam_bundle:get_bundles(ExamId),
 	BundleDocsDict = helper:get_dict_from_docs(BundleDocs, number),
 
+
+
+	%
+	% get candidate docs
+	%
+	SeatNumbers = lists:map(fun([_SubjectCode, _BundleNumber, SeatNumber]) ->
+		SeatNumber
+	end, List),
+	SeatNumbersUnique = helper:unique(SeatNumbers),
+	CandidateDocs = anpcandidates:getdocs_by_snos(ExamId, SeatNumbersUnique),
+	CandidateDocsDict = helper:get_dict_from_docs(CandidateDocs, anpseatnumber),
 
 
 	%
@@ -416,15 +431,25 @@ handle_import_csv_to_fs(List) ->
 
 
 		%
-		% fs
+		% return fs to save
 		%
-		[
-			itf:build(itf:textbox(?F(anp_paper_uid)), []),
-			itf:build(itf:textbox(?F(anpseatnumber)), SeatNumber),
-			itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
-			itf:build(itf:textbox(?F(anpcentercode)), BundleId),
-			itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
-		]
+		case dict:find(SeatNumber, CandidateDocsDict) of
+			{ok, CandidateDoc} ->
+				FsToSave = [
+					itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
+					itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
+				],
+				FsAll1 = itf:d2f(CandidateDoc, FsAll),
+				itf:fs_merge(FsAll1, FsToSave);
+			_ -> [
+				itf:build(itf:textbox(?F(anp_paper_uid)), []),
+				itf:build(itf:textbox(?F(anpseatnumber)), SeatNumber),
+				itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
+				itf:build(itf:textbox(?F(anpcentercode)), BundleId),
+				itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
+				itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
+			]
+		end
 
 	end, List),
 
