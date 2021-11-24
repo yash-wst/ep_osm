@@ -75,6 +75,9 @@ get() ->
 			?OSMBDL(inwardstate),
 			?OSMBDL(scanningstate),
 			?OSMBDL(uploadstate)
+		],
+		config=[
+			{action_layout_type, buttons}
 		]
 	}.
 
@@ -152,7 +155,6 @@ fetch(D, _From, _Size, [
 	%
 	Actions = [
 		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
-		{refresh, "Refresh", "Refresh"},
 		{export_bundle_csv, "Export Bundle CSV", "Export Bundle CSV"},
 		{export_bundle_dir, "Export Bundle Folder", "Export Bundle Folder"}
 	] ++
@@ -1641,19 +1643,19 @@ sort_candidate_docs(Docs) ->
 
 
 get_bgcolor(inwardstate, "completed", _, _) ->
-	"bg-success";
+	"table-success";
 get_bgcolor(scanningstate, "completed", [], _) ->
-	"bg-danger";
+	"table-danger";
 get_bgcolor(scanningstate, "completed", "assigned", _) ->
-	"bg-warning";
+	"table-warning";
 get_bgcolor(scanningstate, "completed", "completed", _) ->
-	"bg-success";
+	"table-success";
 get_bgcolor(uploadstate, "completed", "completed", []) ->
-	"bg-danger";
+	"table-danger";
 get_bgcolor(uploadstate, "completed", "completed", "assigned") ->
-	"bg-warning";
+	"table-warning";
 get_bgcolor(uploadstate, "completed", "completed", "completed") ->
-	"bg-success";
+	"table-success";
 get_bgcolor(_, _, _, _) ->
 	[].
 
@@ -1681,7 +1683,7 @@ redirect_to_main() ->
 		?MODULE, wf:q(id)
 	]),
 	helper:redirect(Url).
-	
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
