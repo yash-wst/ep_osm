@@ -270,7 +270,9 @@ fetch(D, _From, _Size, [
 						itf:val(BDoc, scanningstate),
 						itf:val(BDoc, scanned_date)
 					]),
-					layout_dtp_by(scannedby, BDoc, ProfileDocsDict)
+					layout_dtp_by(
+						scannedby, BDoc, ProfileDocsDict, {InwardState, ScanningState, UploadState}
+					)
 				]
 			},
 			#dcell {
@@ -280,7 +282,9 @@ fetch(D, _From, _Size, [
 						itf:val(BDoc, uploadstate),
 						itf:val(BDoc, uploaded_date)
 					]),
-					layout_dtp_by(qualityby, BDoc, ProfileDocsDict)
+					layout_dtp_by(
+						qualityby, BDoc, ProfileDocsDict, {InwardState, ScanningState, UploadState}
+					)
 				]
 			},
 			#dcell {
@@ -465,13 +469,14 @@ layout_user_info(_) ->
 %
 %..............................................................................
 
-layout_dtp_by(Type, BundleDoc, ProfileDocsDict) ->
+layout_dtp_by(Type, BundleDoc, ProfileDocsDict, BundleStates) ->
 	layout_dtp_by(
 		itxauth:role(),
 		Type,
 		BundleDoc,
 		ProfileDocsDict,
-		itf:val(BundleDoc, Type)
+		itf:val(BundleDoc, Type),
+		BundleStates
 	).
 
 layout_dtp_by(
@@ -479,17 +484,35 @@ layout_dtp_by(
 	scannedby = Type,
 	BundleDoc,
 	_ProfileDocsDict,
-	[]) ->
+	[],
+	{InwardState, _, _}) when
+		InwardState == ?COMPLETED ->
 	ite:link(
 		launch_assign_dtp_staff, "Assign", {launch_assign_dtp_staff, Type, BundleDoc}
 	);
+
+layout_dtp_by(
+	?APPOSM_SCANUPLOADER,
+	scannedby,
+	BundleDoc,
+	ProfileDocsDict,
+	User,
+	{_, ScanningState, _}) when
+		ScanningState /= ?COMPLETED, User /= [] ->
+	[
+		layout_user_info(dict:find(User, ProfileDocsDict)),
+		ite:link(
+			scanning_completed, "Scanning completed", {scanning_completed, BundleDoc}
+		)
+	];
 
 layout_dtp_by(
 	Role,
 	Type,
 	BundleDoc,
 	_ProfileDocsDict,
-	[])
+	[],
+	_BundleStates)
 	when Role == ?APPOSM_SCANUPLOADER ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
@@ -497,7 +520,11 @@ layout_dtp_by(
 
 layout_dtp_by(
 	_Role,
-	_Type, _BundleDoc, ProfileDocsDict, Val) ->
+	_Type,
+	_BundleDoc,
+	ProfileDocsDict,
+	Val,
+	_BundleStates) ->
 	case Val of
 		[] ->
 			[];
@@ -758,6 +785,18 @@ event(upload_completed) ->
 
 event({confirmation_yes, scanning_completed}) ->
 	handle_scanning_completed();
+
+
+event({confirmation_yes, {scanning_completed, BundleDoc}}) ->
+	handle_scanning_completed(itf:idval(BundleDoc));
+
+event({scanning_completed, BundleDoc}) ->
+	itl:confirmation(
+		itx:format("Are you sure you want to mark this bundle ~s as 'Scanning Completed'?", [
+			itf:val(BundleDoc, number)
+		]),
+		{scanning_completed, BundleDoc}
+	);
 
 event(scanning_completed) ->
 	itl:confirmation(
@@ -1099,11 +1138,15 @@ handle_uploading_completed() ->
 %..............................................................................
 
 handle_scanning_completed() ->
+	Id = wf:q(osm_bundle_fk),
+	handle_scanning_completed(Id).
+
+handle_scanning_completed(Id) ->
 
 	%
 	% init
 	%
-	Id = wf:q(osm_bundle_fk),
+	{ok, BundleDoc} = ep_osm_bundle_api:get(Id),
 
 
 	%
@@ -1111,7 +1154,8 @@ handle_scanning_completed() ->
 	%
 	FsToSave = [
 		itf:build(?OSMBDL(scanningstate), "completed"),
-		itf:build(?OSMBDL(scanned_date), helper:date_today_str())
+		itf:build(?OSMBDL(scanned_date), helper:date_today_str()),
+		itf:build_comment(itf:d2f(BundleDoc, ?OSMBDL(comments)), "scanning completed")
 	],
 
 

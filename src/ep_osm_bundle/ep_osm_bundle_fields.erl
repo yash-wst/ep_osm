@@ -108,6 +108,9 @@ f(uploaded_date = I) ->
 	itf:date(?F(I, "Uploaded Date"));
 
 
+f(comments = I) ->
+	itf:notes(?F(I, "Comments"));
+
 
 f(O) -> throw(O).
 

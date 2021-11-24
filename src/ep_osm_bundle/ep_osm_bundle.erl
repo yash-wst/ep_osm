@@ -38,7 +38,8 @@ fs(basic) -> [
 	?OSMBDL(bundle_size),
 	?OSMBDL(inward_date),
 	?OSMBDL(scanned_date),
-	?OSMBDL(uploaded_date)
+	?OSMBDL(uploaded_date),
+	?OSMBDL(comments)
 ];
 
 fs(index) -> [
