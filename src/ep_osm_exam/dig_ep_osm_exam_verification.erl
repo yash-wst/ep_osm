@@ -16,6 +16,13 @@
 %------------------------------------------------------------------------------
 
 main() ->
+	main(wf:q(anptestid)).
+
+
+main(Id) when Id /= undefined ->
+	Url = itx:format("/~p?id=~s", [?MODULE, Id]),
+	helper:redirect(Url);
+main(_) ->
 	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
@@ -48,28 +55,27 @@ get() ->
 	#dig {
 		description="OSM Exam Verification",
 		module=?MODULE,
-		filters=[
-			?COREXS(season_fk),
-			?CORFAC(faculty_code_fk),
-			?CORPGM(program_code_fk),
-			?CORSUB(subject_code_fk),
-			fields:get(anptestcourseid),
-			fields:get(teststatus),
-			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), wf:q(id)),
-			itf:build(itf:hidden(osm_bundle_fk), wf:q(bundleid))
-		] ++
-		case wf:q(id) of
-			ExamId when
-				ExamId /=[],
-				ExamId /= undefined -> [
-					fields:get(anpseatnumber)
-				];
-			_ -> [
-			]
-		end,
+		filters=filters(wf:q(id)),
 		size=25
 	}.
+
+filters(ExamId) when ExamId /= undefined ->
+	[
+		itf:build(itf:hidden(osm_exam_fk), ExamId),
+		fields:build(anpcentercode, wf:q(centreid)),
+		fields:get(anpseatnumber)
+	];
+filters(_) ->
+	[
+		?COREXS(season_fk),
+		?CORFAC(faculty_code_fk),
+		?CORPGM(program_code_fk),
+		?CORSUB(subject_code_fk),
+		fields:get(anptestcourseid),
+		fields:get(teststatus),
+		fields:get(exam_pattern),
+		itf:build(itf:hidden(osm_exam_fk), wf:q(id))
+	].
 
 
 %------------------------------------------------------------------------------
@@ -119,24 +125,24 @@ fetch(D, _From, _Size, [
 	%
 	% get evaluation stats
 	%
-	Stats = ep_osm_exam_api:get_bundle_evaluation_stats(ExamId),
+	Stats = ep_osm_exam_api:get_centre_evaluation_stats(ExamId),
 	StatsDict = dict:from_list(Stats),
 
 
 	%
-	% get bundle ids
+	% get centre ids
 	%
-	BundleIds = lists:map(fun({[BundleId, _State], _}) ->
-		BundleId
+	CentreIds = lists:map(fun({[CentreId, _State], _}) ->
+		CentreId
 	end, Stats),
-	BundleIdsUnique = helper:unique(BundleIds),
+	CentreIdsUnique = helper:unique(CentreIds),
 
 
 
 	%
 	% layout results
 	%
-	Results = lists:map(fun(BundleId) ->
+	Results = lists:map(fun(CentreId) ->
 
 		%
 		% get stats per bundle
@@ -144,13 +150,13 @@ fetch(D, _From, _Size, [
 		[
 			#dcell {val=#link {
 				new=true,
-				text=BundleId,
-				url=io_lib:format("/~p?id=~s&bundleid=~s", [
-					?MODULE, ExamId, BundleId
+				text=CentreId,
+				url=io_lib:format("/~p?id=~s&centreid=~s", [
+					?MODULE, ExamId, CentreId
 				])
 			}}
 		] ++ lists:map(fun(State) ->
-			Val = case dict:find([BundleId, State], StatsDict) of
+			Val = case dict:find([CentreId, State], StatsDict) of
 				{ok, Count} ->
 					Count;
 				error ->
@@ -162,7 +168,7 @@ fetch(D, _From, _Size, [
 			}
 		end, states())
 
-	end, BundleIdsUnique),
+	end, CentreIdsUnique),
 
 
 
@@ -170,7 +176,7 @@ fetch(D, _From, _Size, [
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="Bundle"}
+		#dcell {type=header, val="Centre Code"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
 	end, states()) ++ [
@@ -194,7 +200,7 @@ fetch(D, _From, _Size, [
 	%
 	{
 		D#dig {
-			total=length(BundleIdsUnique),
+			total=length(CentreIdsUnique),
 			description=itf:val(TFs, testname)
 		},
 		[Header] ++ dig:append_total_cells(ResultsSorted)
@@ -211,7 +217,7 @@ fetch(D, _From, _Size, [
 
 fetch(D, _From, _Size, [
 	#field {id=osm_exam_fk, uivalue=ExamId},
-	#field {id=osm_bundle_fk, uivalue=BundleId}
+	#field {id=anpcentercode, uivalue=CentreCode}
 ]) ->
 
 	%
@@ -222,13 +228,13 @@ fetch(D, _From, _Size, [
 
 
 	%
-	% get student docs from osm exam db with the specified bundle id
+	% get student docs from osm exam db with the specified centre code
 	%
-	FsToSearchBundle = [
-		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId)
+	FsToSearch = [
+		fields:build(anpcentercode, CentreCode)
 	],
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
-		ExamDb, FsToSearchBundle, 0, ?INFINITY
+		ExamDb, FsToSearch, 0, ?INFINITY
 	),
 
 
@@ -279,7 +285,7 @@ fetch(D, _From, _Size, [
 	{D#dig {
 		total=length(CandidateDocs),
 		description=io_lib:format("~s / ~s / ~s", [
-			BundleId,
+			CentreCode,
 			itf:val(ExamDoc, testname),
 			?LN(?L2A(itf:val(ExamDoc, teststatus)))
 		])
@@ -292,6 +298,15 @@ fetch(D, _From, _Size, [
 % [osm_exam_fk, anpseatnumber]
 %
 %..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=ExamId},
+	#field {id=anpcentercode},
+	#field {id=anpseatnumber, uivalue=SeatNumber}
+]) ->
+	fetch(D, _From, _Size, [
+		#field {id=osm_exam_fk, uivalue=ExamId},
+		#field {id=anpseatnumber, uivalue=SeatNumber}
+	]);
 
 fetch(D, _From, _Size, [
 	#field {id=osm_exam_fk, uivalue=ExamId},

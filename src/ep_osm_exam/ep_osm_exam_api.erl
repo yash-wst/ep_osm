@@ -322,11 +322,11 @@ get_evaluator_answerpaper_count(TestId, Role, ProfileId, AnswerPaperState) ->
 
 
 %------------------------------------------------------------------------------
-% stats - bundle evaluation
+% stats - centre evaluation
 %------------------------------------------------------------------------------
 
 
-get_bundle_evaluation_stats(TestId) ->
+get_centre_evaluation_stats(TestId) ->
 	SK = [<<"">>, <<"">>],
 	EK = [<<"z\\ufff0">>, <<"z\\ufff0">>],
 
