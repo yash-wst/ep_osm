@@ -117,11 +117,13 @@ layout() ->
 
 layout_student_info(_TFs, Fs) ->
 	ProfileId = ?L2A("profileidfk_" ++ wf:q(role)),
+	MarkingId = ?L2A("anpcanvas_" ++ wf:q(role)),
 	Es = layout:get(?VIEW, fields:getfields(Fs, [
 		anpseatnumber,
 		anpfullname,
 		anpstate,
-		ProfileId
+		ProfileId,
+		MarkingId
 	]), [], table),
 
 	[
@@ -180,6 +182,8 @@ layout_page_nos(TFs, Fs, RoleFId) ->
 % events
 %------------------------------------------------------------------------------
 
+event({download, EvaluatorType}) ->
+	anpcandidate:event({download, EvaluatorType});
 event(Event) ->
 	?D(Event).
 

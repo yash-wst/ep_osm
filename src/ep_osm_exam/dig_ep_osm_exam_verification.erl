@@ -148,13 +148,7 @@ fetch(D, _From, _Size, [
 		% get stats per bundle
 		%
 		[
-			#dcell {val=#link {
-				new=true,
-				text=CentreId,
-				url=io_lib:format("/~p?id=~s&centreid=~s", [
-					?MODULE, ExamId, CentreId
-				])
-			}}
+			#dcell {val=CentreId}
 		] ++ lists:map(fun(State) ->
 			Val = case dict:find([CentreId, State], StatsDict) of
 				{ok, Count} ->
@@ -166,7 +160,15 @@ fetch(D, _From, _Size, [
 				bgcolor=get_class(State, Val),
 				val=Val
 			}
-		end, states())
+		end, states()) ++ [
+			#dcell {val=#link {
+				new=true,
+				text="View",
+				url=io_lib:format("/~p?id=~s&centreid=~s", [
+					?MODULE, ExamId, CentreId
+				])
+			}}
+		]
 
 	end, CentreIdsUnique),
 
@@ -215,7 +217,7 @@ fetch(D, _From, _Size, [
 %
 %..............................................................................
 
-fetch(D, _From, _Size, [
+fetch(D, From, Size, [
 	#field {id=osm_exam_fk, uivalue=ExamId},
 	#field {id=anpcentercode, uivalue=CentreCode}
 ]) ->
@@ -234,7 +236,7 @@ fetch(D, _From, _Size, [
 		fields:build(anpcentercode, CentreCode)
 	],
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
-		ExamDb, FsToSearch, 0, ?INFINITY
+		ExamDb, FsToSearch, From, Size
 	),
 
 
@@ -246,6 +248,7 @@ fetch(D, _From, _Size, [
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
+			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {
 				val=#link {
@@ -274,6 +277,7 @@ fetch(D, _From, _Size, [
 	Header = [
 		#dcell {type=header, val="Barcode / UID"},
 		#dcell {type=header, val="Seat No."},
+		#dcell {type=header, val="Full name"},
 		#dcell {type=header, val="State"},
 		#dcell {type=header, val="Scanned Images"}
 	],
