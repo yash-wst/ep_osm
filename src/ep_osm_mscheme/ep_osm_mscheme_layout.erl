@@ -13,6 +13,14 @@ insert_buttons(WUId, F) ->
 	insert_buttons(WUId, F, ep_osm_mscheme_handler).
 
 insert_buttons(WUId, F, Handler) ->
+
+	X = itxconfigs_cache:get2(ep_osm_mscheme_anyx, 10),
+	Y = itxconfigs_cache:get2(ep_osm_mscheme_ofy, 12),
+	?ASSERT(
+		(X < Y),
+		itx:format("Any x (~p) should be less than y (~p)", [X, Y])
+	),
+
 	[
 		itl:get(?CREATE, [itf:textbox(?F(marks_per_question, "Marks Per Question"))], noevent, table),
 		#hr {},
@@ -32,7 +40,7 @@ insert_buttons(WUId, F, Handler) ->
 		% group
 		%
 		lists:map(fun(I) ->
-			Label = io_lib:format("Group of ~p questions", [I]),
+			Label = io_lib:format("Group of ~p", [I]),
 			insert_button(Label, F, {widget, WUId, ?WTYPE_GROUP, I}, Handler)
 		end, lists:seq(2, 15)),
 		#hr {},
@@ -46,9 +54,9 @@ insert_buttons(WUId, F, Handler) ->
 				body=lists:map(fun(J) ->
 					Label = io_lib:format("Any ~p of ~p", [I, J]),
 					insert_button(Label, F, {widget, WUId, ?WTYPE_RULE, {I, J}}, Handler)
-				end, lists:seq(I + 1, 12))
+				end, lists:seq(I + 1, Y))
 			}
-		end, lists:seq(1, 10)),
+		end, lists:seq(1, X)),
 		#hr {},
 
 
@@ -75,7 +83,7 @@ insert_button(Label, #field {} = F, {widget, _, _, _} = Widget, Handler) ->
 
 insert_button(Label, WUId, {widget, _, _, _} = Widget, Handler) ->
 	#button {
-		style="margin: 5px; padding: 5px;",
+		style="margin: 5px; padding: 5px; width: 7em;",
 		class="btn btn-sm btn-primary-outline",
 		delegate=Handler,
 		text=Label,
