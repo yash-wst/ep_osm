@@ -686,7 +686,9 @@ finish_upload_event_inward(_Id, Filename, Fileloc, _Node) ->
 	DirNamesToUpload = lists:map(fun(D) ->
 		itf:val(D, anpseatnumber)
 	end, BundleDocs),
-	dig_ep_osm_exam_inward_uploadtos3:upload(S3Dir, DirNamesToUpload, Filename, Fileloc).
+	dig_ep_osm_exam_inward_uploadtos3:upload(
+		S3Dir, DirNamesToUpload, Filename, Fileloc, wf:q(osm_bundle_fk)
+	).
 
 
 

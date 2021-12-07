@@ -160,8 +160,8 @@ do(Doc) ->
 	%
 	% upload
 	%
-	dig_ep_osm_exam_inward_uploadtos3:upload1(
-		undefined, S3Dir, DirNamesToUpload, ObjectKey, undefined
+	dig_ep_osm_exam_inward_uploadtos3:upload2(
+		undefined, S3Dir, DirNamesToUpload, ObjectKey, undefined, OsmBundleId
 	).
 
 

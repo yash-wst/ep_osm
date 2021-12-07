@@ -10,84 +10,88 @@
 %------------------------------------------------------------------------------
 
 
-upload(S3Dir, DirNamesToUpload, Filename, Filepath) ->
+upload(S3Dir, DirNamesToUpload, Filename, Filepath, BundleId) ->
 	%
 	% upload in background as it is time consuming
 	%
 	Context = wf_context:context(),
-	PId = spawn(?MODULE, upload1, [Context, S3Dir, DirNamesToUpload, Filename, Filepath]),
+	PId = spawn(?MODULE, upload1, [
+		Context, S3Dir, DirNamesToUpload, Filename, Filepath, BundleId
+	]),
 	dig:log(io_lib:format("spawned upload process: ~p", [PId])).
 
 
-upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath0) ->
-
+upload1(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
 	try
-
-		%
-		% init
-		%
-		case Context of
-			undefined ->
-				skip;
-			_ ->
-				wf_context:context(Context)
-		end,
-
-
-		%
-		% download from s3
-		%
-		Filepath = case Filepath0 of
-			undefined ->
-				handle_download_from_s3(Filename);
-			_ ->
-				Filepath0
-		end,
-
-
-		%
-		% verify inputs
-		%
-		handle_verify_inputs(S3Dir, DirNamesToUpload),
-
-
-		%
-		% verify file is zip
-		%
-		handle_verify_zip_file(Filepath),
-
-
-		%
-		% create a working directory and unzip the zip file
-		%
-		WorkDir = "/tmp/" ++ helper:uidintstr(),
-		helper:cmd("mkdir -p ~s", [WorkDir]),
-
-
-		%
-		% upload to s3
-		%
-		handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filename, Filepath),
-
-
-		%
-		% cleanup
-		%
-		handle_cleanup(WorkDir, Filepath),
-		handle_remove_from_s3(Filename),
-
-
-		%
-		% done
-		%
-		dig:log("Uploading done.")
-
+		upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId)
 	catch
 		Error:Message ->
 			?D({Error, Message, erlang:get_stacktrace()}),
 			Log = io_lib:format("~p, ~p", [Error, Message]),
 			dig:log(error, Log)
 	end.
+
+
+upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
+	%
+	% init
+	%
+	case Context of
+		undefined ->
+			skip;
+		_ ->
+			wf_context:context(Context)
+	end,
+
+
+	%
+	% download from s3
+	%
+	Filepath = case Filepath0 of
+		undefined ->
+			handle_download_from_s3(Filename);
+		_ ->
+			Filepath0
+	end,
+
+
+	%
+	% verify inputs
+	%
+	handle_verify_inputs(S3Dir, DirNamesToUpload),
+
+
+	%
+	% verify file is zip
+	%
+	handle_verify_zip_file(Filepath),
+
+
+	%
+	% create a working directory and unzip the zip file
+	%
+	WorkDir = "/tmp/" ++ helper:uidintstr(),
+	helper:cmd("mkdir -p ~s", [WorkDir]),
+
+
+	%
+	% upload to s3
+	%
+	handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, Filename, Filepath, BundleId),
+
+
+	%
+	% cleanup
+	%
+	handle_cleanup(WorkDir, Filepath),
+	handle_remove_from_s3(Filename),
+
+
+	%
+	% done
+	%
+	dig:log("Uploading done.").
+
 
 
 
@@ -187,7 +191,7 @@ handle_verify_zip_file(Filepath) ->
 % handle - upload to s3
 %------------------------------------------------------------------------------
 
-handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath) ->
+handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, BundleId) ->
 
 
 	%
@@ -207,6 +211,13 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath) ->
 	%
 	{ok, [ZipDir0]} = file:list_dir(WorkDir),
 	ZipDir = io_lib:format("~s/~s", [WorkDir, ZipDir0]),
+
+
+	%
+	% handle verify uploaded folder name
+	%
+	handle_verify_uploaded_folder_name(ZipDir0, BundleId),
+
 
 
 	%
@@ -239,6 +250,24 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath) ->
 
 
 	dig:log("Uploading to S3 ... ok").
+
+
+
+%------------------------------------------------------------------------------
+% handle - verify uploaded folder name
+%------------------------------------------------------------------------------
+
+handle_verify_uploaded_folder_name(ZipDir0, BundleId) ->
+	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+	ExamId = itf:val(BundleDoc, osm_exam_fk),
+	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
+	BundleDirName = dig_ep_osm_exam_inward:get_bundle_dir_name(ExamDoc, BundleDoc),
+	?ASSERT(
+		ZipDir0 == BundleDirName,
+		itx:format("Incorrect folder uploaded. Required: ~s, uploaded: ~s", [
+			BundleDirName, ZipDir0
+		])
+	).
 
 
 
