@@ -34,7 +34,8 @@ heading() ->
 	doc,
 	rdsdoc,
 	listofquestions=[],
-	evaluatorrole
+	evaluatorrole,
+	testtotalmarks
 }).
 
 
@@ -49,6 +50,7 @@ exportids() -> [
 	"program_name",
 	"subject_code",
 	"subject_name",
+	"testtotalmarks",
 	"prn",
 	"seatnumber",
 	"evaluation_state",
@@ -134,7 +136,8 @@ f("profileidfk_anpmoderator_reval") ->
 f("profileidfk_anprevaluator") ->
 	fields:get(profileidfk_anprevaluator);
 
-
+f("testtotalmarks") ->
+	itf:textbox(?F(testtotalmarks, "Test Total Marks"));
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -250,6 +253,7 @@ fetch(D, From, Size, [
 	MSchemeId = itf:val(ExamDoc, osm_mscheme_fk),
 	SeatNumberMappingId = itxconfigs_cache:get2(osm_images_folder_id, booklet_number),
 	ListOfAllQuestions = get_list_of_questions(ExamDoc),
+	TestTotalMarks = anptests:testtotalmarks(ExamDoc),
 
 
 	%
@@ -312,7 +316,8 @@ fetch(D, From, Size, [
 			doc=Doc,
 			rdsdoc=dict:find(SeatNumber, RdsDocsDict),
 			listofquestions=ListOfAllQuestions,
-			evaluatorrole=get_evaluator_role(Doc)
+			evaluatorrole=get_evaluator_role(Doc),
+			testtotalmarks=TestTotalMarks
 		},
 
 
@@ -699,6 +704,12 @@ val(#docs {
 	Id == "courseid" ->
 	itf:val(ExamDoc, f(Id));
 
+
+val(#docs {
+	testtotalmarks=TestTotalMarks
+}, Id) when
+	Id == "testtotalmarks" ->
+	TestTotalMarks;
 
 
 val(#docs {
