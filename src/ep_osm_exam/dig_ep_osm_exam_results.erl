@@ -55,9 +55,13 @@ exportids() -> [
 	"booklet_number",
 	"sticker_uid",
 	"courseid",
+	"profileidfk_anpevaluator",
 	"evaluator_total",
+	"profileidfk_anpmoderator",
 	"moderator_total",
+	"profileidfk_anprevaluator",
 	"revaluator_total",
+	"profileidfk_anpmoderator_reval",
 	"moderator_reval_total",
 	"total",
 	"marks_per_question",
@@ -115,9 +119,22 @@ f("courseid") ->
 f("marks_per_question") ->
 	itf:textbox(?F(marks_per_question, "Marks Per Question"));
 
-
 f("marks_per_marked_question") ->
 	itf:textbox(?F(marks_per_marked_question, "Marks Per Marked Question"));
+
+f("profileidfk_anpevaluator") ->
+	fields:get(profileidfk_anpevaluator);
+
+f("profileidfk_anpmoderator") ->
+	fields:get(profileidfk_anpmoderator);
+
+f("profileidfk_anpmoderator_reval") ->
+	fields:get(profileidfk_anpmoderator_reval);
+
+f("profileidfk_anprevaluator") ->
+	fields:get(profileidfk_anprevaluator);
+
+
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -744,6 +761,27 @@ val(#docs {
 	Id == "booklet_number";
 	Id == "sticker_uid" ->
 	[];
+
+
+val(#docs {
+	doc=Doc
+}, Id) when
+	Id == "profileidfk_anpevaluator";
+	Id == "profileidfk_anpmoderator";
+	Id == "profileidfk_anprevaluator";
+	Id == "profileidfk_anpmoderator_reval" ->
+
+	ProfileId = itf:val(Doc, f(Id)),
+	Fun = fun() ->
+		{ok, ProfileDoc} = profiles:getdoc(ProfileId),
+		profiles:displayname_fmt(helper_api:doc2fields({ok, ProfileDoc}))
+	end,
+	case ProfileId of
+		[] ->
+			[];
+		_ ->
+			itxdoc_cache:get({?MODULE, ProfileId}, Fun)
+	end;
 
 
 val(#docs {
