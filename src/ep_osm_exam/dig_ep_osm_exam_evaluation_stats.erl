@@ -13,6 +13,13 @@
 %------------------------------------------------------------------------------
 
 main() ->
+	main(wf:q(anptestid)).
+
+
+main(Id) when Id /= undefined ->
+	Url = itx:format("/~p?id=~s", [?MODULE, Id]),
+	helper:redirect(Url);
+main(_) ->
 	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
@@ -256,7 +263,14 @@ fetch(D, _From, _Size, [
 	{
 		D#dig {
 			total=length(ProfileDocs),
-			description=itf:val(TFs, testname)
+			description=#link {
+				url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
+				text=io_lib:format("~s / ~s / ~s", [
+					itf:val(TFs, anptestcourseid),
+					itf:val(TFs, testname),
+					?LN(?L2A(itf:val(TFs, teststatus)))
+				])
+			}
 		},
 		[Header] ++ tl(dig:append_total_cells(ResultsSorted))
 	};

@@ -203,7 +203,14 @@ fetch(D, _From, _Size, [
 	{
 		D#dig {
 			total=length(CentreIdsUnique),
-			description=itf:val(TFs, testname)
+			description=#link {
+				url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
+				text=io_lib:format("~s / ~s / ~s", [
+					itf:val(TFs, anptestcourseid),
+					itf:val(TFs, testname),
+					?LN(?L2A(itf:val(TFs, teststatus)))
+				])
+			}
 		},
 		[Header] ++ dig:append_total_cells(ResultsSorted)
 	};
@@ -259,13 +266,6 @@ fetch(D, From, Size, [
 					])
 				}
 			}
-			% #dcell {
-			% 	val=ite:button(
-			% 		view_scanned_images,
-			% 		"View Images",
-			% 		{view_scanned_images, ExamId, itf:idval(CDoc)}
-			% 	)
-			% }
 		]
 	end, CandidateDocs),
 
