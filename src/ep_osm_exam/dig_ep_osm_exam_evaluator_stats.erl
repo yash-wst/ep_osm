@@ -228,7 +228,11 @@ fetch(D, _From, _Size, [
 	ProfileIds = lists:map(fun({[_, ProfileId], _}) ->
 		ProfileId
 	end, Stats),
-	AllEligibleProfileIds = ProfileIds ++ anpcandidates:get_evaluators_for_test(TFs, anpevaluator),
+	AllEligibleProfileIds = ProfileIds ++ 
+		anpcandidates:get_evaluators_for_test(TFs, anpevaluator) ++
+		anpcandidates:get_evaluators_for_test(TFs, anpmoderator) ++
+		anpcandidates:get_evaluators_for_test(TFs, anprevaluator) ++
+		anpcandidates:get_evaluators_for_test(TFs, anpmoderator_reval),
 	ProfileIdsUnique = helper:unique(AllEligibleProfileIds) -- ["unassigned"],
 	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique),
 	ProfileDocsDict = helper:get_dict_from_docs(ProfileDocs),
@@ -292,6 +296,7 @@ fetch(D, _From, _Size, [
 			}
 		end, states()) ++ [
 			#dcell {
+				show_csv=false,
 				val=EvaluatorLink
 			}
 		]
@@ -315,7 +320,7 @@ fetch(D, _From, _Size, [
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
 	end, states()) ++ [
-		#dcell {type=header, val="View"},
+		#dcell {type=header, val="View", show_csv=false},
 		#dcell {type=header, val="Total"}
 	],
 
@@ -580,13 +585,42 @@ handle_export_evaluator_stats_bulk(Fs, Email) ->
 	% export in batches
 	%
 	done = handle_export_evaluator_stats_bulk(Fs, Dir, 0),
+	handle_generate_xlsx(Dir),
 
 
 	%
 	% zip and mail dir
 	%
-	helper:zip_mail_clean_dir([Email], Dir, "OSM: Evaluator statistics export"),
+	helper:zip_mail_link_clean_dir([Email], Dir, "OSM: Evaluator statistics export"),
 	dig:log(success, "Task completed.").
+
+
+
+handle_generate_xlsx(Dir) ->
+	%
+	% init
+	%
+	dig:log(warning, "Generating combined xlxs file ..."),
+	SOffice = case os:cmd("uname -s") of
+		"Darwin" ++ _ ->
+			"/Applications/LibreOffice.app/Contents/MacOS/soffice";
+		_ ->
+			"soffice"
+	end,
+
+
+	%
+	% combine all csv to single csv
+	%
+	helper:cmd("cd ~s; cat *.csv > combined.file; mv combined.file combined.csv", [
+		Dir
+	]),
+
+
+	helper:cmd("cd ~s; ~s --headless --convert-to xlsx:'Calc MS Excel 2007 XML' combined.csv", [
+		Dir, SOffice
+	]).
+
 
 
 
@@ -617,7 +651,7 @@ handle_export_evaluator_stats_bulk(Fs, Dir, From) ->
 		% create dig for export
 		%
 		D = #dig {
-			module=dig_ep_osm_exam_evaluation_stats,
+			module=?MODULE,
 			filters=[
 				itf:build(itf:hidden(osm_exam_fk), itf:idval(Doc))
 			]
