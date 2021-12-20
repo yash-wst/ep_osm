@@ -416,11 +416,11 @@ handle_import_csv_to_fs(List) ->
 	%
 	% build fs
 	%
-	FsList = lists:map(fun([
+	{FsList, _} = lists:foldl(fun([
 		_SubjectCode,
 		BundleNumber,
 		SeatNumber
-	]) ->
+	], {Acc, EpochTime}) ->
 
 		%
 		% get bundle doc
@@ -433,7 +433,7 @@ handle_import_csv_to_fs(List) ->
 		%
 		% return fs to save
 		%
-		case dict:find(SeatNumber, CandidateDocsDict) of
+		Fs = case dict:find(SeatNumber, CandidateDocsDict) of
 			{ok, CandidateDoc} ->
 				FsToSave = [
 					itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
@@ -447,11 +447,13 @@ handle_import_csv_to_fs(List) ->
 				itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
 				itf:build(itf:textbox(?F(anpcentercode)), BundleId),
 				itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
-				itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
+				itf:build(itf:textbox(?F(timestamp_inward)), ?I2S(EpochTime))
 			]
-		end
+		end,
 
-	end, List),
+		{Acc ++ [Fs], EpochTime+1}
+
+	end, {[], helper:epochtime()}, List),
 
 
 	%
