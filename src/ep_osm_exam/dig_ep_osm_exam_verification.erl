@@ -354,13 +354,6 @@ fetch(D, _From, _Size, [
 					])
 				}
 			}
-			% #dcell {
-			% 	val=ite:button(
-			% 		view_scanned_images,
-			% 		"View Images",
-			% 		{view_scanned_images, ExamId, itf:idval(CDoc)}
-			% 	)
-			% }
 		]
 	end, CandidateDocs),
 

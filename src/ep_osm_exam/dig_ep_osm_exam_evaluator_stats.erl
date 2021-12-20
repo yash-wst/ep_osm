@@ -3,13 +3,20 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
-
+-import(dig_ep_osm_exam_evaluation_stats, [get_class/2, states/0]).
 
 %------------------------------------------------------------------------------
 % main
 %------------------------------------------------------------------------------
 
 main() ->
+	main(wf:q(anptestid)).
+
+
+main(Id) when Id /= undefined ->
+	Url = itx:format("/~p?id=~s", [?MODULE, Id]),
+	helper:redirect(Url);
+main(_) ->
 	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
@@ -51,7 +58,8 @@ get() ->
 			fields:get(anptestcourseid),
 			fields:get(teststatus),
 			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
+			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id)),
+			itf:build(itf:hidden(profileid), itxcontext:q(evaluatorid))
 		],
 		size=25,
 		actions=[
@@ -82,17 +90,264 @@ init() ->
 % function - fetch
 %------------------------------------------------------------------------------
 
-
 %..............................................................................
 %
 % [osm_exam_fk]
 %
 %..............................................................................
 fetch(D, From, Size, [
-	#field {id=osm_exam_fk}
-	] = Fs) ->
-	{D1, Results} = dig_ep_osm_exam_evaluation_stats:fetch(D, From, Size, Fs),
-	{D1#dig {actions=[]}, Results};
+	#field {id=osm_exam_fk, uivalue=ExamId},
+	#field {id=profileid, uivalue=ProfileId}
+	]) ->
+
+
+	%
+	% init
+	%
+	TFs = anptests:get(ExamId),
+	PFs = profiles:get(ProfileId),
+	Role = itf:val(PFs, profiletype),
+	FId = ?L2A("profileidfk_" ++ Role),
+	Module = ?L2A("profile_" ++ Role),
+
+
+	%
+	% get docs
+	%
+	Docs = ep_osm_candidate_api:fetch(
+		ExamId, From, Size, [
+			fields:build(FId, ProfileId)
+		]
+	),
+
+
+	%
+	% layout results
+	%
+	Results = lists:map(fun(CDoc) ->
+		[
+			#dcell {val=itf:val(CDoc, anp_paper_uid)},
+			#dcell {val=itf:val(CDoc, anpseatnumber)},
+			#dcell {val=itf:val(CDoc, anpfullname)},
+			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
+			#dcell {
+				val=#link {
+					text="View",
+					new=true,
+					url=io_lib:format("/ep_osm_eval_view?mode=view&anpid=~s&anptestid=~s&role=anpevaluator", [
+						itf:idval(CDoc), ExamId
+					])
+				}
+			}
+		]
+	end, Docs),
+
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Barcode / UID"},
+		#dcell {type=header, val="Seat No."},
+		#dcell {type=header, val="Full name"},
+		#dcell {type=header, val="State"},
+		#dcell {type=header, val="Scanned Images"}
+	],
+
+	%
+	% return
+	%
+	{
+		D#dig {
+			dcell_headers=Header,
+			description=[
+				#link {
+					style="margin-right: 15px;",
+					url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
+					text=io_lib:format("~s / ~s / ~s", [
+						itf:val(TFs, anptestcourseid),
+						itf:val(TFs, testname),
+						?LN(?L2A(itf:val(TFs, teststatus)))
+					])
+				},
+				#link {
+					url=itx:format("/~p?mode=view&profileid=~s", [
+						Module, ProfileId
+					]),
+					text=io_lib:format("~s / ~s", [
+						profiles:displayname_fmt(PFs), ?LN(?L2A(Role))
+					])
+				}
+			]
+		},
+		Results
+	};
+
+
+
+
+%..............................................................................
+%
+% [osm_exam_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=ExamId}
+	]) ->
+
+
+	%
+	% init
+	%
+	TFs = anptests:get(ExamId),
+	
+
+
+	%
+	% spfs cells
+	%
+	{SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict} =
+		ep_core_helper:get_sfps_dicts([TFs]),
+	SFPSCells = ep_core_dig_helper:get_sfps_cells(
+		TFs, {SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict},
+		#dcell {show_ui=false}
+	),
+
+
+	%
+	% get evaluation stats
+	%
+	Stats = ep_osm_exam_api:get_evaluation_stats(ExamId),
+	StatsDict = dict:from_list(Stats),
+
+
+	%
+	% get profile docs
+	%
+	ProfileIds = lists:map(fun({[_, ProfileId], _}) ->
+		ProfileId
+	end, Stats),
+	AllEligibleProfileIds = ProfileIds ++ anpcandidates:get_evaluators_for_test(TFs, anpevaluator),
+	ProfileIdsUnique = helper:unique(AllEligibleProfileIds) -- ["unassigned"],
+	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique),
+	ProfileDocsDict = helper:get_dict_from_docs(ProfileDocs),
+
+
+
+	%
+	% layout results
+	%
+	Results = lists:map(fun(ProfileId) ->
+
+		%
+		% init
+		%
+		ProfileDoc = helper:get_doc_or_empty_doc_from_dict(ProfileId, ProfileDocsDict),
+
+		%
+		% get evaluator link
+		%
+		EvaluatorLink = case ProfileId of
+			"unassigned" ->
+				[];
+			_ ->
+				 #link {
+					text="View",
+					url=itx:format("~p?id=~s&evaluatorid=~s", [
+						?MODULE, ExamId, ProfileId
+					])
+				}
+		end,
+
+
+
+		%
+		% get stats per profile
+		%
+		SFPSCells ++ [
+			#dcell {
+				val=itf:val(ProfileDoc, fullname)
+			},
+			#dcell {
+				type=label,
+				val=itf:val(ProfileDoc, mobile)
+			},
+			#dcell {
+				val=itf:val(ProfileDoc, email)
+			},
+			#dcell {
+				val=?LN(?L2A(itf:val(ProfileDoc, profiletype)))
+			}
+		] ++ lists:map(fun(State) ->
+			Val = get_eval_count_for_profile(
+				ProfileId,
+				dict:find([State, ProfileId], StatsDict),
+				State,
+				itf:val(ProfileDoc, profiletype)
+			),
+			#dcell {
+				bgcolor=get_class(State, Val),
+				val=Val
+			}
+		end, states()) ++ [
+			#dcell {
+				val=EvaluatorLink
+			}
+		]
+
+	end, ["unassigned"] ++ ProfileIdsUnique),
+
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, show_ui=false, val="Season"},
+		#dcell {type=header, show_ui=false, val="Faculty"},
+		#dcell {type=header, show_ui=false, val="Program"},
+		#dcell {type=header, show_ui=false, val="Subject"},
+		#dcell {type=header, val="Fullname"},
+		#dcell {type=header, val="Mobile"},
+		#dcell {type=header, val="Email"},
+		#dcell {type=header, val="Role"}
+	] ++ lists:map(fun(State) ->
+		#dcell {type=header, val=?LN(?L2A(State++"_min"))}
+	end, states()) ++ [
+		#dcell {type=header, val="View"},
+		#dcell {type=header, val="Total"}
+	],
+
+
+	%
+	% sort results
+	%
+	ResultsSorted = lists:sort(fun(A, B) ->
+		#dcell {val=YetToStartA} = lists:nth(5, A),
+		#dcell {val=YetToStartB} = lists:nth(5, B),
+		YetToStartA > YetToStartB
+	end, Results),
+
+
+
+	%
+	% return
+	%
+	{
+		D#dig {
+			total=length(ProfileDocs),
+			description=#link {
+				url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
+				text=io_lib:format("~s / ~s / ~s", [
+					itf:val(TFs, anptestcourseid),
+					itf:val(TFs, testname),
+					?LN(?L2A(itf:val(TFs, teststatus)))
+				])
+			}
+		},
+		[Header] ++ tl(dig:append_total_cells(ResultsSorted))
+	};
 
 
 %..............................................................................
@@ -406,6 +661,44 @@ handle_export_evaluator_stats_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
 
 
 %
+% get evaluation count
+%
+get_eval_count_for_profile(_, error, _, _) ->
+	0;
+get_eval_count_for_profile("unassigned", {ok, Val}, State, _) when
+	State == "anpstate_not_uploaded";
+	State == "anpstate_yettostart";
+	State == "anpstate_discarded";
+	State == "anpstate_moderation" ->
+	Val;
+get_eval_count_for_profile("unassigned", _, _, _) ->
+	0;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anpevaluator") when
+% 	State == "anpstate_yettostart";
+% 	State == "anpstate_active";
+% 	State == "anpstate_completed";
+% 	State == "anpstate_evaluation_rejected" ->
+% 	Val;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator") when
+% 	State == "anpstate_moderation";
+% 	State == "anpstate_moderation_completed" ->
+% 	Val;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anprevaluator") when
+% 	State == "anpstate_revaluation";
+% 	State == "anpstate_revaluation_completed" ->
+% 	Val;
+% get_eval_count_for_profile(_, {ok, Val}, State, "anpmoderator_reval") when
+% 	State == "anpstate_moderation_reval";
+% 	State == "anpstate_moderation_reval_completed" ->
+% 	Val;
+get_eval_count_for_profile(_, {ok, Val}, _State, _Role) ->
+	Val;
+get_eval_count_for_profile(_, _, _, _) ->
+	0.
+
+
+
+%
 % get class evaluator
 %
 get_class_evaluator(TotalEvaluators, _) when TotalEvaluators > 0 ->
@@ -414,6 +707,8 @@ get_class_evaluator(0, TotalPapers) when TotalPapers > 0 ->
 	"table-danger";
 get_class_evaluator(_, _) ->
 	[].
+
+
 
 %
 % get class
