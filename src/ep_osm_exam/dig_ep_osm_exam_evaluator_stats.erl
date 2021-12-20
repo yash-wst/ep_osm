@@ -591,7 +591,7 @@ handle_export_evaluator_stats_bulk(Fs, Email) ->
 	%
 	% zip and mail dir
 	%
-	helper:zip_mail_link_clean_dir([Email], Dir, "OSM: Evaluator statistics export"),
+	helper:zip_mail_clean_dir([Email], Dir, "OSM: Evaluator statistics export"),
 	dig:log(success, "Task completed.").
 
 
