@@ -26,6 +26,7 @@ form() ->
 % records
 %------------------------------------------------------------------------------
 
+-define(BATCH_SIZE, 100).
 
 
 %------------------------------------------------------------------------------
@@ -52,7 +53,8 @@ get() ->
 		actions=[
 			{action_import, "+ Import", "+ Import"},
 			{action_import_student_data, "Import Student Data", "Import Student Data"},
-			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."}
+			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."},
+			{action_change_state, "Change State", "Change State"}
 		]
 	}.
 
@@ -182,6 +184,21 @@ layout() ->
 
 %..............................................................................
 %
+% layout - change state
+%
+%..............................................................................
+
+layout_change_state() ->
+	F = fields:get(teststatus),
+	Fs = [
+		F#field {id=to_state, label="To State"}
+	],
+	Es = itl:get(?CREATE, Fs, ite:get(change_state, "Change State"), table),
+	dig_mm:handle_show_action("Change State", Es).
+
+
+%..............................................................................
+%
 % layout - files
 %
 %..............................................................................
@@ -275,6 +292,17 @@ layout_upload_form() ->
 event({browser_to_s3_completed, ObjectKey}) ->
 	handle_objectkey_upload_completed(ObjectKey);
 
+
+event({confirmation_yes, change_state}) ->
+	itl:modal_close(),
+	handle_change_state_confirmed();
+
+event(change_state) ->
+	handle_change_state();
+
+event(action_change_state) ->
+	layout_change_state();
+
 event(action_import_student_data) ->
 	dig_mm:handle_show_action("Import Student Data", layout_import_student_data());
 
@@ -308,6 +336,104 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+
+
+
+%..............................................................................
+%
+% handle change state
+%
+%..............................................................................
+
+handle_change_state() ->
+	%
+	% get tests
+	%
+	Docs = get_tests_change_state(0, ?BATCH_SIZE),
+
+
+	?ASSERT(
+		Docs /= [],
+		"Could not find any matching test documents"
+	),
+
+
+	%
+	% confirmation
+	%
+	Count = length(Docs),
+	Message = if
+		Count < ?BATCH_SIZE ->
+			itx:format("There are ~p tests to update. Are you sure you want continue?", [Count]);
+		true ->
+			itx:format("There are more than ~p tests to update. Are you sure you want to continue?", [
+				?BATCH_SIZE
+			])
+	end,
+	itl:confirmation(Message, change_state).
+
+
+
+
+
+
+%..............................................................................
+%
+% handle change state confirmed
+%
+%..............................................................................
+
+handle_change_state_confirmed() ->
+
+	%
+	% init
+	%
+	handle_change_state_confirmed(get_tests(0, ?BATCH_SIZE)).
+
+
+handle_change_state_confirmed(Docs) ->
+
+	%
+	% init
+	%
+	ToState = wf:q(to_state),
+	FsToSave = [
+		fields:build(teststatus, ToState)
+	],
+
+
+	%
+	% update date
+	%
+	DocsToSave = lists:map(fun(Doc) ->
+		Fs = helper_api:doc2fields({ok, Doc}),
+		Fs1 = itf:fs_merge(Fs, FsToSave),
+		helper_api:fields2doc(Fs1)
+	end, Docs),
+
+
+	%
+	% save
+	%
+	{ok, ResDocs} = db:savebulk(anptests:getdb(), DocsToSave),
+	Message = itx:format("Batch save result {ok, error}: ~p", [db_helper:bulksave_summary(ResDocs)]),
+	dig:log(warning, Message),
+
+
+	%
+	% recurse
+	%
+	case length(Docs) == ?BATCH_SIZE of
+		true ->
+			handle_change_state_confirmed(get_tests(0, ?BATCH_SIZE));
+		_ ->
+			dig:log(success, "Finished"),
+			over
+	end.
+
+
+
 
 
 %..............................................................................
@@ -354,6 +480,66 @@ handle_objectkey(_) ->
 % misc
 %------------------------------------------------------------------------------
 
+
+get_tests(From, Size) ->
+	%
+	% init
+	%
+	Dig = helper:state(dig),
+	Fs = dig:get_nonempty_fs(Dig#dig.filters),
+
+
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter and then try again"
+	),
+
+
+	%
+	% get tests
+	%
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		ep_osm_exam_api:db(), Fs, From, Size
+	),
+	Docs.
+
+
+
+%
+% get tests - change state
+%
+get_tests_change_state(From, Size) ->
+	%
+	% init
+	%
+	Dig = helper:state(dig),
+	Fs = dig:get_nonempty_fs(Dig#dig.filters),
+
+
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter and then try again"
+	),
+
+	?ASSERT(
+		itf:find(Fs, teststatus) /= undefined,
+		"Please select test status. It cannot be empty"
+	),
+
+
+	?ASSERT(
+		itf:val2(Fs, teststatus) /= wf:q(to_state),
+		"Test status and To State cannot be same"
+	),
+
+
+	%
+	% get tests
+	%
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		ep_osm_exam_api:db(), Fs, From, Size
+	),
+	Docs.
 
 
 %------------------------------------------------------------------------------
