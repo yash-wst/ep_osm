@@ -63,6 +63,7 @@ filters(ExamId) when ExamId /= undefined ->
 	[
 		itf:build(itf:hidden(osm_exam_fk), ExamId),
 		fields:build(anpcentercode, wf:q(centreid)),
+		fields:build(anpstate, wf:q(state)),
 		fields:get(anpseatnumber)
 	];
 filters(_) ->
@@ -217,16 +218,8 @@ fetch(D, _From, _Size, [
 
 
 
-
-%..............................................................................
-%
-% [osm_exam_fk, osm_bundle_fk]
-%
-%..............................................................................
-
 fetch(D, From, Size, [
-	#field {id=osm_exam_fk, uivalue=ExamId},
-	#field {id=anpcentercode, uivalue=CentreCode}
+	#field {id=osm_exam_fk, uivalue=ExamId} | Fs
 ]) ->
 
 	%
@@ -237,13 +230,10 @@ fetch(D, From, Size, [
 
 
 	%
-	% get student docs from osm exam db with the specified centre code
+	% get student docs from osm exam db with the specified bundle id
 	%
-	FsToSearch = [
-		fields:build(anpcentercode, CentreCode)
-	],
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
-		ExamDb, FsToSearch, From, Size
+		ExamDb, Fs, From, Size
 	),
 
 
@@ -297,112 +287,15 @@ fetch(D, From, Size, [
 	% return
 	%
 	{D#dig {
-		total=length(CandidateDocs),
-		description=io_lib:format("~s / ~s / ~s", [
-			CentreCode,
+		total=?INFINITY,
+		description=io_lib:format("~s / ~s", [
 			itf:val(ExamDoc, testname),
 			?LN(?L2A(itf:val(ExamDoc, teststatus)))
 		])
-	}, [Header] ++ Results};
+	}, [Header] ++ Results}.
 
 
 
-%..............................................................................
-%
-% [osm_exam_fk, anpseatnumber]
-%
-%..............................................................................
-fetch(D, _From, _Size, [
-	#field {id=osm_exam_fk, uivalue=ExamId},
-	#field {id=anpcentercode},
-	#field {id=anpseatnumber, uivalue=SeatNumber}
-]) ->
-	fetch(D, _From, _Size, [
-		#field {id=osm_exam_fk, uivalue=ExamId},
-		#field {id=anpseatnumber, uivalue=SeatNumber}
-	]);
-
-fetch(D, _From, _Size, [
-	#field {id=osm_exam_fk, uivalue=ExamId},
-	#field {id=anpseatnumber, uivalue=SeatNumber}
-]) ->
-
-
-	%
-	% init
-	%
-	ExamDb = anpcandidates:db(ExamId),
-	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
-
-
-	%
-	% get student docs from osm exam db with the specified bundle id
-	%
-	FsToSearchBundle = [
-		itf:build(itf:textbox(?F(anpseatnumber)), SeatNumber)
-	],
-	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
-		ExamDb, FsToSearchBundle, 0, ?INFINITY
-	),
-
-
-
-	%
-	% results
-	%
-	Results = lists:map(fun(CDoc) ->
-		[
-			#dcell {val=itf:val(CDoc, anp_paper_uid)},
-			#dcell {val=itf:val(CDoc, anpseatnumber)},
-			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
-			#dcell {
-				val=#link {
-					text="View",
-					new=true,
-					url=io_lib:format("/ep_osm_eval_view?mode=view&anpid=~s&anptestid=~s&role=anpevaluator", [
-						itf:idval(CDoc), ExamId
-					])
-				}
-			}
-		]
-	end, CandidateDocs),
-
-
-
-	%
-	% header
-	%
-	Header = [
-		#dcell {type=header, val="Barcode / UID"},
-		#dcell {type=header, val="Seat No."},
-		#dcell {type=header, val="State"},
-		#dcell {type=header, val="Scanned Images"}
-	],
-
-
-	%
-	% return
-	%
-	{D#dig {
-		total=length(CandidateDocs),
-		description=io_lib:format("~s / ~s / ~s", [
-			SeatNumber,
-			itf:val(ExamDoc, testname),
-			?LN(?L2A(itf:val(ExamDoc, teststatus)))
-		])
-	}, [Header] ++ Results};
-
-
-
-
-%..............................................................................
-%
-% _
-%
-%..............................................................................
-
-fetch(D, From, Size, Fs) ->
-	dig_ep_osm_exam_evaluation_stats:fetch(D, From, Size, Fs).
 
 
 %------------------------------------------------------------------------------

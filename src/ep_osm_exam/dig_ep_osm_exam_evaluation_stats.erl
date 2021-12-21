@@ -216,7 +216,8 @@ fetch(D, From, Size, Fs) ->
 				end,
 				#dcell {
 					bgcolor=get_class(State, Val),
-					val=Val
+					val=get_link(Doc, State, Val),
+					val_export=Val
 				}
 		end, states()) ++ [
 			dcell_exam_actions(Doc)
@@ -832,6 +833,21 @@ get_class(State, Number) when Number > 0 ->
 get_class(_, _) ->
 	[].
 
+
+
+%
+% get link
+%
+get_link(Doc, State, Number) when Number > 0 ->
+	#link {
+		new=true,
+		text=Number,
+		url=itx:format("/~p?id=~s&state=~s", [
+			dig_ep_osm_exam_verification, itf:idval(Doc), State
+		])
+	};
+get_link(_, _, Number) ->
+	Number.
 
 
 
