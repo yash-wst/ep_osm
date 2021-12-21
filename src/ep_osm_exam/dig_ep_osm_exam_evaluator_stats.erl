@@ -134,6 +134,15 @@ fetch(D, From, Size, [
 				val=#link {
 					text="View",
 					new=true,
+					url=io_lib:format("/anpcandidate?mode=view&anpid=~s&anptestid=~s", [
+						itf:idval(CDoc), ExamId
+					])
+				}
+			},
+			#dcell {
+				val=#link {
+					text="View",
+					new=true,
 					url=io_lib:format("/ep_osm_eval_view?mode=view&anpid=~s&anptestid=~s&role=anpevaluator", [
 						itf:idval(CDoc), ExamId
 					])
@@ -152,6 +161,7 @@ fetch(D, From, Size, [
 		#dcell {type=header, val="Seat No."},
 		#dcell {type=header, val="Full name"},
 		#dcell {type=header, val="State"},
+		#dcell {type=header, val="Candidate Doc"},
 		#dcell {type=header, val="Scanned Images"}
 	],
 
