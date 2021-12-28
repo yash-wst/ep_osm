@@ -377,17 +377,23 @@ layout() ->
 %..............................................................................
 
 layout_uploaded_pages(ExamDoc, BundleDoc, CDoc) ->
-	layout_uploaded_pages(ExamDoc, BundleDoc, CDoc, itf:val(BundleDoc, uploadstate)).
+	layout_uploaded_pages(ExamDoc, BundleDoc, CDoc, itf:val(BundleDoc, scanningstate)).
 
 
 layout_uploaded_pages(ExamDoc, _BundleDoc, CDoc, ?COMPLETED) ->
 	Bucket = configs:get(aws_s3_bucket, []),
-	DirPath = itx:format("~s/~s", [
+	DirPath = itx:format("~s/~s/", [
 		itf:val(ExamDoc, aws_s3_dir), itf:val(CDoc, anpseatnumber)
 	]),
 	try
 		Keys = helper_s3:list_keys(Bucket, DirPath),
-		length(Keys)
+		#link {
+			new=true,
+			text=length(Keys),
+			url=itx:format("/ep_osm_verify_images?anpid=~s&anptestid=~s", [
+				itf:idval(CDoc), itf:idval(ExamDoc)
+			])
+		}
 	catch _:_ ->
 		error
 	end;
@@ -1601,6 +1607,7 @@ handle_insert_candidatedoc(BundleDoc, CDoc) ->
 		#tablecell {body=?LN(?L2A(itf:val(CDoc, anpstate)))},
 		#tablecell {body=itf:val(CDoc, anpfullname)},
 		#tablecell {body=itf:val(CDoc, total_pages)},
+		#tablecell {body=""},
 		#tablecell {body=layout_candidate_remove(BundleDoc, CDoc)}
 	]},
 	wf:insert_top(dig:id(table), Row).
