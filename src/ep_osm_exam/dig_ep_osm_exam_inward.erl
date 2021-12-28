@@ -148,7 +148,7 @@ fetch(D, _From, _Size, [
 			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=itf:val(CDoc, total_pages)},
 			dig:if_not(
-				TotalPages, danger,
+				get_expected_images_from_total_pages(TotalPages), danger,
 				#dcell {val=layout_uploaded_pages(ExamDoc, BundleDoc, CDoc)}
 			),
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
@@ -179,7 +179,7 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="State"},
 		#dcell {type=header, val="Student Name"},
 		#dcell {type=header, val="Total Pages"},
-		#dcell {type=header, val="Uploaded Pages"},
+		#dcell {type=header, val="Uploaded Images"},
 		#dcell {type=header, val="Remove"}
 	],
 
@@ -1831,6 +1831,14 @@ redirect_to_main() ->
 		?MODULE, wf:q(id)
 	]),
 	helper:redirect(Url).
+
+
+
+get_expected_images_from_total_pages(error) ->
+	error;
+get_expected_images_from_total_pages(TotalPages) ->
+	(TotalPages /2) + 1.
+
 
 %------------------------------------------------------------------------------
 % end
