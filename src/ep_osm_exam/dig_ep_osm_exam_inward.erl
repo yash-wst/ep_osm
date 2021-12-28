@@ -140,12 +140,17 @@ fetch(D, _From, _Size, [
 	% results
 	%
 	Results = lists:map(fun(CDoc) ->
+		TotalPages = helper:l2i(itf:val(CDoc, total_pages)),
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=itf:val(CDoc, total_pages)},
+			dig:if_not(
+				TotalPages, danger,
+				#dcell {val=layout_uploaded_pages(ExamDoc, BundleDoc, CDoc)}
+			),
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
 	end, CandidateDocs1),
@@ -174,6 +179,7 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="State"},
 		#dcell {type=header, val="Student Name"},
 		#dcell {type=header, val="Total Pages"},
+		#dcell {type=header, val="Uploaded Pages"},
 		#dcell {type=header, val="Remove"}
 	],
 
@@ -363,9 +369,34 @@ layout() ->
 
 
 
+
 %..............................................................................
 %
-% layout - inward form
+% layout - uploaded pages
+%
+%..............................................................................
+
+layout_uploaded_pages(ExamDoc, BundleDoc, CDoc) ->
+	layout_uploaded_pages(ExamDoc, BundleDoc, CDoc, itf:val(BundleDoc, uploadstate)).
+
+
+layout_uploaded_pages(ExamDoc, _BundleDoc, CDoc, ?COMPLETED) ->
+	Bucket = configs:get(aws_s3_bucket, []),
+	DirPath = itx:format("~s/~s", [
+		itf:val(ExamDoc, aws_s3_dir), itf:val(CDoc, anpseatnumber)
+	]),
+	try
+		Keys = helper_s3:list_keys(Bucket, DirPath),
+		length(Keys)
+	catch _:_ ->
+		error
+	end;
+layout_uploaded_pages(_ExamDoc, _BundleDoc, _CDoc, _) ->
+	[].
+
+%..............................................................................
+%
+% layout - candidate remove
 %
 %..............................................................................
 layout_candidate_remove(BundleDoc, CDoc)  ->
