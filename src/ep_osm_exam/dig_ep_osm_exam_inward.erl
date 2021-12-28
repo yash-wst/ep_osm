@@ -145,6 +145,7 @@ fetch(D, _From, _Size, [
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {val=itf:val(CDoc, anpfullname)},
+			#dcell {val=itf:val(CDoc, total_pages)},
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
 	end, CandidateDocs1),
@@ -172,6 +173,7 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Seat No."},
 		#dcell {type=header, val="State"},
 		#dcell {type=header, val="Student Name"},
+		#dcell {type=header, val="Total Pages"},
 		#dcell {type=header, val="Remove"}
 	],
 
@@ -394,9 +396,16 @@ layout_candidate_remove(BundleDoc, CDoc)  ->
 %..............................................................................
 
 layout_inward_form() ->
+	ExamId = wf:q(id),
+	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
+	PagesPerBooklet = itf:val(ExamDoc, pages_per_booklet),
 	Fs = [
 		itf:textbox(?F(anp_paper_uid, "Barcode / UID"), [], textbox_enterkey),
-		itf:textbox(?F(anpseatnumber, "Student Seat No."), [], textbox_enterkey)
+		itf:textbox(?F(anpseatnumber, "Student Seat No."), [], textbox_enterkey),
+		itf:build(
+			itf:textbox(?F(total_pages, "Total Pages"), [], textbox_enterkey),
+			PagesPerBooklet
+		)
 	],
 	itl:get(?CREATE, Fs, noevent, line).
 
@@ -860,7 +869,7 @@ event(print_bundle_cover) ->
 
 
 event(textbox_enterkey) ->
-	handle_inward(wf:q(anp_paper_uid), wf:q(anpseatnumber));
+	handle_inward(wf:q(anp_paper_uid), wf:q(anpseatnumber), wf:q(total_pages));
 
 
 event(refresh) ->
@@ -1296,7 +1305,8 @@ handle_export_bundle_csv(ExamId, BundleId) ->
 			#dcell {val=SubjectCode},
 			#dcell {val=BundleNumber},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
-			#dcell {val=itf:val(CDoc, anpfullname)}
+			#dcell {val=itf:val(CDoc, anpfullname)},
+			#dcell {val=itf:val(CDoc, total_pages)}
 		]
 	end, CandidateDocs1),
 
@@ -1425,10 +1435,21 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 %
 %..............................................................................
 
-handle_inward([], []) ->
+handle_inward([], [], _) ->
 	helper_ui:flash(error, "Please enter either barcode or student seat number", 5);
 
-handle_inward(UId, SNo) ->
+handle_inward(UId, SNo, TotalPages) ->
+
+	%
+	% assert total pages in int or empty
+	%
+	?ASSERT(
+		(TotalPages ==[]) or (helper:l2i(TotalPages) /= error),
+		"Total pages should be empty or an integer"
+	),
+
+
+
 
 	%
 	% init
@@ -1460,11 +1481,11 @@ handle_inward(UId, SNo) ->
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 		ExamDb, FsToSearchCandidate, 0, ?INFINITY
 	),
-	handle_inward(ExamId, OsmBundleId, UId, SNo, CandidateDocs).
+	handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, CandidateDocs).
 
 
 
-handle_inward(ExamId, OsmBundleId, UId, SNo, []) ->
+handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, []) ->
 	%
 	% create entry in exam db
 	%
@@ -1480,6 +1501,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, []) ->
 		itf:build(itf:textbox(?F(anpseatnumber)), ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)),
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
 		itf:build(itf:textbox(?F(anpcentercode)), "B:" ++ BundleNumber),
+		itf:build(itf:textbox(?F(total_pages)), TotalPages),
 		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
 		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
 	],
@@ -1493,7 +1515,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, []) ->
 	end;
 
 
-handle_inward(ExamId, OsmBundleId, UId, SNo, [Doc]) ->
+handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, [Doc]) ->
 
 	%
 	% init
@@ -1515,6 +1537,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, [Doc]) ->
 	%
 	FsToSave = [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
+		itf:build(itf:textbox(?F(total_pages)), TotalPages),
 		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
 	],
 	case ep_osm_candidate_api:update(ExamId, Doc, FsToSave) of
@@ -1546,6 +1569,7 @@ handle_insert_candidatedoc(BundleDoc, CDoc) ->
 		#tablecell {body=itf:val(CDoc, anpseatnumber)},
 		#tablecell {body=?LN(?L2A(itf:val(CDoc, anpstate)))},
 		#tablecell {body=itf:val(CDoc, anpfullname)},
+		#tablecell {body=itf:val(CDoc, total_pages)},
 		#tablecell {body=layout_candidate_remove(BundleDoc, CDoc)}
 	]},
 	wf:insert_top(dig:id(table), Row).
