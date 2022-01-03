@@ -251,7 +251,7 @@ fetch(D, From, Size, [
 				val=#link {
 					text="View",
 					new=true,
-					url=io_lib:format("/anpcandidate?mode=view&anpid=~s&anptestid=~s", [
+					url=io_lib:format("/ep_osm_candidate?mode=view&anpid=~s&anptestid=~s", [
 						itf:idval(CDoc), ExamId
 					])
 				}

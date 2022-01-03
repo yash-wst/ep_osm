@@ -7,17 +7,19 @@ main() ->
 	ita:auth(?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered.html"})).
 
 title() ->
-	?LN("ep_osm_candidate").
+	?LN("Candidate Booklet").
 
 heading() ->
-	?LN("ep_osm_candidate").
+	?LN("Candidate Booklet").
 
-db() ->
-	"ep_osm_candidate".
 
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
+access(?VIEW, Role) when
+	Role == ?APPOSM_ADMIN;
+	Role == ?APPOSM_CONTROLLER;
+	Role == ?APPOSM_ANPADMIN  -> true;
 access(_, _) -> false.
 
 %------------------------------------------------------------------------------
@@ -61,12 +63,20 @@ fs(all) -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	itxdocument:layout(wf:q(mode), ?MODULE, wf:q(id)).
+	layout(wf:q(mode)).
+
+layout(?VIEW) ->
+	anpcandidate:layout(?VIEW);
+
+layout(Mode) ->
+	throw(Mode).
 
 
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+event({download, EvaluatorType}) ->
+	anpcandidate:event({download, EvaluatorType});
 event(E) ->
 	itxdocument:event(E, ?MODULE, wf:q(id)).
 
