@@ -32,6 +32,9 @@ menu(?APPOSM_ADMIN) ->
 		]},
 		{?LN("Results"), [
 			{dig_ep_osm_exam_results, ?VIEW, ?LN("OSM Results")}
+		]},
+		{?LN("Reports"), [
+			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")}
 		]}
 	];
 
@@ -63,6 +66,9 @@ menu(?APPOSM_ANPADMIN) ->
 		]},
 		{?LN("Results"), [
 			{dig_ep_osm_exam_results, ?VIEW, ?LN("OSM Results")}
+		]},
+		{?LN("Reports"), [
+			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")}
 		]}
 	];
 

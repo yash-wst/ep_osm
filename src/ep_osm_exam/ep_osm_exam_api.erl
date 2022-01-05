@@ -345,6 +345,29 @@ get_centre_evaluation_stats(TestId) ->
 %------------------------------------------------------------------------------
 % eva
 %------------------------------------------------------------------------------
+getstats_evaldate(TestId) ->
+
+	%
+	% init
+	%
+	ViewName = "eval_date_assigned",
+	SK = undefined,
+	EK = undefined,
+
+
+	%
+	% query
+	%
+	try
+		itxview:get_stats(
+			anpcandidates:db(TestId), ViewName, SK, EK, 2
+		)
+	catch error:{badmatch,{error,not_found}} ->
+		anptests:setup(TestId),
+		itxview:get_stats(
+			anpcandidates:db(TestId), ViewName, SK, EK, 2
+		)
+	end.
 
 getstats_evaldate_profileid(TestId, Evaldate, ProfileId) ->
 
