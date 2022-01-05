@@ -263,9 +263,10 @@ fetch(D, From, Size, Fs) ->
 	%
 	{
 		D#dig {
-			total=?INFINITY
+			total=?INFINITY,
+			dcell_headers=Header
 		},
-		[Header] ++ dig:append_total_cells(ResultsSorted)
+		dig:append_total_cells(ResultsSorted)
 	}.
 
 

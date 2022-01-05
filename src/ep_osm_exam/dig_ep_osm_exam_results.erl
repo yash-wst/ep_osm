@@ -376,9 +376,10 @@ fetch(D, From, Size, [
 		D#dig {
 			description=itl:render(itf:d2f_doc(ExamDoc, ?OSMEXM(osm_exam_fk))),
 			total=Count,
-			actions=[]
+			actions=[],
+			dcell_headers=Header
 		},
-		[Header] ++ Results
+		Results
 	};
 
 
