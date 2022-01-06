@@ -191,8 +191,7 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Email"},
 		#dcell {type=header, val="Role"},
 		#dcell {type=header, val="Date"},
-		#dcell {type=header, val="Count"},
-		#dcell {type=header, val="Total"}
+		#dcell {type=header, val="Count"}
 	],
 
 
@@ -222,7 +221,7 @@ fetch(D, _From, _Size, [
 				])
 			}
 		},
-		[Header] ++ tl(dig:append_total_cells(ResultsSorted))
+		[Header] ++ ResultsSorted
 	};
 
 
