@@ -66,7 +66,10 @@ var options = {
 	host: dbhost,
 	port: parseInt(dbport),
 	path: path,
-	auth: auth
+	auth: auth,
+	headers: {
+		'Referer': 'https://osm.uniapps.in/',
+	}
 };
 
 http.get(options, function(resp) {
