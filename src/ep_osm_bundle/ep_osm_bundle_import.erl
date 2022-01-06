@@ -304,7 +304,7 @@ handle_import_ensure_bundle_exists(List) ->
 	% init
 	%
 	ExamId = minijobcontext:q(osm_exam_fk),
-
+	{ok, ExamDoc} = anptests:getdoc(ExamId),
 
 	%
 	% get seat numbers
@@ -347,6 +347,7 @@ handle_import_ensure_bundle_exists(List) ->
 		%
 		FsToSave = [
 			itf:build(?OSMBDL(osm_exam_fk), ExamId),
+			itf:build(?COREXS(season_fk), itf:val(ExamDoc, season_fk)),
 			itf:build(?OSMBDL(number), BundleNumber),
 			itf:build(?OSMBDL(createdby), itxauth:user()),
 			itf:build(?OSMBDL(createdon), helper:epochtimestr())
