@@ -13,7 +13,10 @@ var dbport = arguments[6];
 var dbprefix = arguments[7];
 var auth = un + ':' + pw;
 
-var path = '/' + dbprefix + 'anp_' + arguments[0] + '/' + arguments[1];
+if (dbprefix == "undefined")
+	var path = '/anp_' + arguments[0] + '/' + arguments[1];
+else
+	var path = '/' + dbprefix + 'anp_' + arguments[0] + '/' + arguments[1];
 
 var oex = {};
 
