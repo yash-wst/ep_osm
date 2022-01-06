@@ -9,7 +9,7 @@ DBPORT=$6
 UN=$7
 PW=$8
 SHOW_MARKING=$9
-DbPrefix=${10}
+DBPREFIX=${10}
 FNAMES=${11}
 
 
@@ -31,7 +31,7 @@ cd $DIR
 # add evaluator canvas marking to images if specified
 #
 if [ "true" == "$SHOW_MARKING" ]; then
-	node $SDIR/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT DbPrefix
+	node $SDIR/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT $DBPREFIX
 fi
 
 
