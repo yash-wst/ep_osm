@@ -5,13 +5,15 @@ var fs = require('fs');
 var fabric = require('/usr/local/lib/node_modules/fabric').fabric;
 
 var arguments = process.argv.slice(2);
-var path = '/anp_' + arguments[0] + '/' + arguments[1];
 var anptype = arguments[2];
 var un = arguments[3];
 var pw = arguments[4];
 var dbhost = arguments[5];
 var dbport = arguments[6];
+var dbprefix = arguments[7];
 var auth = un + ':' + pw;
+
+var path = '/' + dbprefix + 'anp_' + arguments[0] + '/' + arguments[1];
 
 var oex = {};
 
