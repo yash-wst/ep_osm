@@ -68,7 +68,7 @@ var options = {
 	path: path,
 	auth: auth,
 	headers: {
-		'Referer': 'https://osm.uniapps.in/',
+		'Referer': 'https://osm.uniapps.in/'
 	}
 };
 
