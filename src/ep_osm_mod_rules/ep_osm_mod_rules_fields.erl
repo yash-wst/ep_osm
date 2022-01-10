@@ -41,7 +41,7 @@ f(evaluator_role_2 = I) ->
 
 
 f(diffpercentage = I) ->
-	itf:textbox_int(?F(I, "Difference Percentage"));
+	itf:textbox_int(?F(I, "Difference (Marks)"));
 
 f(evaluator_role_3 = I) ->
 	F = f(evaluator_role),
