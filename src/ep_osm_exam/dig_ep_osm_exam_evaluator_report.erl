@@ -141,7 +141,6 @@ fetch(D, _From, _Size, [
 	% layout results
 	%
 	Results = lists:map(fun({[Date, ProfileId], Count}) ->
-		?D({[Date, ProfileId], Count}),
 
 		%
 		% init

@@ -59,15 +59,19 @@ exportids() -> [
 	"courseid",
 	"profileidfk_anpevaluator",
 	"anpevaluator_eval_date",
+	"ip_anpevaluator",
 	"evaluator_total",
 	"profileidfk_anpmoderator",
 	"anpmoderator_eval_date",
+	"ip_anpmoderator",
 	"moderator_total",
 	"profileidfk_anprevaluator",
 	"anprevaluator_eval_date",
+	"ip_anprevaluator",
 	"revaluator_total",
 	"profileidfk_anpmoderator_reval",
 	"anpmoderator_reval_eval_date",
+	"ip_anpmoderator_reval",
 	"moderator_reval_total",
 	"total",
 	"marks_per_question",
@@ -142,6 +146,19 @@ f("profileidfk_anprevaluator") ->
 
 f("testtotalmarks") ->
 	itf:textbox(?F(testtotalmarks, "Test Total Marks"));
+
+f("ip_anpevaluator") ->
+	itf:textbox(?F(ip_anpevaluator, "Evaluator IP"));
+
+f("ip_anpmoderator") ->
+	itf:textbox(?F(ip_anpmoderator, "Moderator IP"));
+
+f("ip_anprevaluator") ->
+	itf:textbox(?F(ip_anprevaluator, "Revaluator IP"));
+
+f("ip_anpmoderator_reval") ->
+	itf:textbox(?F(ip_anpmoderator_reval, "Moderator Reval IP"));
+
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -789,14 +806,14 @@ val(#docs {
 
 	ProfileId = itf:val(Doc, f(Id)),
 	Fun = fun() ->
-		{ok, ProfileDoc} = profiles:getdoc(ProfileId),
-		profiles:displayname_fmt(helper_api:doc2fields({ok, ProfileDoc}))
+		profiles:getdoc(ProfileId)
 	end,
 	case ProfileId of
 		[] ->
 			[];
 		_ ->
-			itxdoc_cache:get({?MODULE, ProfileId}, Fun)
+			{ok, ProfileDoc} = itxdoc_cache:get({?MODULE, ProfileId}, Fun),
+			profiles:displayname_fmt(helper_api:doc2fields({ok, ProfileDoc}))
 	end;
 
 
@@ -809,6 +826,18 @@ val(#docs {
 	evaluatorrole=Role
 } = RecDoc, "total" = Id) ->
 	val(RecDoc, ?FLATTEN(Role ++ "_" ++ Id));
+
+
+
+val(#docs {
+	doc=Doc
+}, "ip_" ++ Role) ->
+	try
+		get_ipaddress(Role, Doc)
+	catch E:M ->
+		?D({E, M, erlang:get_stacktrace()}),
+		[]
+	end;
 
 
 val(#docs {
@@ -951,6 +980,38 @@ get_evaluator_role(Doc) ->
 			"evaluator"
 	end.
 
+
+
+%
+% get ip address of
+%
+get_ipaddress(Role, Doc) ->
+	ProfileFId = ?L2A("profileidfk_" ++ Role),
+	ProfileId = itf:val(Doc, ProfileFId),
+	Fun = fun() ->
+		profiles:getdoc(ProfileId)
+	end,
+	case ProfileId of
+		[] ->
+			[];
+		_ ->
+			{ok, ProfileDoc} = itxdoc_cache:get({?MODULE, ProfileId}, Fun),
+			Username = itf:val(ProfileDoc, username),
+			Comments = itf:val(Doc, fields:get(comments)),
+			get_ipaddress_from_username(Username, Comments)
+	end.
+
+
+get_ipaddress_from_username(Username, Comments) ->
+	lists:foldl(fun({Key, _Val}, Acc) ->
+		[_Date, _Time, IP, User] = string:tokens(Key, " "),
+		case Username == User of
+			true ->
+				IP;
+			_ ->
+				Acc
+		end
+	end, [], Comments).
 
 
 %------------------------------------------------------------------------------
