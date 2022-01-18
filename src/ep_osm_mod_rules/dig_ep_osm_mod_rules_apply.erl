@@ -37,13 +37,33 @@ access(_, _) -> false.
 
 
 %------------------------------------------------------------------------------
+% fs
+%------------------------------------------------------------------------------
+
+fs(filters) ->
+	lists:map(fun(F) ->
+		F#field {validators=[]}
+	end, anptest:fs(search));
+
+
+fs(select_moderation_rule) ->
+	[
+		itf:dropdown(?F(running_mode, "Run Mode"), itf:options([
+			?F(test_mode, "Test Mode"),
+			?F(live_mode, "Live Mode")
+		])),
+		?OSMRLS(osm_mod_rules_fk)
+	].
+
+
+%------------------------------------------------------------------------------
 % function - get
 %------------------------------------------------------------------------------
 
 get() ->
 	#dig {
 		module=?MODULE,
-		filters=anptest:fs(search)
+		filters=fs(filters)
 	}.
 
 
@@ -169,29 +189,50 @@ event({itx, E}) ->
 %..............................................................................
 
 handle_apply_yes() ->
-
 	%
 	% init
 	%
-	itl:modal_close(),
-	Context = wf_context:context(),
 	D = helper:state(dig),
 	Fs = dig:get_nonempty_fs(D#dig.filters),
-	Docs = get_test_docs(Fs, 0, ?INFINITY),
-	{ok, ModDoc} = ep_osm_mod_rules_api:get(wf:q(osm_mod_rules_fk)),
-	Rules = get_moderation_rules(ModDoc),
+	RuleDocId = wf:q(osm_mod_rules_fk),
 	RunningMode = wf:q(running_mode),
 
 
 	%
+	% prcessing mode
+	%
+	case configs:getbool(process_via_minijob, false) of
+		true ->
+			handle_apply_yes_minijob(Fs, RuleDocId, RunningMode);
+		_ ->
+			handle_apply_yes_taskqueue(Fs, RuleDocId, RunningMode)
+	end.
+
+
+
+%
+% processing - minijob
+%
+handle_apply_yes_minijob(Fs, _RuleDocId, _RunningMode) ->
+	FsRule = itf:uivalue(fs(select_moderation_rule)),
+	{ok, Doc} = minijob_ep_osm_mod_rules_apply:create_and_run(Fs ++ FsRule),
+	minijob_status:show_status(Doc).
+
+
+
+
+%
+% processing - taskqueue
+%
+handle_apply_yes_taskqueue(Fs, RuleDocId, RunningMode) ->
+	%
 	% function
 	%
+	itl:modal_close(),
+	Context = wf_context:context(),
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		lists:foreach(fun(Doc) ->
-			Type = itf:val(ModDoc, type),
-			handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc)
-		end, Docs),
+		handle_apply_yes_1(Fs, RuleDocId, RunningMode),
 		dig:log(success, "Task completed")
 	end,
 
@@ -201,6 +242,31 @@ handle_apply_yes() ->
 	%
 	taskqueue:create(Fun, []),
 	helper_ui:flash(warning, "Added to queue.", 5).
+
+
+
+%..............................................................................
+%
+% handle - apply yes 1
+%
+%..............................................................................
+
+handle_apply_yes_1(Fs, RuleDocId, RunningMode) ->
+	%
+	% init
+	%
+	Docs = get_test_docs(Fs, 0, ?INFINITY),
+	{ok, ModDoc} = ep_osm_mod_rules_api:get(RuleDocId),
+	Rules = get_moderation_rules(ModDoc),
+
+
+	%
+	% apply
+	%
+	lists:foreach(fun(Doc) ->
+		Type = itf:val(ModDoc, type),
+		handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc)
+	end, Docs).
 
 
 
@@ -547,13 +613,7 @@ handle_apply() ->
 %..............................................................................
 
 handle_select_moderation_rule() ->
-	Fs = [
-		itf:dropdown(?F(running_mode, "Run Mode"), itf:options([
-			?F(test_mode, "Test Mode"),
-			?F(live_mode, "Live Mode")
-		])),
-		?OSMRLS(osm_mod_rules_fk)
-	],
+	Fs = fs(select_moderation_rule),
 	Es = itl:get(?CREATE, Fs, ite:get(apply), table),
 	dig_mm:handle_show_action("Moderation Rule", Es).
 
