@@ -473,6 +473,10 @@ handle_apply_yes_test_doc_batch("difference" = Type, ApplyAcc, Rules, ExamDoc, F
 		Role1Id = ?L2A(?FLATTEN("total_" ++ Role1)),
 		Role2Id = ?L2A(?FLATTEN("total_" ++ Role2)),
 		DiffPercentageInt = ?S2I(DiffPercentage),
+		AcceptableCompletedStates = [
+			ep_osm_helper:completed_state_of(Role1),
+			ep_osm_helper:completed_state_of(Role2)
+		],
 
 
 		lists:foldl(fun(CandidateDoc, Acc1) ->
@@ -483,15 +487,19 @@ handle_apply_yes_test_doc_batch("difference" = Type, ApplyAcc, Rules, ExamDoc, F
 			Total2 = itf:val(CandidateDoc, Role2Id),
 			Total1Float = helper:s2f_v1(Total1),
 			Total2Float = helper:s2f_v1(Total2),
+			AnpState = itf:val(CandidateDoc, anpstate),
+			IsAnpStateOk = lists:member(AnpState, AcceptableCompletedStates),
 
 
 			%
 			% check difference
 			%
-			case {Total1Float, Total2Float} of
-				{error, _} ->
+			case {Total1Float, Total2Float, IsAnpStateOk} of
+				{_, _, false} ->
 					Acc1;
-				{_, error} ->
+				{error, _, _} ->
+					Acc1;
+				{_, error, _} ->
 					Acc1;
 				_ ->
 					case abs(Total1Float - Total2Float) > DiffPercentageInt of
