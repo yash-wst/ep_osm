@@ -140,17 +140,13 @@ fetch(D, _From, _Size, [
 	% results
 	%
 	Results = lists:map(fun(CDoc) ->
-		TotalPages = helper:l2i(itf:val(CDoc, total_pages)),
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=itf:val(CDoc, total_pages)},
-			dig:if_not(
-				get_expected_images_from_total_pages(TotalPages), danger,
-				#dcell {val=layout_uploaded_pages(ExamDoc, BundleDoc, CDoc)}
-			),
+			#dcell {val=layout_uploaded_pages(ExamDoc, BundleDoc, CDoc)},
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
 	end, CandidateDocs1),
@@ -386,10 +382,34 @@ layout_uploaded_pages(ExamDoc, _BundleDoc, CDoc, ?COMPLETED) ->
 		itf:val(ExamDoc, aws_s3_dir), itf:val(CDoc, anpseatnumber)
 	]),
 	try
+
+		%
+		% init
+		%
+		TotalPages = helper:l2i(itf:val(CDoc, total_pages)),
+		ExpectedImagesCount = get_expected_images_from_total_pages(TotalPages),
 		Keys = helper_s3:list_keys(Bucket, DirPath),
+		LengthKeys = length(Keys),
+
+
+		%
+		% class
+		%
+		HighlightClass = case ExpectedImagesCount == LengthKeys of
+			true ->
+				"p-1";
+			_ ->
+				"text-danger border border-danger border-1 p-1"
+		end,
+
+
+		%
+		% layout
+		%
 		#link {
 			new=true,
-			text=length(Keys),
+			class=HighlightClass,
+			text=LengthKeys,
 			url=itx:format("/ep_osm_verify_images?anpid=~s&anptestid=~s", [
 				itf:idval(CDoc), itf:idval(ExamDoc)
 			])
