@@ -198,7 +198,8 @@ get() ->
 		filters=fs(search),
 		size=25,
 		actions=[
-			{export_results_bulk, "Bulk Export Results", "Bulk Export Results"}
+			{export_results_bulk, "Bulk Export Results", "Bulk Export Results"},
+			{export_results_bulk_pdf, "Bulk Export Results (PDF)", "Bulk Export Results (PDF)"}
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}}),
@@ -524,6 +525,9 @@ layout() ->
 event({itx, E}) ->
 	ite:event(E);
 
+event(export_results_bulk_pdf) ->
+	handle_export_results_bulk_pdf();
+
 event(export_results_bulk) ->
 	handle_export_results_bulk().
 
@@ -694,6 +698,179 @@ handle_export_results_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
 	])),
 	dig:handle_export(Name, FilePath, D, Fs).
 
+
+
+
+%..............................................................................
+%
+% handle - bulk export results pdf
+%
+%..............................................................................
+
+handle_export_results_bulk_pdf() ->
+	case configs:getbool(process_via_minijob, false) of
+		false ->
+			handle_export_results_bulk_pdf_taskqueue();
+		true ->
+			handle_export_results_bulk_pdf_minijob()
+	end.
+
+
+
+%
+% minijo
+%
+handle_export_results_bulk_pdf_minijob() ->
+	Filters = itf:uivalue(fs(search)),
+	Fs = dig:get_nonempty_fs(Filters),
+	{ok, Doc} = minijob_osm_result_export:create_and_run(Fs),
+	minijob_status:show_status(Doc).
+
+
+
+%
+% taskqueue
+%
+handle_export_results_bulk_pdf_taskqueue() ->
+
+	%
+	% init
+	%
+	D = helper:state(dig),
+	Fs = dig:get_nonempty_fs(D#dig.filters),
+
+
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter."
+	),
+
+	%
+	% create
+	%
+	Context = wf_context:context(),
+	Fun = fun({Fs1, Email}) ->
+		wf_context:context(Context),
+		handle_export_results_bulk_pdf(Fs1, Email)
+	end,
+
+
+	%
+	% add to task queue
+	%
+	taskqueue:create(Fun, {Fs, itxauth:email()}),
+	helper_ui:flash("Added to task queue. Please check email for zip file.").
+
+
+
+handle_export_results_bulk_pdf(Fs, Email) ->
+
+	%
+	% init
+	%
+	dig:log(info, "Starting task ..."),
+	Uid = helper:uidintstr(),
+	Dir = "/tmp/" ++ Uid,
+
+
+	%
+	% create dir
+	%
+	helper:cmd("mkdir -p ~s", [Dir]),
+
+
+	%
+	% export in batches
+	%
+	done = handle_export_results_bulk_pdf(Fs, Dir, 0),
+
+
+	%
+	% zip and mail dir
+	%
+	helper:zip_mail_link_clean_dir([Email], Dir, "OSM: PDF results export"),
+	dig:log(success, "Task completed.").
+
+
+
+handle_export_results_bulk_pdf(Fs, Dir, From) ->
+
+
+	%
+	% get docs in batches
+	%
+	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter"
+	),
+	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),
+
+
+
+	%
+	% create csv for every test
+	%
+	lists:foreach(fun(Doc) ->
+
+		%
+		% init
+		%
+		timer:sleep(1000),
+		dig:log(warning, io_lib:format("Processing ... ~s", [itf:val(Doc, testname)])),
+
+	
+		SeasonId = itf:val(Doc, season_fk),
+		TestTotalMarks = anptests:testtotalmarks(Doc),
+		SeasonDoc = itx:okdoc(ep_core_exam_season_api:get(SeasonId)),
+
+		%
+		% create dig for export
+		%
+		D = #dig {
+			module=?MODULE,
+			size=1000,
+			filters=[
+				itf:build(itf:hidden(osm_exam_fk), itf:idval(Doc))
+			],
+			config=[
+				{show_slno, true},
+				{pdf_table_summary, [
+					layout_pdf_header(Doc, SeasonDoc, TestTotalMarks)
+				]}
+			]
+		},
+
+
+		%
+		% create file
+		%
+		{_Name, FilePath} = handle_export_results_bulk_pdf_create_file(Doc, D),
+		helper:cmd("mv ~s ~s", [FilePath, Dir]),
+		dig:log(success, io_lib:format("Created ~s", [FilePath]))
+
+
+	end, Docs),
+
+
+	%
+	% termination condiction
+	%
+	case length(Docs) < ?BATCH_SIZE of
+		true ->
+			done;
+		_ ->
+			handle_export_results_bulk_pdf(Fs, Dir, From + ?BATCH_SIZE)
+	end.
+
+
+
+handle_export_results_bulk_pdf_create_file(Doc, #dig {} = D) ->
+	Filename = io_lib:format("~s_~s_~s", [
+		itf:val(Doc, anptestcourseid), itf:val(Doc, testname), dig:export_filename(D)
+	]),
+	{Name, FilePath} = dig:get_filename_path(Filename, pdf),
+	dig:handle_export_pdf(Name, FilePath, D).
 
 
 
