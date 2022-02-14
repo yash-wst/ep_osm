@@ -201,7 +201,8 @@ get() ->
 			{export_results_bulk, "Bulk Export Results", "Bulk Export Results"}
 		],
 		events=[
-			ite:button(export, "CSV", {itx, {dig, export}})
+			ite:button(export, "CSV", {itx, {dig, export}}),
+			ite:button(export_pdf, "PDF", {itx, {dig, export_pdf}})
 		],
 		instructions=[
 			{ok, "You can add, remove and change the order of export by updating exportids shown below"},
@@ -213,7 +214,8 @@ get() ->
 			}}
 		],
 		config=[
-			{responsive_type, scroll}
+			{responsive_type, scroll},
+			{show_slno, true}
 		]
 	}.
 
@@ -394,7 +396,12 @@ fetch(D, From, Size, [
 			description=itl:render(itf:d2f_doc(ExamDoc, ?OSMEXM(osm_exam_fk))),
 			total=Count,
 			actions=[],
-			dcell_headers=Header
+			dcell_headers=Header,
+			config=D#dig.config ++ [
+				{pdf_table_summary, [
+					layout_pdf_header(ExamDoc, SeasonDoc, TestTotalMarks)
+				]}
+			]
 		},
 		Results
 	};
@@ -764,7 +771,23 @@ val(#docs {
 val(#docs {
 	doc=Doc
 }, Id) when
-	Id == "evaluator_total";
+	Id == "evaluator_total" ->
+	Val = itf:val(Doc, f(Id)),
+	AnpState = itf:val(Doc, anpstate),
+	case {Val, AnpState} of
+		{_, "anpstate_discarded"} ->
+			"Discarded";
+		{_, "anpstate_not_uploaded"} ->
+			"Absent";
+		{_, "anpstate_active"} ->
+			"Active";
+		{[], _} ->
+			[];
+		_ -> helper:i2s(helper:ceiling(helper:s2f_v1(Val)))
+	end;
+val(#docs {
+	doc=Doc
+}, Id) when
 	Id == "moderator_total";
 	Id == "revaluator_total";
 	Id == "moderator_reval_total" ->
@@ -1013,6 +1036,83 @@ get_ipaddress_from_username(Username, Comments) ->
 		end
 	end, [], Comments).
 
+
+
+
+%------------------------------------------------------------------------------
+% layouts
+%------------------------------------------------------------------------------
+
+layout_pdf_header(ExamDoc, SeasonDoc, TestTotalMarks) ->
+
+
+	%
+	% init
+	%
+	TestId = itf:idval(ExamDoc),
+	Stats = ep_osm_exam_api:get_evaluation_stats0(TestId),
+
+
+	%
+	% total absent
+	%
+	TotalAbsent = proplists:get_value(["anpstate_not_uploaded"], Stats, 0),
+	TotalDiscarded = proplists:get_value(["anpstate_discarded"], Stats, 0),
+	TotalPresent = lists:foldl(fun(AnpState, Acc) ->
+		Count = proplists:get_value([?A2L(AnpState)], Stats, 0),
+		case AnpState of
+			anpstate_discarded ->
+				Acc;
+			anpstate_not_uploaded ->
+				Acc;
+			_ ->
+				Acc + Count
+		end
+	end, 0, helper_options:options(anpstate)),
+
+
+
+	%
+	% display
+	%
+	#table {
+		class="table table-bordered table-sm",
+		rows=[
+			#tablerow {cells=[
+				#tablecell {
+					colspan=2,
+					body=#p {
+						style="margin: 0px",
+						class="text-uppercase mycenter",
+						text=itf:val(SeasonDoc, name)
+					}
+				}
+			]},
+			#tablerow {cells=[
+				#tablecell {style="width: 25%", body="Exam Code"},
+				#tablecell {body=itf:val(ExamDoc, anptestcourseid)}
+			]},
+			#tablerow {cells=[
+				#tablecell {body="Exam Name"},
+				#tablecell {body=itf:val(ExamDoc, testname)}
+			]},
+			#tablerow {cells=[
+				#tablecell {body="Total Marks"},
+				#tablecell {body=TestTotalMarks}
+			]},
+			#tablerow {cells=[
+				#tablecell {body="Total Present"},
+				#tablecell {text=TotalPresent}
+			]},
+			#tablerow {cells=[
+				#tablecell {body="Total Absent"},
+				#tablecell {text=TotalAbsent}
+			]},
+			#tablerow {cells=[
+				#tablecell {body="Total Discarded"},
+				#tablecell {text=TotalDiscarded}
+			]}
+	]}.
 
 %------------------------------------------------------------------------------
 % end
