@@ -545,6 +545,26 @@ event(export_results_bulk) ->
 %..............................................................................
 
 handle_export_results_bulk() ->
+
+	%
+	% init
+	%
+	D = helper:state(dig),
+	Fs = dig:get_nonempty_fs(D#dig.filters),
+
+
+	%
+	% assert
+	%
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter."
+	),
+
+
+	%
+	% process
+	%
 	case configs:getbool(process_via_minijob, false) of
 		false ->
 			handle_export_results_bulk_taskqueue();
@@ -576,11 +596,6 @@ handle_export_results_bulk_taskqueue() ->
 	D = helper:state(dig),
 	Fs = dig:get_nonempty_fs(D#dig.filters),
 
-
-	?ASSERT(
-		Fs /= [],
-		"Please select at least one filter."
-	),
 
 	%
 	% create
@@ -708,6 +723,24 @@ handle_export_results_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
 %..............................................................................
 
 handle_export_results_bulk_pdf() ->
+
+	%
+	% init
+	%
+	D = helper:state(dig),
+	Fs = dig:get_nonempty_fs(D#dig.filters),
+
+
+	%
+	% assert
+	%
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one filter."
+	),
+
+
+
 	case configs:getbool(process_via_minijob, false) of
 		false ->
 			handle_export_results_bulk_pdf_taskqueue();
