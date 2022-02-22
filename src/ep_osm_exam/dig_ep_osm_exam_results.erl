@@ -653,7 +653,7 @@ handle_export_results_bulk(Fs, Dir, From) ->
 	%
 	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
 	?ASSERT(
-		Fs /= [],
+		dig:get_nonempty_fs(Fs) /= [],
 		"Please select at least one filter"
 	),
 	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),
@@ -834,7 +834,7 @@ handle_export_results_bulk_pdf(Fs, Dir, From) ->
 	%
 	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
 	?ASSERT(
-		Fs /= [],
+		dig:get_nonempty_fs(Fs) /= [],
 		"Please select at least one filter"
 	),
 	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),
