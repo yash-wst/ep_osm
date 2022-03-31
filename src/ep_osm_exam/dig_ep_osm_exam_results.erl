@@ -669,7 +669,7 @@ handle_export_results_bulk(Fs, Dir, From) ->
 		% init
 		%
 		timer:sleep(1000),
-		dig:log(warning, io_lib:format("Processing ... ~s", [itf:val(Doc, testname)])),
+		dig:log(warning, io_lib:format("Processing ... ~ts", [itf:val(Doc, testname)])),
 
 
 		%
@@ -850,7 +850,7 @@ handle_export_results_bulk_pdf(Fs, Dir, From) ->
 		% init
 		%
 		timer:sleep(1000),
-		dig:log(warning, io_lib:format("Processing ... ~s", [itf:val(Doc, testname)])),
+		dig:log(warning, io_lib:format("Processing ... ~ts", [itf:val(Doc, testname)])),
 
 	
 		SeasonId = itf:val(Doc, season_fk),
