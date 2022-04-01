@@ -708,8 +708,8 @@ handle_export_results_bulk(Fs, Dir, From) ->
 
 
 handle_export_results_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
-	{Name, FilePath} = dig:get_filename_path(io_lib:format("~s_~s_~s", [
-		itf:val(Doc, anptestcourseid), itf:val(Doc, testname), dig:export_filename(D)
+	{Name, FilePath} = dig:get_filename_path(io_lib:format("~s_~ts", [
+		itf:val(Doc, anptestcourseid), dig:export_filename(D)
 	])),
 	dig:handle_export(Name, FilePath, D, Fs).
 
@@ -899,8 +899,8 @@ handle_export_results_bulk_pdf(Fs, Dir, From) ->
 
 
 handle_export_results_bulk_pdf_create_file(Doc, #dig {} = D) ->
-	Filename = io_lib:format("~s_~s_~s", [
-		itf:val(Doc, anptestcourseid), itf:val(Doc, testname), dig:export_filename(D)
+	Filename = io_lib:format("~s_~ts", [
+		itf:val(Doc, anptestcourseid), dig:export_filename(D)
 	]),
 	{Name, FilePath} = dig:get_filename_path(Filename, pdf),
 	dig:handle_export_pdf(Name, FilePath, D).

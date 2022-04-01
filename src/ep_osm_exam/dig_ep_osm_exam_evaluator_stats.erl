@@ -692,8 +692,8 @@ handle_export_evaluator_stats_bulk(Fs, Dir, From) ->
 
 
 handle_export_evaluator_stats_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
-	{Name, FilePath} = dig:get_filename_path(io_lib:format("~s_~s_~s", [
-		itf:val(Doc, anptestcourseid), itf:val(Doc, testname), dig:export_filename(D)
+	{Name, FilePath} = dig:get_filename_path(io_lib:format("~ts_~ts", [
+		itf:val(Doc, anptestcourseid), dig:export_filename(D)
 	])),
 	dig:handle_export(Name, FilePath, D, Fs).
 
