@@ -553,7 +553,7 @@ layout_dtp_by(
 	[],
 	{InwardState, _, _}) when
 		InwardState == ?COMPLETED ->
-	ite:link(
+	ite:button(
 		launch_assign_dtp_staff, "Assign", {launch_assign_dtp_staff, Type, BundleDoc}
 	);
 
@@ -567,8 +567,8 @@ layout_dtp_by(
 		ScanningState /= ?COMPLETED, User /= [] ->
 	[
 		layout_user_info(dict:find(User, ProfileDocsDict)),
-		ite:link(
-			scanning_completed, "Scanning completed", {scanning_completed, BundleDoc}
+		ite:button(
+			scanning_completed, "Mark Scanning Completed", {scanning_completed, BundleDoc}
 		)
 	];
 

@@ -35,6 +35,7 @@ options(ep_osm_scanuploader_fk) ->
 		db=ep_osm_scanuploader_api:db(),
 		displayfs=ep_osm_scanuploader:fs(displayfs),
 		filterfs=[
+			itf:build(?ITXPRF(profiletype), ?APPOSM_SCANUPLOADER),
 			?ITXPRF(username),
 			?ITXPRF(mobile),
 			?ITXPRF(email)
