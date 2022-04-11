@@ -45,6 +45,9 @@ get() ->
 		module=?MODULE,
 		filters=[
 			?COREXS(season_fk)
+		],
+		config=[
+			{responsive_type, scroll}
 		]
 	}.
 
@@ -91,6 +94,13 @@ fetch(D, _From, _Size, [
 	end, Stats),
 	SeasonIdsUnique = helper:unique(SeasonIds),
 	SeasonDocs = ep_core_exam_season_api:getdocs_by_ids(SeasonIdsUnique),
+	SeasonDocsSorted = lists:sort(fun(A, B) ->
+		case {A, B} of
+			{A, B} when A == undefined; B == undefined ->
+				true;
+			_ -> itf:val(A, startdate) < itf:val(B, startdate)
+		end
+	end, SeasonDocs),
 
 
 	%
@@ -122,7 +132,7 @@ fetch(D, _From, _Size, [
 			end,
 			dig:if_not(0, info, #dcell {val=Val})
 		end, states())
-	end, SeasonDocs),
+	end, SeasonDocsSorted),
 
 
 	%
