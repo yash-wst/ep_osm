@@ -1481,22 +1481,46 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 	),
 	CandidateDocs1 = sort_candidate_docs(CandidateDocs),
 
-	Results = lists:map(fun(CDoc) ->
+
+	%
+	% get result vals
+	%
+	{_, Results} = lists:foldl(fun(CDoc, {Slno, Acc}) ->
 		UId = itf:val(CDoc, anp_paper_uid),
 		SNo = itf:val(CDoc, anpseatnumber),
-		[
-			?CASE_IF_THEN_ELSE(SNo, [], UId, SNo),
-			itf:val(CDoc, anpfullname)
-		]
-	end, CandidateDocs1),
-	Table = dig:layout_vals(#dig{config=[
-		{show_slno, true},
-		{responsive_type, scroll}
-	]}, Results, [
-		"UID / Seat Number", "Full Name"
-	]),
-	Es2 = Table#table {class="table table-sm table-bordered"},
+		{
+			Slno + 1,
+			Acc ++ [[
+				?I2S(Slno),
+				?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)
+			]]
+		}
+	end, {1, []}, CandidateDocs1),
 
+
+
+	%
+	% split into columns
+	%
+	ListOfResults = helper:list_split(Results, 30),
+	Tables = lists:map(fun(NResults) ->
+		Table = dig:layout_vals(#dig{config=[
+			{show_slno, false},
+			{responsive_type, scroll}
+		]}, NResults, [
+			"Sl. No.", "UID / Seat Number"
+		]),
+		Table1 = Table#table {class="table table-sm table-bordered"},
+		layout:g(5, Table1)
+	end, ListOfResults),
+	Es2 = #table {
+		class="table table-sm table-bordered",
+		rows=[
+			#tablerow {cells=lists:map(fun(Table) ->
+				#tablecell {body=Table}
+			end, Tables)}
+		]
+	},
 
 
 
