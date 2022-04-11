@@ -184,6 +184,9 @@ fetch(D, _From, _Size, [
 	% return
 	%
 	{D#dig {
+		config=[
+			{show_slno, true}
+		],
 		description=#link {
 			url=itx:format("/dig_ep_osm_exam_inward?id=~s", [OsmExamId]),
 			text=io_lib:format("~s / ~s / ~s / Bundle: ~s", [
