@@ -1428,7 +1428,7 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 			},
 			#p {
 				style="font-size: 2em; margin: 0px;",
-				text="# " ++ itf:val(BundleDoc, number)
+				text="Bundle # " ++ itf:val(BundleDoc, number)
 			},
 			#hr {}
 		]
@@ -1445,15 +1445,21 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 		ExamDb, FsToSearchBundle, 0, ?INFINITY
 	),
 	CandidateDocs1 = sort_candidate_docs(CandidateDocs),
-	ListOfCandidateDocs = helper:list_split(CandidateDocs1, 5),
-	Results = lists:map(fun(CDocs) ->
-		lists:map(fun(CDoc) ->
-			UId = itf:val(CDoc, anp_paper_uid),
-			SNo = itf:val(CDoc, anpseatnumber),
-			#dcell {val=?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)}
-		end, CDocs)
-	end, ListOfCandidateDocs),
-	Table = dig:layout_table(#dig{show_slno=false}, Results),
+
+	Results = lists:map(fun(CDoc) ->
+		UId = itf:val(CDoc, anp_paper_uid),
+		SNo = itf:val(CDoc, anpseatnumber),
+		[
+			?CASE_IF_THEN_ELSE(SNo, [], UId, SNo),
+			itf:val(CDoc, anpfullname)
+		]
+	end, CandidateDocs1),
+	Table = dig:layout_vals(#dig{config=[
+		{show_slno, true},
+		{responsive_type, scroll}
+	]}, Results, [
+		"UID / Seat Number", "Full Name"
+	]),
 	Es2 = Table#table {class="table table-sm table-bordered"},
 
 
