@@ -1403,34 +1403,66 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 	%
 	% prepare cover header
 	%
-	Es1 = #panel {
-		class="font-weight-bold mycenter text-uppercase",
-		body=[
-			#p {
-				style="margin: 0px;",
-				text=SeasonName
+	CellClass = "font-weight-bold",
+	Es1 = #table {
+		class="table table-bordered table-sm table-condensed",
+		rows=[
+			#tablerow {
+				cells=[
+					#tablecell {body="Exam Season"},
+					#tablecell {class=CellClass, body=SeasonName}
+				]
 			},
-			#p {
-				style="font-size: 1.5em; margin: 0px;",
-				text=io_lib:format("(~s) ~s", [itf:val(CapDoc, code), itf:val(CapDoc, name)])
+			#tablerow {
+				cells=[
+					#tablecell {body="CAP Centre"},
+					#tablecell {class=CellClass, body=io_lib:format("(~s) ~s", [
+						itf:val(CapDoc, code), itf:val(CapDoc, name)
+					])}
+				]
 			},
-			#p {
-				style="font-size: 1.5em; margin: 0px;",
-				text=ep_core_subject_api:getname(itf:val(ExamDoc, subject_code_fk))
+			#tablerow {
+				cells=[
+					#tablecell {body="Faculty"},
+					#tablecell {class=CellClass, body=ep_core_faculty_api:getname(
+						itf:val(ExamDoc, faculty_code_fk)
+					)}
+				]
 			},
-			#p {
-				style="font-size: 1.5em; margin: 0px;",
-				text=itf:val(ExamDoc, testname)
+			#tablerow {
+				cells=[
+					#tablecell {body="Program"},
+					#tablecell {class=CellClass, body=ep_core_program_api:getname(
+						itf:val(ExamDoc, program_code_fk)
+					)}
+				]
 			},
-			#p {
-				style="font-size: 2em; margin: 0px;",
-				text=itf:val(ExamDoc, anptestcourseid)
+			#tablerow {
+				cells=[
+					#tablecell {body="Subject"},
+					#tablecell {class=CellClass, body=ep_core_subject_api:getname(
+						itf:val(ExamDoc, subject_code_fk)
+					)}
+				]
 			},
-			#p {
-				style="font-size: 2em; margin: 0px;",
-				text="Bundle # " ++ itf:val(BundleDoc, number)
+			#tablerow {
+				cells=[
+					#tablecell {body="Test Name"},
+					#tablecell {class=CellClass, body=itf:val(ExamDoc, testname)}
+				]
 			},
-			#hr {}
+			#tablerow {
+				cells=[
+					#tablecell {body="Course ID"},
+					#tablecell {class=CellClass, body=itf:val(ExamDoc, anptestcourseid)}
+				]
+			},
+			#tablerow {
+				cells=[
+					#tablecell {body="Bundle Number"},
+					#tablecell {class=CellClass, body=itf:val(BundleDoc, number)}
+				]
+			}
 		]
 	},
 
