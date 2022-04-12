@@ -98,9 +98,9 @@ fetch(D, _From, _Size, [
 		case {A, B} of
 			{A, B} when A == undefined; B == undefined ->
 				true;
-			_ -> itf:val(A, startdate) < itf:val(B, startdate)
+			_ -> itf:val(A, startdate) > itf:val(B, startdate)
 		end
-	end, SeasonDocs),
+	end, SeasonDocs -- [undefined]),
 
 
 	%
@@ -132,17 +132,7 @@ fetch(D, _From, _Size, [
 			end,
 			dig:if_not(0, info, #dcell {val=Val})
 		end, states())
-	end, SeasonDocsSorted),
-
-
-	%
-	% sort results
-	%
-	ResultsSorted = lists:sort(fun(A, B) ->
-		#dcell {val=Val1} = lists:nth(2, A),
-		#dcell {val=Val2} = lists:nth(2, B),
-		Val1 > Val2
-	end, Results),
+	end, SeasonDocsSorted ++ [undefined]),
 
 
 	%
@@ -162,9 +152,9 @@ fetch(D, _From, _Size, [
 	%
 	{
 		D#dig {
-			total=length(ResultsSorted)
+			total=length(Results)
 		},
-		[Header] ++ dig:append_total_cells(ResultsSorted)
+		[Header] ++ dig:append_total_cells(Results)
 	};
 
 
