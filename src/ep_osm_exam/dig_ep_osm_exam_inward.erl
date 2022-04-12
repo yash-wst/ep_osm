@@ -184,7 +184,7 @@ fetch(D, _From, _Size, [
 	% return
 	%
 	{D#dig {
-		config=[
+		config=D#dig.config ++ [
 			{show_slno, true}
 		],
 		description=#link {
@@ -1502,9 +1502,10 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 	%
 	% split into columns
 	%
-	ListOfResults = helper:list_split(Results, 30),
+	ListOfResults = helper:list_split(Results, 25),
 	Tables = lists:map(fun(NResults) ->
 		Table = dig:layout_vals(#dig{config=[
+			{action_layout_type, buttons},
 			{show_slno, false},
 			{responsive_type, scroll}
 		]}, NResults, [
@@ -1514,11 +1515,18 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 		layout:g(5, Table1)
 	end, ListOfResults),
 	Es2 = #table {
+    	style="border-collapse: collapse;",
 		class="table table-sm table-bordered",
 		rows=[
-			#tablerow {cells=lists:map(fun(Table) ->
-				#tablecell {body=Table}
-			end, Tables)}
+			#tablerow {
+				style="padding: 0px",
+				cells=lists:map(fun(Table) ->
+					#tablecell {
+						style="padding: 0px",
+						body=Table
+					}
+				end, Tables)
+			}
 		]
 	},
 
