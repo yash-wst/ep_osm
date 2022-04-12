@@ -1695,6 +1695,7 @@ handle_inward_focus_textbox() ->
 
 handle_insert_candidatedoc(BundleDoc, CDoc) ->
 	Row = #tablerow {cells=[
+		#tablecell {body=[]},
 		#tablecell {body=itf:val(CDoc, anp_paper_uid)},
 		#tablecell {body=itf:val(CDoc, anpseatnumber)},
 		#tablecell {body=?LN(?L2A(itf:val(CDoc, anpstate)))},
