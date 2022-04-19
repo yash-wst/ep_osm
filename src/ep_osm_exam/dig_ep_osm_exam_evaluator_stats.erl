@@ -280,19 +280,12 @@ fetch(D, _From, _Size, [
 		% get stats per profile
 		%
 		SFPSCells ++ [
-			#dcell {
-				val=itf:val(ProfileDoc, fullname)
-			},
-			#dcell {
-				type=label,
-				val=itf:val(ProfileDoc, mobile)
-			},
-			#dcell {
-				val=itf:val(ProfileDoc, email)
-			},
-			#dcell {
-				val=?LN(?L2A(itf:val(ProfileDoc, profiletype)))
-			}
+			#dcell {type=label, val=itf:val(TFs, anptestcourseid)},
+			#dcell {type=label, val=itf:val(TFs, testname)}
+			#dcell {val=itf:val(ProfileDoc, fullname)},
+			#dcell {type=label, val=itf:val(ProfileDoc, mobile)},
+			#dcell {val=itf:val(ProfileDoc, email)},
+			#dcell {val=?LN(?L2A(itf:val(ProfileDoc, profiletype)))}
 		] ++ lists:map(fun(State) ->
 			Val = get_eval_count_for_profile(
 				ProfileId,
@@ -323,6 +316,8 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, show_ui=false, val="Faculty"},
 		#dcell {type=header, show_ui=false, val="Program"},
 		#dcell {type=header, show_ui=false, val="Subject"},
+		#dcell {type=header, val="Exam Id"},
+		#dcell {type=header, val="Exam Name"},
 		#dcell {type=header, val="Fullname"},
 		#dcell {type=header, val="Mobile"},
 		#dcell {type=header, val="Email"},
