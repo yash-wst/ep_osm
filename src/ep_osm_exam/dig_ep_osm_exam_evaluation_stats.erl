@@ -449,7 +449,7 @@ handle_reset_forgotten_active_booklets(ForgottenDays, {FromState, ToState}, Docs
 		%
 		% init
 		%
-		Testname = io_lib:format("~s / ~s", [
+		Testname = io_lib:format("~ts / ~ts", [
 			itf:val(Doc, anptestcourseid),
 			itf:val(Doc, testname)
 		]),
@@ -618,7 +618,7 @@ handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 		%
 		% init
 		%
-		Testname = io_lib:format("~s / ~s", [
+		Testname = io_lib:format("~ts / ~ts", [
 			itf:val(Doc, anptestcourseid),
 			itf:val(Doc, testname)
 		]),
