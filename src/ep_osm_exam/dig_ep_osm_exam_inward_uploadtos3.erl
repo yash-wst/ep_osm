@@ -319,7 +319,7 @@ handle_upload_to_s3_upload(ZipDir, S3Dir, DirNameToUpload) ->
 	%
 	% exec
 	%
-	CmdRes = helper:cmd("cd ~s; AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 sync --only-show-errors ~s s3://~s/~s/~s", [
+	CmdRes = helper:cmd("cd ~s; AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 sync --only-show-errors ~s s3://~s/~s/~s --delete", [
 		ZipDir,
 		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
 		DirNameToUpload, configs:get(aws_s3_bucket), S3Dir, DirNameToUpload
