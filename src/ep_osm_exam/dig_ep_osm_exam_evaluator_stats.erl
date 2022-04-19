@@ -281,7 +281,7 @@ fetch(D, _From, _Size, [
 		%
 		SFPSCells ++ [
 			#dcell {type=label, val=itf:val(TFs, anptestcourseid)},
-			#dcell {type=label, val=itf:val(TFs, testname)}
+			#dcell {type=label, val=itf:val(TFs, testname)},
 			#dcell {val=itf:val(ProfileDoc, fullname)},
 			#dcell {type=label, val=itf:val(ProfileDoc, mobile)},
 			#dcell {val=itf:val(ProfileDoc, email)},
