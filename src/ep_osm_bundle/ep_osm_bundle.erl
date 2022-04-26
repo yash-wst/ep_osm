@@ -58,8 +58,13 @@ fs(index) -> [
 ];
 
 fs(form) -> [
+	?COREXS(season_fk),
 	?OSMBDL(osm_exam_fk),
 	?OSMBDL(number),
+	?OSMBDL(createdby),
+	?OSMBDL(createdon),
+	?OSMBDL(scannedby),
+	?OSMBDL(qualityby),
 	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
 	?OSMBDL(uploadstate),

@@ -22,8 +22,6 @@ form() ->
 	ep_osm_bundle.
 
 digmm_actions() -> [
-	?F(view, "View"),
-	?F(edit, "Edit")
 ].
 
 %------------------------------------------------------------------------------
@@ -69,9 +67,10 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?VIEW,
+		mode=?EXPORT,
 		module=?MODULE,
 		filters=[
+			?COREXS(season_fk),
 			?OSMBDL(osm_exam_fk),
 			?OSMBDL(createdby),
 			?OSMBDL(inwardstate),
@@ -80,6 +79,9 @@ get() ->
 			?OSMBDL(inward_date),
 			?OSMBDL(scanned_date),
 			?OSMBDL(uploaded_date)
+		],
+		events=[
+			ite:button(export, "CSV", {itx, {dig, export}})
 		],
 		size=25
 	}.
