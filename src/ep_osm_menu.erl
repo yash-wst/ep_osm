@@ -28,14 +28,15 @@ menu(?APPOSM_ADMIN) ->
 			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Status")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")},
 			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Evaluation Status")},
-			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Evaluator Status")},
-			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Scanning Status")}
+			{dig_ep_osm_exam_evaluator_stats, ?VIEW, ?LN("Evaluator Status")}
 		]},
 		{?LN("Results"), [
 			{dig_ep_osm_exam_results, ?VIEW, ?LN("OSM Results")}
 		]},
 		{?LN("Reports"), [
-			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")}
+			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")},
+			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Status Report")},
+			{dig_mm_ep_osm_bundle, ?VIEW, ?LN("Bundle Status Report")}
 		]}
 	];
 
