@@ -542,12 +542,25 @@ layout_upload_form(BundleDoc, _) ->
 			RedirectUrl
 		])
 	],
+
+	%
+	% previous uploads
+	%
+	EsPreviousUploads = case cfg_show_previous_uploads() of
+		true ->
+			minijob_ep_osm_exam_uploadtos3:layout_previous_uploads(BundleDoc);
+		_ ->
+			[]
+	end,	
+
+
 	[
 		itl:instructions([
 			{danger, "Folder name and zip file name should be same. Ex: Folder: 200, Zip: 200.zip"},
 			{ok, "Zip file should contain folders of the current bundle only."},
 			{danger, "Please ensure you have reliable, high bandwidth, internet connection"}
 		]),
+		EsPreviousUploads,
 		Es
 	].
 
@@ -817,7 +830,12 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 	]),
 
 
-	minijob_status:show_status(Doc).
+	case cfg_show_previous_uploads() of
+		true ->
+			redirect_to_bundle(OsmBundleId);
+		_ ->
+			minijob_status:show_status(Doc)
+	end.
 
 
 
@@ -2071,6 +2089,17 @@ redirect_to_main() ->
 	helper:redirect(Url).
 
 
+redirect_to_bundle(OsmBundleId) ->
+	Url = itx:format("/~p?id=~s&digx=~s", [
+		?MODULE, wf:q(id), base64:encode_to_string(helper:t2l([
+			{osm_exam_fk, wf:q(id)},
+			{osm_bundle_fk, OsmBundleId}
+		]))
+	]),
+	helper:redirect(Url).
+
+
+
 
 get_expected_images_from_total_pages(error) ->
 	error;
@@ -2181,6 +2210,13 @@ assert_entry_does_not_exist_elsewhere(UId, SNo, CandidateDoc) ->
 
 
 
+
+%------------------------------------------------------------------------------
+% configs
+%------------------------------------------------------------------------------
+
+cfg_show_previous_uploads() ->
+	itxconfigs_cache:get2(dig_ep_osm_exam_inward_show_previous_uploads, false).
 
 %------------------------------------------------------------------------------
 % end

@@ -22,6 +22,7 @@ heading() ->
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
+access(?VIEW, _) -> true;
 access(_, ?ADMIN) -> true;
 access(_, _) -> false.
 
@@ -113,6 +114,64 @@ progress(Doc, Increment) ->
 layout() ->
 	minijob:layout(?MODULE).
 
+
+layout_previous_uploads(BundleDoc) ->
+
+	%
+	% filters
+	%
+	Filters = [
+		itf:build(?MJOB(mj_module), "minijob_ep_osm_exam_uploadtos3"),
+		fields:build(osm_bundle_fk, itf:idval(BundleDoc))
+	],
+
+	%
+	% find
+	%
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		minijob_api:db(), Filters, 0, 100, [
+			{use_index, ["mj_module"]}
+		]
+	),
+	DocsSorted = lists:sort(fun(A, B) ->
+		helper:s2n(itf:val(A, mj_createdon)) >
+		helper:s2n(itf:val(B, mj_createdon))
+	end, Docs),
+
+	%
+	% get values
+	%
+	FsGrid = minijob:fs(grid),
+	LoL = lists:map(fun(Doc) ->
+		Fs = itf:d2f(Doc, FsGrid),
+		lists:map(fun(F) ->
+			itl:render(F)
+		end, Fs) ++ [
+			#link {
+				new=true,
+				text="View",
+				url=itx:format("/~p?mode=view&id=~s", [
+					?MODULE, itf:idval(Doc)
+				])
+			}
+		]
+	end, DocsSorted),
+
+
+	%
+	% header
+	%
+	Header = lists:map(fun(F) ->
+		F#field.label
+	end, FsGrid) ++ [
+		"Details"
+	],
+
+
+	%
+	%
+	%
+	dig:layout_vals(#dig{}, LoL, Header).
 
 
 %------------------------------------------------------------------------------
