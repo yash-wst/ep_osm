@@ -85,7 +85,9 @@ fs() ->
 %------------------------------------------------------------------------------
 
 concurrency() ->
-	one_per_user.
+	{max_per_user, itxconfigs_cache:get2(
+		minijob_ep_osm_exam_uploadtos3_max_concurrency, 1
+	)}.
 
 
 
