@@ -147,6 +147,7 @@ fetch(D, _From, _Size, [
 			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=itf:val(CDoc, total_pages)},
 			#dcell {val=layout_uploaded_pages(ExamDoc, BundleDoc, CDoc)},
+			#dcell {val=layout_candidate_edit(BundleDoc, CDoc)},
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
 	end, CandidateDocs1),
@@ -176,6 +177,7 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Student Name"},
 		#dcell {type=header, val="Total Pages"},
 		#dcell {type=header, val="Uploaded Images"},
+		#dcell {type=header, val="Edit"},
 		#dcell {type=header, val="Remove"}
 	],
 
@@ -189,11 +191,12 @@ fetch(D, _From, _Size, [
 		],
 		description=#link {
 			url=itx:format("/dig_ep_osm_exam_inward?id=~s", [OsmExamId]),
-			text=io_lib:format("~s / ~s / ~s / Bundle: ~s", [
+			text=io_lib:format("~s / ~s / ~s / Bundle: ~s (~s)", [
 				itf:val(ExamDoc, anptestcourseid),
 				itf:val(ExamDoc, testname),
 				?LN(?L2A(itf:val(ExamDoc, teststatus))),
-				itf:val(BundleDoc, number)
+				itf:val(BundleDoc, number),
+				get_bundle_state(BundleDoc)
 			])
 		},
 		actions=Actions
@@ -448,6 +451,38 @@ layout_candidate_remove(BundleDoc, CDoc)  ->
 		_ ->
 			[]
 	end.
+
+
+%..............................................................................
+%
+% layout - candidate edit
+%
+%..............................................................................
+layout_candidate_edit(BundleDoc, CDoc)  ->
+
+	%
+	% init
+	%
+	User = itxauth:user(),
+
+	case {
+		itf:val(BundleDoc, createdby),
+		itf:val(BundleDoc, inwardstate),
+		itf:val(BundleDoc, scanningstate)
+	} of
+		{User, InwardState, ScanningState} when
+			InwardState == [];
+			ScanningState == [] ->
+			ite:button(
+				edit_candidate,
+				"Edit",
+				{edit_candidate, itf:idval(CDoc)},
+				"btn btn-link"
+			);
+		_ ->
+			[]
+	end.
+
 
 
 
@@ -833,6 +868,11 @@ event({remove_candidate, _CId} = E) ->
 		E
 	);
 
+event({edit_candidate, CId}) ->
+	handle_edit_candidate_dialog(CId);
+
+event({edit_receiver, CId}) ->
+	handle_edit_candidate(CId);
 
 event({confirmation_yes, inward_completed}) ->
 	handle_inward_completed();
@@ -1052,6 +1092,100 @@ handle_remove_candidate(CId) ->
 		_ ->
 			helper_ui:flash(error, "Sorry, could not delete!")
 	end.
+
+
+
+
+
+%..............................................................................
+%
+% handle - edit canddidate
+%
+%..............................................................................
+
+handle_edit_candidate_dialog(CId) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(wf:q(osm_exam_fk)),
+	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CId),
+
+
+
+	%
+	% layout 
+	%
+	Fs = itf:d2f(CandidateDoc, anpcandidate:fs(edit_receiver)),
+	Fs1 = dig_mm:id_map(CId, Fs),
+	Event = ite:get(?NID(edit_receiver, CId), "Save", {edit_receiver, CId}),
+	Es = itl:get(?EDIT, Fs1, Event, table),
+
+
+	%
+	% show
+	%
+	itl:modal_fs(Es).
+
+
+
+%..............................................................................
+%
+% handle - edit canddidate
+%
+%..............................................................................
+
+handle_edit_candidate(CId) ->
+
+	%
+	% init
+	%
+	ExamId = wf:q(osm_exam_fk),
+	ExamDb = anpcandidates:db(wf:q(osm_exam_fk)),
+	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CId),
+	Fs = anpcandidate:fs(edit_receiver),
+	Fs1 = dig_mm:id_map(CId, Fs),
+	Fs2 = itf:uivalue(Fs1),
+	Fs3 = dig_mm:id_unmap(Fs2),
+
+
+	%
+	% vals
+	%
+	UId = itf:val2(Fs3, anp_paper_uid),
+	SNo = itf:val2(Fs3, anpseatnumber),
+
+
+	%
+	% assert - entry does not exist in a different bundle
+	%
+	assert_entry_does_not_exist_elsewhere(UId, SNo, CandidateDoc),
+
+
+
+	%
+	% save
+	%
+	Changelist = itf:fs_changelist(CandidateDoc, Fs3),
+	case Changelist of
+		[] ->
+			helper_ui:flash(warning, "No changes.");
+		_ ->
+			FComment = itf:d2f(CandidateDoc, fields:get(comments)),
+			FComment1 = itf:build_comment(FComment, Changelist), 
+			case ep_osm_candidate_api:update(ExamId, CandidateDoc, Fs3 ++ [FComment1]) of
+				{ok, CandidateDoc1} ->
+					helper:redirect(wf:uri()),
+					helper_ui:flash(success, io_lib:format("Saved: ~s, ~s, ~s", [
+						UId, SNo, itf:val(CandidateDoc1, anpfullname)
+					]), 5);
+				_ ->
+					helper_ui:flash(error, io_lib:format("Error!: ~s, ~s", [UId, SNo]))
+			end
+	end,
+
+
+	itl:modal_close().
 
 
 %..............................................................................
@@ -1704,6 +1838,7 @@ handle_insert_candidatedoc(BundleDoc, CDoc) ->
 		#tablecell {body=itf:val(CDoc, anpfullname)},
 		#tablecell {body=itf:val(CDoc, total_pages)},
 		#tablecell {body=""},
+		#tablecell {body=layout_candidate_edit(BundleDoc, CDoc)},
 		#tablecell {body=layout_candidate_remove(BundleDoc, CDoc)}
 	]},
 	wf:insert_top(dig:id(table), Row).
@@ -1941,6 +2076,110 @@ get_expected_images_from_total_pages(error) ->
 	error;
 get_expected_images_from_total_pages(TotalPages) ->
 	(TotalPages /2) + 1.
+
+
+
+get_bundle_state(BundleDoc) ->
+	case {
+		itf:val(BundleDoc, uploadstate),
+		itf:val(BundleDoc, scanningstate),
+		itf:val(BundleDoc, inwardstate)
+	} of
+		{?COMPLETED, _, _} ->
+			"Upload Completed";
+		{_, ?COMPLETED, _} ->
+			"Scanning Completed";
+		{_, _, ?COMPLETED} ->
+			"Inward Completed";
+		{_, _, _} ->
+			[]
+	end.
+
+
+
+%------------------------------------------------------------------------------
+% asserts
+%------------------------------------------------------------------------------
+
+
+%..............................................................................
+%
+% assert - entry does not exist elsewhere
+%
+%..............................................................................
+
+assert_entry_does_not_exist_elsewhere(UId, SNo, CandidateDoc) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(wf:q(osm_exam_fk)),
+
+
+	%
+	% seat number
+	%
+	case itf:val(CandidateDoc, anpseatnumber) of
+		SNo ->
+			skip;
+		_ ->
+			FsToSearchCandidate = [
+				itf:build(itf:textbox(?F(anpseatnumber)), SNo)
+			],
+			#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+				ExamDb, FsToSearchCandidate, 0, ?INFINITY, [
+					{use_index, ["anpseatnumber"]}
+				]
+			),
+			case CandidateDocs of
+				[] ->
+					ok;
+				[CandidateDocFound] ->
+					BundleIdFound = itf:val(CandidateDocFound, osm_bundle_fk),
+					BundleNumberFound = get_bundle_number_from_cache(BundleIdFound),
+					?ASSERT(
+						false,
+						itx:format("Seat number ~s: already exists in bundle ~s", [
+							SNo, BundleNumberFound
+						])
+					)
+			end
+	end,
+
+
+	%
+	% uid
+	%
+	case itf:val(CandidateDoc, anp_paper_uid) of
+		[] ->
+			skip;
+		UId ->
+			skip;
+		_ ->
+			FsToSearchCandidate1 = [
+				itf:build(itf:textbox(?F(anp_paper_uid)), UId)
+			],
+			#db2_find_response {docs=CandidateDocs1} = db2_find:get_by_fs(
+				ExamDb, FsToSearchCandidate1, 0, ?INFINITY, [
+					{use_index, ["anp_paper_uid"]}
+				]
+			),
+			case CandidateDocs1 of
+				[] ->
+					ok;
+				[CandidateDocFound1] ->
+					BundleIdFound1 = itf:val(CandidateDocFound1, osm_bundle_fk),
+					BundleNumberFound1 = get_bundle_number_from_cache(BundleIdFound1),
+					?ASSERT(
+						false,
+						itx:format("UId ~s: already exists in bundle ~s", [
+							UId, BundleNumberFound1
+						])
+					)
+			end
+	end.
+
+
 
 
 %------------------------------------------------------------------------------
