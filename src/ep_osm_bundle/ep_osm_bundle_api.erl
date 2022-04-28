@@ -119,7 +119,9 @@ savebulk(LoLofFields) ->
 %------------------------------------------------------------------------------
 
 fetch(From, Size, Filters) ->
-	#db2_find_response {docs=Docs} = db2_find:get_by_fs(db(), Filters, From, Size),
+	fetch(From, Size, Filters, []).
+fetch(From, Size, Filters, Config) ->
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(db(), Filters, From, Size, Config),
 	Docs.
 
 

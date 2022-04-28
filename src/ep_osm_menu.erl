@@ -107,6 +107,7 @@ menu(?APPOSM_CONTROLLER) ->
 menu(?APPOSM_SCANUPLOADER) ->
 	[
 		{topmenu, [
+			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},
 			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")}
 		]}
 	];

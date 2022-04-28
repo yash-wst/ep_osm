@@ -74,6 +74,15 @@ fs(form) -> [
 	?OSMBDL(uploaded_date)
 ];
 
+fs(mybundle) -> [
+	?OSMBDL(osm_exam_fk),
+	?OSMBDL(scannedby),
+	?OSMBDL(qualityby),
+	?OSMBDL(scanningstate),
+	?OSMBDL(uploadstate)
+];
+
+
 fs(view) ->
 	fs(basic);
 
