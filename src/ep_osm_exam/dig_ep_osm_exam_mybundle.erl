@@ -53,7 +53,7 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
-			?COREXS(season_fk),
+			itf:build(?COREXS(season_fk), get_active_season_id()),
 			?OSMBDL(osm_exam_fk),
 			itf:build(f(myassignment), "scannedby"),
 			?OSMBDL(scanningstate),
@@ -116,7 +116,9 @@ fetch(D, From, Size, Fs) ->
 	%
 	% fetch docs from db
 	%
-	Docs = ep_osm_bundle_api:fetch(From, Size, FsFind),
+	Docs = ep_osm_bundle_api:fetch(From, Size, FsFind, [
+		{use_index, ["season_fk"]}
+	]),
 
 
 	%
@@ -212,6 +214,13 @@ event({itx, E}) ->
 % misc
 %------------------------------------------------------------------------------
 
+get_active_season_id() ->
+	case ep_core_exam_season_api:list_active() of
+		[{SeasonId, _} | _] ->
+			SeasonId;
+		_ ->
+			[]
+	end.
 
 
 %------------------------------------------------------------------------------
