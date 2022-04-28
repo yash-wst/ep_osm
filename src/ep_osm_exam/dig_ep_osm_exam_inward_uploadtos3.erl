@@ -396,6 +396,114 @@ handle_remove_from_s3(ObjectKey) ->
 	CmdRes.
 
 
+
+
+
+%------------------------------------------------------------------------------
+% handle - upload seatnumber zip
+%------------------------------------------------------------------------------
+
+handle_upload_seatnumber_zip(ExamId,  CandidateId, SeatNumber, AttachmentName, Filepath) ->
+	handle_upload_seatnumber_zip_verify(SeatNumber, AttachmentName, Filepath),
+	handle_upload_seatnumber_zip_upload_dir(ExamId, CandidateId, SeatNumber, AttachmentName, Filepath).
+
+
+%..............................................................................
+%
+% handle - seatnumber zip verify
+%
+%..............................................................................
+
+handle_upload_seatnumber_zip_verify(SeatNumber, AttachmentName, Filepath) ->
+
+	%
+	% init
+	%
+	ExpectedFilename = itx:format("~s.zip", [SeatNumber]),
+
+	%
+	% assert filename is seatnumber.zip
+	%
+	?ASSERT(
+		AttachmentName == ExpectedFilename,
+		itx:format("Invalid file name. Please uploaded ~s", [ExpectedFilename])
+	),
+
+
+	%
+	% assert file type is zip
+	%
+	handle_verify_zip_file(Filepath).
+
+
+
+
+%..............................................................................
+%
+% handle - seatnumber zip upload
+%
+%..............................................................................
+
+handle_upload_seatnumber_zip_upload_dir(ExamId, CandidateId, SeatNumber, _Filename, Filepath) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
+	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CandidateId),
+	S3Dir = itf:val(ExamDoc, aws_s3_dir),
+	BundleId = itf:val(CandidateDoc, osm_bundle_fk),
+
+
+
+	%
+	% create a working directory and unzip the zip file
+	%
+	WorkDir = "/tmp/" ++ helper:uidintstr(),
+	helper:cmd("mkdir -p ~s", [WorkDir]),
+
+
+
+	%
+	% unzip the file in workdir
+	%
+	{ok, Cwd} = file:get_cwd(),
+	Filepath1 = ?FLATTEN(io_lib:format("~s/~s", [Cwd, Filepath])),
+	helper:cmd("cd ~s; unzip ~s", [WorkDir, Filepath1]),
+
+
+
+	%
+	% upload
+	%
+	UploadRes = handle_upload_to_s3_upload(
+		WorkDir, S3Dir, SeatNumber
+	),
+
+
+
+	%
+	% cleanup
+	%
+	handle_cleanup(WorkDir, Filepath),
+
+
+
+	%
+	% assert uploadres is empty
+	%
+	?ASSERT(
+		UploadRes == [],
+		UploadRes
+	).
+
+
+
+
+
+
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------

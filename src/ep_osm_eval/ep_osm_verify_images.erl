@@ -47,6 +47,7 @@ layout() ->
 	%
 	?AKIT({layout, card_list_group, [
 		layout_student_info(TFs, Fs),
+		layout_upload(TFs, Fs),
 		layout_page_nos(TFs, Fs, ImgUrls),
 		layout_answerpaper(TFs, Fs, ImgUrls)
 	]}).
@@ -130,12 +131,51 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 	end, ImgUrls).
 
 
+
+%
+% layout - upload
+%
+layout_upload(TFs, Fs) ->
+	layout_upload(TFs, Fs, itf:val(Fs, anpstate)).
+
+
+layout_upload(_TFs, Fs, "anpstate_discarded") ->
+	itl:get(?EDIT, [itf:attachment(
+		?F({seatnumber_zip, itf:val(Fs, anpseatnumber)}, "Upload Zip file (SEATNUMBER.zip)"))
+	], noevent, table);
+layout_upload(_TFs, _Fs, _) ->
+	[].
+
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
 
 event(Event) ->
 	?D(Event).
+
+
+
+%------------------------------------------------------------------------------
+% event - file
+%------------------------------------------------------------------------------
+start_upload_event({attachment_upload1, _}) ->
+	helper_ui:flash(?LN("Uploading. Please Wait ...")).
+
+
+finish_upload_event(
+	{attachment_upload1, {seatnumber_zip, SeatNumber}},
+	AttachmentName,
+	LocalFileData,
+	_Node
+) ->
+
+	dig_ep_osm_exam_inward_uploadtos3:handle_upload_seatnumber_zip(
+		wf:q(anptestid),  wf:q(anpid), SeatNumber, AttachmentName, LocalFileData
+	),
+	helper:redirect(wf:uri()).
+
 
 
 %------------------------------------------------------------------------------
