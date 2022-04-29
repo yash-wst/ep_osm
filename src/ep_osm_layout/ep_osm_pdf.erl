@@ -112,7 +112,19 @@ layout(_TFs, DocId, PdfName, Type, "images") ->
 %..............................................................................
 
 layout(_TFs, DocId, PdfName, _Type, _) ->
-	attachment:save_in_dir("./scratch/", anptests:getdb(), DocId, PdfName),
+
+	%
+	% save in dir
+	%
+	Key = {?MODULE, DocId, PdfName},
+	LifeTimeMins = 10,
+	Fun = fun() ->
+		attachment:save_in_dir("./scratch/", anptests:getdb(), DocId, PdfName)
+	end,
+	itxdoc_cache:get(Key, Fun, LifeTimeMins),
+
+
+
 	Body = "<iframe
 		width='100%' height='1000'
 		frameborder='0' scrolling='auto'
