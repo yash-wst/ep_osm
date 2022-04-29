@@ -119,7 +119,11 @@ layout(_TFs, DocId, PdfName, _Type, _) ->
 	Key = {?MODULE, DocId, PdfName},
 	LifeTimeMins = 10,
 	Fun = fun() ->
-		attachment:save_in_dir("./scratch/", anptests:getdb(), DocId, PdfName)
+		try
+			attachment:save_in_dir("./scratch/", anptests:getdb(), DocId, PdfName)
+		catch E:Message ->
+			?D({E, Message, erlang:get_stacktrace(), DocId, PdfName})
+		end
 	end,
 	itxdoc_cache:get(Key, Fun, LifeTimeMins),
 
