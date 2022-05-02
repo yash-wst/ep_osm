@@ -30,6 +30,29 @@ list() ->
 	end, db:getdocs(db())).
 
 
+%
+% get count by exam id
+%
+get_count_by_osm_exam_fk(ExamId) ->
+
+	%
+	% init
+	%
+	Fs = [
+		itf:build(?OSMBDL(osm_exam_fk), ExamId)
+	],
+	ViewName = {"osm_exam_fk", "osm_exam_fk"},
+	SK = itxview:fields_to_sk(Fs),
+	EK = itxview:fields_to_ek(Fs),
+
+
+	%
+	% count
+	%
+	itxview:get_count_by_fields1(db(), SK, EK, ViewName).
+
+
+
 %------------------------------------------------------------------------------
 % check
 %------------------------------------------------------------------------------

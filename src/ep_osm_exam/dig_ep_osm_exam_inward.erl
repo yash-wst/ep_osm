@@ -78,7 +78,8 @@ get() ->
 		],
 		config=[
 			{action_layout_type, buttons}
-		]
+		],
+		size=100
 	}.
 
 
@@ -209,7 +210,7 @@ fetch(D, _From, _Size, [
 % [osm_exam_fk]
 %
 %..............................................................................
-fetch(D, _From, _Size, [
+fetch(D, From, Size, [
 	#field {id=osm_exam_fk, uivalue=OsmExamId} | _
 ] = Fs) ->
 
@@ -218,7 +219,7 @@ fetch(D, _From, _Size, [
 	%
 	{ok, ExamDoc} = ep_osm_exam_api:get(OsmExamId),
 	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
-		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY
+		ep_osm_bundle_api:db(), Fs, From, Size
 	),
 	FBundle = ?OSMBDL({osm_bundle_fk, OsmExamId}),
 
@@ -337,6 +338,7 @@ fetch(D, _From, _Size, [
 	% return
 	%
 	{D#dig {
+		total=ep_osm_bundle_api:get_count_by_osm_exam_fk(OsmExamId),
 		description=io_lib:format("~s / ~s", [
 			itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
 		]),
