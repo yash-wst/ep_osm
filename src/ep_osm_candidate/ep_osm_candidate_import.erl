@@ -431,7 +431,7 @@ get_exam_docs(SeasonId, SubjectId) ->
 	ep_osm_exam_api:fetch(0, ?INFINITY, [
 			fields:build(season_fk, SeasonId),
 			fields:build(subject_code_fk, SubjectId),
-			fields:build(teststatus, ?SCHEDULED)
+			db2es_find:get_field_cond("$in", teststatus, [?ACTIVE, ?SCHEDULED])
 		], [
 			{use_index, ["subject_code_fk"]}
 		]
