@@ -70,7 +70,8 @@ upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
 	%
 	% create a working directory and unzip the zip file
 	%
-	WorkDir = "/tmp/" ++ helper:uidintstr(),
+	{ok, Cwd} = file:get_cwd(),
+	WorkDir = itx:format("~s/scratch/~s", [Cwd, helper:uidintstr()]),
 	helper:cmd("mkdir -p ~s", [WorkDir]),
 
 
