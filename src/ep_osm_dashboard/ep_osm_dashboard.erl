@@ -14,6 +14,7 @@ layout(true) ->
 	Key = {?MODULE, layout},
 	layout:grow([
 		widget_evaluation_stats(),
+		widget_dtp_progress(),
 		itxdoc_cache:get(Key, fun layout_from_db/0, 10)
 	]);
 layout(false) ->
@@ -23,15 +24,23 @@ layout(false) ->
 layout_from_db() ->
 	[
 		widget_scanning_stats(),
-		widget_active_test_count(),
-		widget_scheduled_test_count(),
-		widget_reminders_sent_today()
+		layout:grow([
+			widget_active_test_count(),
+			widget_scheduled_test_count(),
+			widget_reminders_sent_today()
+		])
 	].
 
 
 %------------------------------------------------------------------------------
 % widgets
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% test counts
+%
+%..............................................................................
 
 widget_active_test_count() ->
 	Count = anptests:getcount_by_teststatus(?ACTIVE),
@@ -53,6 +62,12 @@ widget_reminders_sent_today() ->
 		"Reminders", Count, "info", "# of reminders sent today" 
 	).
 
+
+%..............................................................................
+%
+% scanning stats
+%
+%..............................................................................
 
 widget_scanning_stats() ->
 
@@ -109,6 +124,76 @@ widget_scanning_stats() ->
 
 
 
+%
+% inward progress
+%
+widget_dtp_progress() ->
+	layout:grow([
+		layout:g(4, widget_inward_progress()),
+		layout:g(4, widget_scanning_progress()),
+		layout:g(4, widget_upload_progress())
+	]).
+
+widget_inward_progress() ->
+	widget_progress("Inward Completed", fun(Date) ->
+		ep_osm_bundle_api:get_stats_inward_completed_by_date(Date)
+	end).
+widget_scanning_progress() ->
+	widget_progress("Scanning Completed", fun(Date) ->
+		ep_osm_bundle_api:get_stats_scanning_completed_by_date(Date)
+	end).
+widget_upload_progress() ->
+	widget_progress("Upload Completed", fun(Date) ->
+		ep_osm_bundle_api:get_stats_upload_completed_by_date(Date)
+	end).
+
+widget_progress(Title, Fun) ->
+
+	%
+	% init
+	%
+	TodayStr = helper:date_today_str(),
+
+	%
+	% stats
+	%
+	FunData = fun() ->
+		lists:map(fun(Date) ->
+			{
+				Date,
+				Fun(Date),
+				""
+			}
+		end, [
+			helper:date_str_offset(TodayStr, -4),
+			helper:date_str_offset(TodayStr, -3),
+			helper:date_str_offset(TodayStr, -2),
+			helper:date_str_offset(TodayStr, -1),
+			TodayStr
+		])
+	end,
+
+
+	%
+	% cache it
+	%
+	Data = itxdoc_cache:get({?MODULE, Title}, FunData, 15),
+
+
+	%
+	% layout
+	%
+	Es = akit_chart:barchart(helper:uidintstr(), Data),
+	akit_card:layout(Title, Es).
+
+
+
+%..............................................................................
+%
+% evaluation stats
+%
+%..............................................................................
+
 widget_evaluation_stats() ->
 
 	%
@@ -160,6 +245,11 @@ widget_evaluation_stats(Title, Stats, States) ->
 	akit_card:layout(Title, Es).
 
 
+%..............................................................................
+%
+% color coding
+%
+%..............................................................................
 
 color(anpstate_yettostart) ->
 	'rgb(59, 125, 221)';

@@ -217,7 +217,32 @@ get_stats_of_active_seasons() ->
 
 
 
+get_stats_inward_completed_by_date(Date) ->
+	get_stats_state_completed_by_date(inward_date, Date).
 
+get_stats_scanning_completed_by_date(Date) ->
+	get_stats_state_completed_by_date(scanned_date, Date).
+
+get_stats_upload_completed_by_date(Date) ->
+	get_stats_state_completed_by_date(uploaded_date, Date).
+
+
+get_stats_state_completed_by_date(State, Date) ->
+	%
+	% init
+	%
+	Fs = [
+		itf:build(?OSMBDL(State), Date)
+	],
+	ViewName = {?A2L(State), ?A2L(State)},
+	SK = itxview:fields_to_sk(Fs),
+	EK = itxview:fields_to_ek(Fs),
+
+
+	%
+	% count
+	%
+	itxview:get_count_by_fields1(db(), SK, EK, ViewName).
 
 
 %------------------------------------------------------------------------------
