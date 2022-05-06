@@ -51,6 +51,7 @@ exportids() -> [
 	"subject_code",
 	"subject_name",
 	"testtotalmarks",
+	"osm_bundle_fk",
 	"prn",
 	"seatnumber",
 	"evaluation_state",
@@ -1088,6 +1089,23 @@ val(#docs {
 } = RecDoc, "total" = Id) ->
 	val(RecDoc, ?FLATTEN(Role ++ "_" ++ Id));
 
+
+val(#docs {
+	doc=Doc
+}, Id) when
+	Id == "osm_bundle_fk" ->
+
+	BundleId = itf:val(Doc, osm_bundle_fk),
+	Fun = fun() ->
+		ep_osm_bundle_api:get(BundleId)
+	end,
+	case BundleId of
+		[] ->
+			[];
+		_ ->
+			{ok, BundleDoc} = itxdoc_cache:get({?MODULE, BundleId}, Fun),
+			itf:val(BundleDoc, number)
+	end;
 
 
 val(#docs {
