@@ -57,7 +57,8 @@ fs(Doc) ->
 % fs -
 %
 fs() -> [
-	itf:build(itf:textbox(?F(dig_module, "Dig Module")), "dig_ep_osm_exam_results")
+	itf:build(itf:textbox(?F(dig_module, "Dig Module")), "dig_ep_osm_exam_results"),
+	fields:build(anpstate, minijobcontext:q(anpstate))
 ].
 
 
@@ -111,7 +112,7 @@ event(E) ->
 %------------------------------------------------------------------------------
 
 create_and_run(Fs) ->
-	minijob:create_and_run(?MODULE, Fs ++ fs()).
+	minijob:create_and_run(?MODULE, itf:fs_merge(Fs, fs())).
 
 
 

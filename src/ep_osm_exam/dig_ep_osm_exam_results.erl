@@ -175,7 +175,20 @@ access(_, _) -> false.
 % fs
 %------------------------------------------------------------------------------
 
-fs(search) -> [
+fs(export_results_bulk) ->
+	FAnpState = fields:get(anpstate),
+	[
+		FAnpState#field {validators=[]}
+	];
+
+fs(search) ->
+	fs(search, itxcontext:q(id)).
+
+fs(search, ExamId) when ExamId /= undefined -> [
+	itf:build(itf:hidden(osm_exam_fk), ExamId),
+	fields:get(anpstate)
+];
+fs(search, _) -> [
 	?COREXS(season_fk),
 	?CORFAC(faculty_code_fk),
 	?CORPGM(program_code_fk),
@@ -198,7 +211,7 @@ get() ->
 		filters=fs(search),
 		size=25,
 		actions=[
-			{export_results_bulk, "Bulk Export Results", "Bulk Export Results"},
+			{action_export_results_bulk, "Bulk Export Results", "Bulk Export Results"},
 			{export_results_bulk_pdf, "Bulk Export Results (PDF)", "Bulk Export Results (PDF)"}
 		],
 		events=[
@@ -256,7 +269,7 @@ fetch(D, From, Size, [
 %
 %..............................................................................
 fetch(D, From, Size, [
-	#field {id=osm_exam_fk, uivalue=ExamId}
+	#field {id=osm_exam_fk, uivalue=ExamId} | Fs
 ]) ->
 
 
@@ -292,13 +305,20 @@ fetch(D, From, Size, [
 	%
 	% get total count
 	%
-	Count = anpcandidates:getdocs_count(ExamId),
+	{Count, Docs} = case Fs of
+		[#field {id=anpstate, uivalue=AnpState}] when
+			AnpState /= [], AnpState /= undefined ->
+			{
+				?INFINITY,
+				anpcandidates:getdocs_by_state(ExamId, AnpState, From, Size)
+			};
+		_ ->
+			{
+				anpcandidates:getdocs_count(ExamId),
+				anpcandidates:getdocs_from_to(ExamId, From, Size)
+			}
+	end,
 
-
-	%
-	% get docs
-	%
-	Docs = anpcandidates:getdocs_from_to(ExamId, From, Size),
 
 
 	%
@@ -525,6 +545,9 @@ layout() ->
 event({itx, E}) ->
 	ite:event(E);
 
+event(action_export_results_bulk) ->
+	dig_mm:handle_show_action("Bulk Export Results", layout_export_results_bulk());
+
 event(export_results_bulk_pdf) ->
 	handle_export_results_bulk_pdf();
 
@@ -558,7 +581,7 @@ handle_export_results_bulk() ->
 	%
 	?ASSERT(
 		Fs /= [],
-		"Please select at least one filter."
+		"Please select at least one exam filter."
 	),
 
 
@@ -648,13 +671,16 @@ handle_export_results_bulk(Fs, Email) ->
 handle_export_results_bulk(Fs, Dir, From) ->
 
 
+	AnpState = minijobcontext:q(anpstate),
+
+
 	%
 	% get docs in batches
 	%
 	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
 	?ASSERT(
 		dig:get_nonempty_fs(Fs) /= [],
-		"Please select at least one filter"
+		"Please select at least one exam filter"
 	),
 	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),
 
@@ -675,11 +701,13 @@ handle_export_results_bulk(Fs, Dir, From) ->
 		%
 		% create dig for export
 		%
+		?D(AnpState),
 		D = #dig {
 			module=?MODULE,
 			size=1000,
 			filters=[
-				itf:build(itf:hidden(osm_exam_fk), itf:idval(Doc))
+				itf:build(itf:hidden(osm_exam_fk), itf:idval(Doc)),
+				fields:build(anpstate, AnpState)
 			]
 		},
 
@@ -1323,6 +1351,20 @@ layout_pdf_header(ExamDoc, SeasonDoc, TestTotalMarks) ->
 				#tablecell {text=TotalDiscarded}
 			]}
 	]}.
+
+
+%..............................................................................
+%
+% layout - export results bulk
+%
+%..............................................................................
+
+layout_export_results_bulk() ->
+	itl:get(?EXPORT, fs(export_results_bulk),
+		ite:get(export_results_bulk, "Export"), table).
+
+
+
 
 %------------------------------------------------------------------------------
 % end
