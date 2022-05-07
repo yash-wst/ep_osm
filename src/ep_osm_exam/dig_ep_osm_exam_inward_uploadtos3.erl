@@ -3,6 +3,7 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
+-define(UPLOAD_TO_S3, "upload_to_s3").
 
 
 %------------------------------------------------------------------------------
@@ -56,6 +57,28 @@ upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
 
 
 	%
+	% create a working directory and unzip the zip file
+	%
+	{ok, Cwd} = file:get_cwd(),
+	WorkDir = itx:format("~s/scratch/~s/~s", [Cwd, ?UPLOAD_TO_S3, helper:uidintstr()]),
+	helper:cmd("mkdir -p ~s", [WorkDir]),
+
+
+	%
+	% upload
+	%
+	try
+		upload3(S3Dir, DirNamesToUpload, Filename, Filepath, BundleId, WorkDir)
+	catch Error:Message ->
+		handle_cleanup(WorkDir, Filepath),
+		handle_remove_from_s3(Filename),
+		throw({Error, Message})
+	end.
+
+
+
+upload3(S3Dir, DirNamesToUpload, Filename, Filepath, BundleId, WorkDir) ->
+	%
 	% verify inputs
 	%
 	handle_verify_inputs(S3Dir, DirNamesToUpload),
@@ -66,13 +89,6 @@ upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
 	%
 	handle_verify_zip_file(Filepath),
 
-
-	%
-	% create a working directory and unzip the zip file
-	%
-	{ok, Cwd} = file:get_cwd(),
-	WorkDir = itx:format("~s/scratch/~s", [Cwd, helper:uidintstr()]),
-	helper:cmd("mkdir -p ~s", [WorkDir]),
 
 
 	%
@@ -198,7 +214,7 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 	%
 	% init
 	%
-	dig:log("Uploading to S3"),
+	dig:log("Unzipping file"),
 
 
 	%
@@ -217,6 +233,7 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 	%
 	% handle verify uploaded folder name
 	%
+	dig:log("Verifying folder name"),
 	handle_verify_uploaded_folder_name(ZipDir0, BundleId),
 
 
@@ -231,6 +248,7 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 	%
 	% for each directory, check if exists and upload to s3
 	%
+	dig:log("Uploading to S3"),
 	lists:foreach(fun(DirNameToUpload) ->
 		case handle_upload_to_s3_check_directory_exists(ZipDir, DirNameToUpload) of
 			true ->
@@ -358,7 +376,7 @@ handle_download_from_s3(ObjectKey) ->
 
 
 	{ok, Cwd} = file:get_cwd(),
-	Fileloc = ?FLATTEN(io_lib:format("~s/scratch/~s", [Cwd, ObjectKey])),
+	Fileloc = ?FLATTEN(io_lib:format("~s/scratch/~s/~s", [Cwd, ?UPLOAD_TO_S3, ObjectKey])),
 
 	CmdRes = helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 cp --only-show-errors s3://~s/~s/~s ~s", [
 		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
@@ -445,16 +463,13 @@ handle_upload_seatnumber_zip_verify(SeatNumber, AttachmentName, Filepath) ->
 %
 %..............................................................................
 
-handle_upload_seatnumber_zip_upload_dir(ExamId, CandidateId, SeatNumber, _Filename, Filepath) ->
+handle_upload_seatnumber_zip_upload_dir(ExamId, _CandidateId, SeatNumber, _Filename, Filepath) ->
 
 	%
 	% init
 	%
-	ExamDb = anpcandidates:db(ExamId),
 	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
-	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CandidateId),
 	S3Dir = itf:val(ExamDoc, aws_s3_dir),
-	BundleId = itf:val(CandidateDoc, osm_bundle_fk),
 
 
 
