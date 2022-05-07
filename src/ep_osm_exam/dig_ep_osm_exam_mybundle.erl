@@ -30,6 +30,7 @@ heading() ->
 %------------------------------------------------------------------------------
 access(_, ?ADMIN) -> true;
 access(_, ?APPOSM_SCANUPLOADER) -> true;
+access(_, ?APPOSM_RECEIVER) -> true;
 access(_, _) -> false.
 
 
@@ -39,6 +40,7 @@ access(_, _) -> false.
 
 f(myassignment) ->
 	itf:dropdown(?F(myassignment, "My Role"), itf:options([
+		?F(createdby, "Created By"),
 		?F(scannedby, "Scanning Assigned"),
 		?F(qualityby, "QC / Upload Assigned"),
 		?F(both, "Both")
@@ -55,7 +57,7 @@ get() ->
 		filters=[
 			itf:build(?COREXS(season_fk), get_active_season_id()),
 			?OSMBDL(osm_exam_fk),
-			itf:build(f(myassignment), "scannedby"),
+			itf:build(f(myassignment), get_default_myassignment()),
 			?OSMBDL(scanningstate),
 			?OSMBDL(uploadstate),
 			?OSMBDL(inward_date),
@@ -99,6 +101,9 @@ fetch(D, From, Size, Fs) ->
 	% fs to filter by my username
 	%
 	FsMe = case itf:val2(Fs, myassignment) of
+		"createdby" -> [
+			itf:build(?OSMBDL(createdby), itxauth:user())
+		];
 		"scannedby" -> [
 			itf:build(?OSMBDL(scannedby), itxauth:user())
 		];
@@ -222,6 +227,14 @@ get_active_season_id() ->
 			[]
 	end.
 
+
+get_default_myassignment() ->
+	get_default_myassignment(itxauth:role()).
+
+get_default_myassignment(?APPOSM_RECEIVER) ->
+	"createdby";
+get_default_myassignment(_) ->
+	"scannedby".
 
 %------------------------------------------------------------------------------
 % end

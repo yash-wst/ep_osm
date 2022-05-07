@@ -76,8 +76,11 @@ fs(form) -> [
 
 fs(mybundle) -> [
 	?OSMBDL(osm_exam_fk),
+	?OSMBDL(number),
+	?OSMBDL(createdby),
 	?OSMBDL(scannedby),
 	?OSMBDL(qualityby),
+	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
 	?OSMBDL(uploadstate)
 ];

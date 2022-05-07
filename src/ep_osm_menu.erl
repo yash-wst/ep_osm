@@ -119,6 +119,7 @@ menu(?APPOSM_RECEIVER) ->
 			{dig_mm_ep_osm_scanuploader, ?VIEW, ?LN("Scanner & Uploader")}
 		]},
 		{topmenu, [
+			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},
 			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")},
 			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Scanning Status")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")}

@@ -45,6 +45,7 @@ get() ->
 		filters=anptest:fs(search),
 		size=25,
 		config=[
+			{searchbar_visibility, "show"},
 			{responsive_type, collapse}
 		]
 	}.

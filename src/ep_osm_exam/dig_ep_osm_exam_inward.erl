@@ -165,7 +165,8 @@ fetch(D, _From, _Size, [
 		layout_action_inwarding(BundleDoc) ++
 		layout_action_scanning(BundleDoc) ++
 		layout_action_uploading(BundleDoc) ++
-		layout_action_inward_form(BundleDoc),
+		layout_action_inward_form(BundleDoc) ++
+		layout_danger_actions_discard_bundle(BundleDoc, itxauth:role()),
 
 
 	%
@@ -187,6 +188,7 @@ fetch(D, _From, _Size, [
 	% return
 	%
 	{D#dig {
+		total=length(CandidateDocs1),
 		config=D#dig.config ++ [
 			{show_slno, true}
 		],
@@ -373,6 +375,39 @@ layout() ->
 
 
 
+%..............................................................................
+%
+% layout - danger actions
+%
+%..............................................................................
+
+
+%
+% action - discard bundle
+%
+layout_danger_actions_discard_bundle(BundleDoc, ?APPOSM_RECEIVER) ->
+
+	%
+	% init
+	%
+	case {
+		itf:val(BundleDoc, inwardstate), 
+		itf:val(BundleDoc, scanningstate), 
+		itf:val(BundleDoc, uploadstate)
+	} of
+		{InwardState, ScanningState, UploadState} when 
+			InwardState == "discarded";
+			ScanningState == ?COMPLETED;
+			UploadState == ?COMPLETED ->
+				[];
+		{_, _, _} -> [
+			{discard_bundle, "Discard Bundle", "Discard Bundle"}
+		]
+	end;
+layout_danger_actions_discard_bundle(_, _) ->
+		[].
+
+
 
 %..............................................................................
 %
@@ -472,6 +507,8 @@ layout_candidate_edit(BundleDoc, CDoc)  ->
 		itf:val(BundleDoc, inwardstate),
 		itf:val(BundleDoc, scanningstate)
 	} of
+		{_, "discarded", _} ->
+			[];
 		{User, InwardState, ScanningState} when
 			InwardState == [];
 			ScanningState == [] ->
@@ -589,6 +626,8 @@ layout_user_info(_) ->
 % layout - dtp by
 %
 %..............................................................................
+layout_dtp_by(_Type, _BundleDoc, _ProfileDocsDict, {"discarded", _, _}) ->
+	[];
 
 layout_dtp_by(Type, BundleDoc, ProfileDocsDict, BundleStates) ->
 	layout_dtp_by(
@@ -844,6 +883,17 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+event({confirmation_yes, discard_bundle}) ->
+	handle_discard_bundle();
+	
+event(discard_bundle = E) ->
+	itl:confirmation(
+		[
+			"Are you sure you want to discard the entire bundle?",
+			itl:instructions(instructions_discard_bundle())
+		],
+		E
+	);
 
 event(upload_form) ->
 	{ok, BundleDoc} = ep_osm_bundle_api:get(wf:q(osm_bundle_fk)),
@@ -1021,6 +1071,68 @@ event({itx, E}) ->
 % handler
 %------------------------------------------------------------------------------
 
+
+%..............................................................................
+%
+% handle - discard bundle
+%
+%..............................................................................
+
+handle_discard_bundle() ->
+
+	%
+	% init
+	%
+	ExamId = wf:q(osm_exam_fk),
+	BundleId = wf:q(osm_bundle_fk),
+	ExamDb = anpcandidates:db(ExamId),
+
+
+	%
+	% get candidate docs
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
+		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearchBundle, 0, ?INFINITY, [{use_index, ["osm_bundle_fk"]}]
+	),
+
+
+	%
+	% change candidate state to discarded
+	%
+	ListOfFsDoc = lists:map(fun(CDoc) ->
+		FsDoc = helper_api:doc2fields({ok, CDoc}),
+		itf:fs_merge(FsDoc, [
+			fields:build(anp_paper_uid, itx:format("~s_discarded_~s", [
+				itf:val(CDoc, anp_paper_uid), itf:idval(CDoc)
+			])),
+			fields:build(anpseatnumber, itx:format("~s_discarded_~s", [
+				itf:val(CDoc, anpseatnumber), itf:idval(CDoc)
+			])),
+			fields:build(anpstate, "anpstate_discarded")
+		])
+	end, CandidateDocs),
+	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
+
+
+	%
+	% change bundle number to discarded
+	%
+	FsToSaveBundle = [
+		itf:build(?OSMBDL(inwardstate), "discarded")
+	],
+	{ok, _} = ep_osm_bundle_api:save(FsToSaveBundle, ep_osm_bundle:fs(all), BundleId),
+
+
+	%
+	% reload
+	%
+	helper:redirect(wf:uri()).
+
+
 %..............................................................................
 %
 % handle - export bundle folder
@@ -1172,8 +1284,8 @@ handle_edit_candidate(CId) ->
 	%
 	% vals
 	%
-	UId = itf:val2(Fs3, anp_paper_uid),
-	SNo = itf:val2(Fs3, anpseatnumber),
+	UId = helper:trim(itf:val2(Fs3, anp_paper_uid)),
+	SNo = helper:trim(itf:val2(Fs3, anpseatnumber)),
 
 
 	%
@@ -2116,14 +2228,16 @@ get_bundle_state(BundleDoc) ->
 		itf:val(BundleDoc, scanningstate),
 		itf:val(BundleDoc, inwardstate)
 	} of
+		{_, _, "discarded"} ->
+			"Discarded";
 		{?COMPLETED, _, _} ->
 			"Upload Completed";
 		{_, ?COMPLETED, _} ->
 			"Scanning Completed";
 		{_, _, ?COMPLETED} ->
 			"Inward Completed";
-		{_, _, _} ->
-			[]
+		{Is, Ss, Us} ->
+			itx:format("~s_~s_~s", [Is, Ss, Us])
 	end.
 
 
@@ -2219,6 +2333,22 @@ assert_entry_does_not_exist_elsewhere(UId, SNo, CandidateDoc) ->
 
 cfg_show_previous_uploads() ->
 	itxconfigs_cache:get2(dig_ep_osm_exam_inward_show_previous_uploads, false).
+
+
+
+%------------------------------------------------------------------------------
+% instructions
+%------------------------------------------------------------------------------
+
+instructions_discard_bundle() ->
+	[
+		{ok, "This operation applies only to seat numbers in 'Not Uploaded' state"},
+		{ok, "All applicable seat numbers will be moved to 'Discarded' state"},
+		{ok, "Seat number will change from SNO to SNO_discarded"},
+		{ok, "Bundle inward state will change to Discarded"}
+	].
+
+
 
 %------------------------------------------------------------------------------
 % end

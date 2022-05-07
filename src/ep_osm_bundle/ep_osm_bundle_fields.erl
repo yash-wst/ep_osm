@@ -147,7 +147,8 @@ options(State) when State == inwardstate; State == scanningstate; State == uploa
 	itf:options([
 		?F(new, "New / Unassigned"),
 		?F(assigned, "Assigned"),
-		?F(completed, "Completed")
+		?F(completed, "Completed"),
+		?F(discarded, "Discarded")
 	]).
 
 %------------------------------------------------------------------------------
