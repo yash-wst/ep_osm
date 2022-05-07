@@ -139,7 +139,9 @@ layout_upload(TFs, Fs) ->
 	layout_upload(TFs, Fs, itf:val(Fs, anpstate)).
 
 
-layout_upload(_TFs, Fs, "anpstate_discarded") -> [
+layout_upload(_TFs, Fs, AnpState) when
+	AnpState == "anpstate_discarded";
+	AnpState == "anpstate_evaluation_rejected" -> [
 	ite:button(
 		move_to_yet_to_start,
 		"Move to Yet-to-start",
