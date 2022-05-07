@@ -139,10 +139,17 @@ layout_upload(TFs, Fs) ->
 	layout_upload(TFs, Fs, itf:val(Fs, anpstate)).
 
 
-layout_upload(_TFs, Fs, "anpstate_discarded") ->
+layout_upload(_TFs, Fs, "anpstate_discarded") -> [
+	ite:button(
+		move_to_yet_to_start,
+		"Move to Yet-to-start",
+		move_to_yet_to_start,
+		"btn btn-sm btn-danger-outline pull-sm-right"
+	),
 	itl:get(?EDIT, [itf:attachment(
 		?F({seatnumber_zip, itf:val(Fs, anpseatnumber)}, "Upload Zip file (SEATNUMBER.zip)"))
-	], noevent, table);
+	], noevent, table)
+];
 layout_upload(_TFs, _Fs, _) ->
 	[].
 
@@ -152,6 +159,15 @@ layout_upload(_TFs, _Fs, _) ->
 % events
 %------------------------------------------------------------------------------
 
+event({confirmation_yes, move_to_yet_to_start}) ->
+	handle_move_to_yet_to_start(wf:q(anptestid), wf:q(anpid));
+
+event(move_to_yet_to_start) ->
+	itl:confirmation(#panel {class="mycenter", body=[
+		#p {text="Have you fixed the problem with images?"},
+		#p {text="Do you want to change state from Discarded to Yet To Start?"}
+	]}, move_to_yet_to_start);
+		 
 event(Event) ->
 	?D(Event).
 
@@ -183,6 +199,42 @@ finish_upload_event(
 %------------------------------------------------------------------------------
 
 
+
+%------------------------------------------------------------------------------
+% handle
+%------------------------------------------------------------------------------
+
+handle_move_to_yet_to_start(ExamId, CandidateId) ->
+
+	%
+	% reset candidate
+	%
+	anpcandidate:handle_anpcandidate_reset(ExamId, CandidateId),
+
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CandidateId),
+
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		fields:build(anpstate, "anpstate_yettostart")
+	],
+	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
+	FComment = itf:d2f(CandidateDoc, fields:get(comments)),
+	FComment1 = itf:build_comment(FComment, Changelist), 
+
+
+	%
+	% save
+	%
+	{ok, _} = ep_osm_candidate_api:update(ExamId, CandidateDoc, FsToSave ++ [FComment1]),
+	helper:redirect(wf:uri()).
 
 
 %------------------------------------------------------------------------------
