@@ -70,8 +70,11 @@ upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
 	try
 		upload3(S3Dir, DirNamesToUpload, Filename, Filepath, BundleId, WorkDir)
 	catch Error:Message ->
+		%
+		% do not remove from s3 in case of error because 
+		% it migbt be needed for retry and debugging.
+		%
 		handle_cleanup(WorkDir, Filepath),
-		handle_remove_from_s3(Filename),
 		throw({Error, Message})
 	end.
 
