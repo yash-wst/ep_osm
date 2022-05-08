@@ -104,6 +104,19 @@ fetch(D, From, Size, Fs) ->
 	Results = layout_bundles(BundleDocs),
 
 
+	%
+	% ensure empty bundles do not terminate export
+	%
+	LenResults = length(Results),
+	LenBundleDocs = length(BundleDocs),
+	Results1 = if
+		LenResults < Size, LenBundleDocs == Size ->
+			[[] ||  _ <- lists:seq(1, LenBundleDocs)];
+		true ->
+			Results
+	end,
+
+
 
 
 	{D#dig {
@@ -126,7 +139,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Upload State"},
 			#dcell {type=header, val="Uploaded Date"}
 		]
-	}, Results}.
+	}, Results1}.
 
 
 
