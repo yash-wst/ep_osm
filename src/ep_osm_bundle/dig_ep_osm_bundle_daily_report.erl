@@ -43,13 +43,16 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
+			?COREXS(season_fk),
+			?OSMBDL(osm_exam_fk),
 			?OSMBDL(inward_date),
 			?OSMBDL(scanned_date),
 			?OSMBDL(uploaded_date)
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
-		]
+		],
+		size=1
 	}.
 
 
@@ -104,6 +107,7 @@ fetch(D, From, Size, Fs) ->
 
 
 	{D#dig {
+		total=?INFINITY,
 		dcell_headers=[
 			#dcell {type=header, val="Exam Code"},
 			#dcell {type=header, val="Exam Name"},
