@@ -281,8 +281,17 @@ layout_bundle_doc(BundleDoc) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+event({itx, {dig, export} = E}) ->
+
+	%
+	% assert
+	%
+	assert_export_time(),
+	ite:event(E);
+
 event({itx, E}) ->
 	ite:event(E).
+
 
 
 
@@ -295,6 +304,26 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
+
+
+
+%------------------------------------------------------------------------------
+% assert export time
+%------------------------------------------------------------------------------
+
+assert_export_time() ->
+	%
+	% init
+	%
+	{Hour, _, _} = erlang:time(),
+	?ASSERT(
+		(
+			(Hour >= itxconfigs_cache:get2(dig_ep_osm_bundle_daily_report_after_hours, 18)) or
+			(Hour < itxconfigs_cache:get2(dig_ep_osm_bundle_daily_report_before_hours, 6))
+		),
+		"Report can be exported only between 6pm and 6am"
+	).
+
 
 
 
