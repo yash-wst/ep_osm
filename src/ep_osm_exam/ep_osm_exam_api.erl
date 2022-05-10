@@ -28,6 +28,17 @@ getdocs_by_ids(ExamIds) ->
 	db:get_docs_by_ids(db(), ExamIds).
 
 
+getdocs_by_teststatus(Status) ->
+	FsFind = [
+		fields:build(teststatus, Status)
+	],
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		db(), FsFind, 0, ?INFINITY, [{use_index, ["teststatus"]}]
+	),
+	Docs.
+
+
+
 
 list() ->
 	lists:map(fun(D) ->
