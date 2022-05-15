@@ -314,7 +314,7 @@ handle_upload_to_s3_upload(ZipDir, S3Dir, DirNameToUpload) ->
 	CmdRes = helper:cmd("cd ~s; AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 sync --only-show-errors ~s s3://~s/~s/~s", [
 		ZipDir,
 		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region, ?AWS_S3_DEFAULT_REGION),
-		DirNameToUpload, configs:get(aws_s3_bucket), S3Dir, DirNameToUpload
+		DirNameToUpload, helper_s3:aws_s3_bucket(), S3Dir, DirNameToUpload
 	]),
 	CmdRes.
 
@@ -353,7 +353,7 @@ handle_download_from_s3(ObjectKey) ->
 
 	CmdRes = helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 cp --only-show-errors s3://~s/~s/~s ~s", [
 		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region, ?AWS_S3_DEFAULT_REGION),
-		configs:get(aws_s3_bucket), "browser_to_s3", ObjectKey,
+		helper_s3:aws_s3_bucket(), "browser_to_s3", ObjectKey,
 		Fileloc
 	]),
 
@@ -377,7 +377,7 @@ handle_remove_from_s3(ObjectKey) ->
 
 	CmdRes = helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 rm --only-show-errors s3://~s/~s/~s", [
 		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region, ?AWS_S3_DEFAULT_REGION),
-		configs:get(aws_s3_bucket), "browser_to_s3", ObjectKey
+		helper_s3:aws_s3_bucket(), "browser_to_s3", ObjectKey
 	]),
 
 	?ASSERT(

@@ -266,7 +266,7 @@ layout_upload_form() ->
 
 	Es = [
 		itxfile_s3_upload:form([
-			configs:get(aws_s3_bucket, []),
+			helper_s3:aws_s3_bucket(),
 			configs:get(aws_s3_access_key, []),
 			configs:get(aws_s3_secret, []),
 			configs:get(aws_s3_default_region, []),
@@ -459,7 +459,7 @@ handle_objectkey(ObjectKey) when ObjectKey /=[], ObjectKey /= undefined ->
 	%
 	try
 		_Infos = helper_s3:info_dir(
-			configs:get(aws_s3_bucket, []),
+			helper_s3:aws_s3_bucket(),
 			"browser_to_s3/" ++ ObjectKey
 		),
 

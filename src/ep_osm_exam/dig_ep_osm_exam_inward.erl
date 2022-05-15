@@ -420,7 +420,7 @@ layout_uploaded_pages(ExamDoc, BundleDoc, CDoc) ->
 
 
 layout_uploaded_pages(ExamDoc, _BundleDoc, CDoc, ?COMPLETED) ->
-	Bucket = configs:get(aws_s3_bucket, []),
+	Bucket = helper_s3:aws_s3_bucket(),
 	DirPath = itx:format("~s/~s/", [
 		itf:val(ExamDoc, aws_s3_dir), itf:val(CDoc, anpseatnumber)
 	]),
@@ -573,7 +573,7 @@ layout_upload_form(BundleDoc, _) ->
 
 	Es = [
 		itxfile_s3_upload:form([
-			configs:get(aws_s3_bucket, []),
+			helper_s3:aws_s3_bucket(),
 			configs:get(aws_s3_access_key, []),
 			configs:get(aws_s3_secret, []),
 			configs:get(aws_s3_default_region, []),
@@ -2033,7 +2033,7 @@ handle_uploaded_zip_file(ObjectKey) ->
 	%
 	try
 		_Infos = helper_s3:info_dir(
-			configs:get(aws_s3_bucket, []),
+			helper_s3:aws_s3_bucket(),
 			"browser_to_s3/" ++ ObjectKey
 		),
 
