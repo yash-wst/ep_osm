@@ -702,7 +702,6 @@ handle_export_results_bulk(Fs, Dir, From) ->
 		%
 		% create dig for export
 		%
-		?D(AnpState),
 		D = #dig {
 			module=?MODULE,
 			size=1000,
