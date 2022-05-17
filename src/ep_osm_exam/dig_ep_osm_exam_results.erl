@@ -669,9 +669,9 @@ handle_export_results_bulk(Fs, Email) ->
 
 
 
-handle_export_results_bulk(Fs, Dir, From) ->
+handle_export_results_bulk(Fs0, Dir, From) ->
 
-
+	Fs = dig:get_nonempty_fs(Fs0),
 	AnpState = minijobcontext:q(anpstate),
 
 
@@ -680,7 +680,7 @@ handle_export_results_bulk(Fs, Dir, From) ->
 	%
 	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
 	?ASSERT(
-		dig:get_nonempty_fs(Fs) /= [],
+		Fs /= [],
 		"Please select at least one exam filter"
 	),
 	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),

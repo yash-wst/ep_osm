@@ -49,8 +49,7 @@ fs(Doc) ->
 	%
 	% return fields
 	%
-	Dig = DigModule:get(),
-	Dig#dig.filters ++ fs().
+	DigModule:fs(search, undefined) ++ fs().
 
 
 %
