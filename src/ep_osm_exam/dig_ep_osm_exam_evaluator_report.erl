@@ -50,6 +50,7 @@ access(_, _) -> false.
 get() ->
 	#dig {
 		module=?MODULE,
+		pdf_orientation=portrait,
 		filters=[
 			?COREXS(season_fk),
 			?CORFAC(faculty_code_fk),
@@ -67,6 +68,11 @@ get() ->
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
+		],
+		config=[
+			{responsive_type, scroll},
+			{show_slno, true},
+			{pdf_table_summary, layout_table_summary()}
 		]
 	}.
 
@@ -89,6 +95,72 @@ init() ->
 %------------------------------------------------------------------------------
 % function - fetch
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% [osm_exam_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=osm_exam_fk, uivalue=ExamId},
+	#field {id=profileid, uivalue=EvaluatorId}
+]) ->
+
+	%
+	% get stats
+	%
+	Stats = ep_osm_exam_api:getstats_evaldate(ExamId),
+	Stats1 = lists:filter(fun({[_Date, ProfileId], _Count}) ->
+		EvaluatorId == ProfileId
+	end, Stats),
+	Stats2 = lists:sort(fun(A, B) ->
+		A < B
+	end, Stats1),
+
+
+
+	%
+	% layout results
+	%
+	{Results, TotalCount} = lists:foldl(fun(
+			{[Date, _EvaluatorId], Count}, {Acc, AccCount}
+	) ->
+		{Acc ++ [[
+			#dcell {val=Date},
+			#dcell {val=Count}
+		]], AccCount + Count}
+	end, {[], 0}, Stats2),
+
+
+
+	%
+	% Header
+	%
+	Header = [
+		#dcell {type=header, val="Date"},
+		#dcell {type=header, val="Count"}
+	],
+
+
+	%
+	% return
+	%
+	{
+		D#dig {
+			show_filter=false,
+			total=length(Results),
+			description="Evaluator Report",
+			events=[
+				ite:button(export_pdf, "Print", {itx, {dig, export_pdf}})
+			],
+			actions=[],
+			dcell_headers=Header
+		},
+		Results ++ [[
+			#dcell {type=header, val="Total"},
+			#dcell {type=header, val=TotalCount}
+		]]
+	};
 
 
 %..............................................................................
@@ -170,6 +242,16 @@ fetch(D, _From, _Size, [
 			},
 			#dcell {
 				val=Count
+			},
+			#dcell {
+				show_csv=false,
+				val=#link {
+					new=true,
+					text="Report",
+					url=itx:format("/~p?id=~s&evaluatorid=~s", [
+						?MODULE, ExamId, ProfileId
+					])
+				}
 			}
 		]
 
@@ -190,7 +272,8 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Email"},
 		#dcell {type=header, val="Role"},
 		#dcell {type=header, val="Date"},
-		#dcell {type=header, val="Count"}
+		#dcell {type=header, val="Count"},
+		#dcell {type=header, show_csv=false, val="Report"}
 	],
 
 
@@ -378,6 +461,27 @@ layout_cell(RoleId, StatsDict, ProfileIds) ->
 		bgcolor=get_class_evaluator(length(ProfileIds), TotalPapers),
 		val=length(ProfileIds)
 	}.
+
+
+
+%..............................................................................
+%
+% layout - table summary
+%
+%..............................................................................
+
+layout_table_summary() ->
+	layout_table_summary(itxcontext:q(id), itxcontext:q(evaluatorid)).
+
+layout_table_summary(ExamId, EvaluatorId) when
+	ExamId /= undefined, EvaluatorId /= undefined ->
+	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
+	Es = itl:get(?VIEW, itf:d2f(ExamDoc, anptest:fs(report)), noevent, tableonly),
+	[Es];
+
+layout_table_summary(_, _) ->
+	undefined.
+
 
 
 %------------------------------------------------------------------------------
