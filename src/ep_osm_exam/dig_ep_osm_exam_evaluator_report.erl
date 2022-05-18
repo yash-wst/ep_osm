@@ -72,7 +72,8 @@ get() ->
 		config=[
 			{responsive_type, scroll},
 			{show_slno, true},
-			{pdf_table_summary, layout_table_summary()}
+			{pdf_table_summary, layout_table_summary()},
+			{pdf_table_footer, layout_table_footer()}
 		]
 	}.
 
@@ -157,8 +158,8 @@ fetch(D, _From, _Size, [
 			dcell_headers=Header
 		},
 		Results ++ [[
-			#dcell {type=header, val="Total"},
-			#dcell {type=header, val=TotalCount}
+			#dcell {val="Total"},
+			#dcell {val=TotalCount}
 		]]
 	};
 
@@ -476,12 +477,45 @@ layout_table_summary() ->
 layout_table_summary(ExamId, EvaluatorId) when
 	ExamId /= undefined, EvaluatorId /= undefined ->
 	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
-	Es = itl:get(?VIEW, itf:d2f(ExamDoc, anptest:fs(report)), noevent, tableonly),
-	[Es];
+	FsReport = lists:map(fun(F) ->
+		F#field {validators=[]}
+	end, anptest:fs(report)),
+	Es = itl:get(?VIEW, itf:d2f(ExamDoc, FsReport), noevent, tableonly),
+	[
+		#p {text="Exam Details", class="font-weight-bold"},
+		Es
+	];
 
 layout_table_summary(_, _) ->
 	undefined.
 
+
+
+%..............................................................................
+%
+% layout - table footer
+%
+%..............................................................................
+
+layout_table_footer() ->
+	layout_table_footer(itxcontext:q(id), itxcontext:q(evaluatorid)).
+
+layout_table_footer(ExamId, EvaluatorId) when
+	ExamId /= undefined, EvaluatorId /= undefined ->
+
+	{ok, ProfileDoc} = profiles:getdoc(EvaluatorId),
+	FsAck = lists:map(fun(F) ->
+		F#field {validators=[]}
+	end, profile_anpevaluator:fs(ack)),
+	Es = itl:get(?VIEW, itf:d2f(ProfileDoc, FsAck),
+		noevent, tableonly),
+	[
+		#p {text="Examiner Details", class="font-weight-bold"},
+		Es
+	];
+
+layout_table_footer(_, _) ->
+	undefined.
 
 
 %------------------------------------------------------------------------------
