@@ -138,7 +138,7 @@ fetch(D, _From, _Size, [
 	% Header
 	%
 	Header = [
-		#dcell {type=header, val="Date"},
+		#dcell {width=26, type=header, val="Date"},
 		#dcell {type=header, val="Count"}
 	],
 
@@ -158,8 +158,8 @@ fetch(D, _From, _Size, [
 			dcell_headers=Header
 		},
 		Results ++ [[
-			#dcell {val="Total"},
-			#dcell {val=TotalCount}
+			#dcell {val=#p {class="font-weight-bold", text="Total"}},
+			#dcell {val=#p {class="font-weight-bold", text=TotalCount}}
 		]]
 	};
 
