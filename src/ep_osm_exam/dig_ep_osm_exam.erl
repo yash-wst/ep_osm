@@ -51,6 +51,7 @@ get() ->
 			ite:button(export, "CSV", {itx, {dig, export}})
 		],
 		actions=[
+			{export_exam_folders, "Export Exam Folders", "Export Exam Folders"},
 			{action_import, "+ Import", "+ Import"},
 			{action_import_student_data, "Import Student Data", "Import Student Data"},
 			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."},
@@ -312,6 +313,9 @@ event(action_uploadzip) ->
 event({download, DocId, AttachmentName}) ->
 	attachment:download(anptests:getdb(), DocId, AttachmentName);
 
+event(export_exam_folders) ->
+	handle_export_exams_dir();
+
 event(E) ->
 	dig_mm:event(E).
 
@@ -338,7 +342,91 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 %------------------------------------------------------------------------------
 
 
+%..............................................................................
+%
+% handle export exams dir
+%
+%..............................................................................
 
+
+handle_export_exams_dir() ->
+
+	%
+	% init
+	%
+	FsFind = dig:get_nonempty_fs(helper:state(dig)),
+	?ASSERT(
+		FsFind /= [],
+		"Please select at least one filter"
+	),
+
+	%
+	% init
+	%
+	RootDir = helper:create_unique_dir(),
+
+	%
+	% create dirs in batches
+	%
+	handle_export_exams_dir(0, RootDir, FsFind),
+
+	%
+	% zip the root dir
+	%
+	{Filename, Filepath} = helper:zip_clean_dir(RootDir),
+	itxdownload:stream(Filename, Filepath).
+
+
+handle_export_exams_dir(From, RootDir, FsFind) ->
+	%
+	% get matching exam docs in batches
+	%
+	ExamDocs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, FsFind),
+
+	%
+	% create directory for each exam doc
+	%
+	lists:foreach(fun(ExamDoc) ->
+		handle_export_exam_dir(RootDir, ExamDoc)
+	end , ExamDocs),
+
+
+	case length(ExamDocs) < ?BATCH_SIZE of
+		true ->
+			done;
+		_ ->
+			handle_export_exams_dir(From + ?BATCH_SIZE, ?BATCH_SIZE, FsFind)
+	end.
+
+
+handle_export_exam_dir(RootDir, ExamDoc) ->
+	%
+	% init
+	% get faculty, program, subject documents
+	%
+	SeasonId = itf:val(ExamDoc, season_fk),
+	FacultyId = itf:val(ExamDoc, faculty_code_fk),
+	ProgramId = itf:val(ExamDoc, program_code_fk),
+	SubjectId = itf:val(ExamDoc, subject_code_fk),
+
+	SeasonDoc = ep_core_exam_season_api:get_from_cache(SeasonId),
+	FacultyDoc = ep_core_faculty_api:get_from_cache(FacultyId),
+	ProgramDoc = ep_core_program_api:get_from_cache(ProgramId),
+	SubjectDoc = ep_core_subject_api:get_from_cache(SubjectId),
+
+	SeasonName = helper:sanitisestr(itf:val(SeasonDoc, name)),
+	FacultyName = helper:sanitisestr(itf:val(FacultyDoc,faculty_name)),
+	ProgramName = helper:sanitisestr(itf:val(ProgramDoc,program_name)),
+	SubjectName = helper:sanitisestr(itf:val(SubjectDoc,subject_name)),
+	ExamName = helper:sanitisestr(itf:val(ExamDoc, testname)),
+
+	%
+	% create dir
+	%
+	Dir = itx:format("~s/~ts/~ts/~ts/~ts/~ts/", [
+		RootDir, SeasonName, FacultyName, ProgramName, SubjectName, ExamName
+	]),
+	helper:cmd("mkdir -p ~ts", [Dir]).
 
 %..............................................................................
 %
