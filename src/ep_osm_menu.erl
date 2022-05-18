@@ -74,21 +74,23 @@ menu(?APPOSM_ANPADMIN) ->
 		]}
 	];
 
-menu(?APPOSM_EVALUATOR) ->
-	[
-	];
+menu(Role) when
+	Role == ?APPOSM_EVALUATOR;
+	Role == ?APPOSM_MODERATOR;
+	Role == ?APPOSM_REVALUATOR;
+	Role == ?APPOSM_MODERATOR_REVAL ->
+	case itxconfigs_cache:get2(ep_osm_menu_evaluators, false) of
+		true ->
+			ProfileModule = ?L2A(itx:format("profile_~s", [Role])),
+			[
+				{topmenu, [
+					{ProfileModule, bank_details, ?LN("Bank Details")}
+				]}
+			];
+		false -> [
+		]
+	end;
 
-menu(?APPOSM_MODERATOR) ->
-	[
-	];
-
-menu(?APPOSM_REVALUATOR) ->
-	[
-	];
-
-menu(?APPOSM_MODERATOR_REVAL) ->
-	[
-	];
 
 
 menu(?APPOSM_CONTROLLER) ->
