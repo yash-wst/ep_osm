@@ -438,7 +438,7 @@ handle_import_csv_to_fs(List) ->
 			{ok, CandidateDoc} ->
 				FsToSave = [
 					itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
-					itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
+					itf:build(itf:textbox(?F(timestamp_inward)), ?I2S(EpochTime))
 				],
 				FsAll1 = itf:d2f(CandidateDoc, FsAll),
 				itf:fs_merge(FsAll1, FsToSave);
