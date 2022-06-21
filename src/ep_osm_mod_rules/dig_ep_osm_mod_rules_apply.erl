@@ -258,6 +258,7 @@ handle_apply_yes_1(Fs, RuleDocId, RunningMode) ->
 	Docs = get_test_docs(Fs, 0, ?INFINITY),
 	{ok, ModDoc} = ep_osm_mod_rules_api:get(RuleDocId),
 	Rules = get_moderation_rules(ModDoc),
+	MinRequiredCandidatesCount = helper:s2i(itf:val(ModDoc, min_required_candidates)),
 
 
 	%
@@ -265,7 +266,17 @@ handle_apply_yes_1(Fs, RuleDocId, RunningMode) ->
 	%
 	lists:foreach(fun(Doc) ->
 		Type = itf:val(ModDoc, type),
-		handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc)
+
+		%
+		% skip the rule if there is a requirement for minimum number
+		% of candidates.
+		%
+		TestId = itf:idval(Doc),
+		Db = ep_osm_candidate_api:db(TestId),
+		TestDocsCount = db:count(Db),
+
+		handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc, TestDocsCount, MinRequiredCandidatesCount)
+
 	end, Docs).
 
 
@@ -276,7 +287,24 @@ handle_apply_yes_1(Fs, RuleDocId, RunningMode) ->
 %
 %..............................................................................
 
-handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc) ->
+handle_apply_yes_test_doc(_Type, _RunningMode, _Rules, Doc, TestDocsCount, MinRequiredCandidatesCount) when
+	is_integer(MinRequiredCandidatesCount),
+	TestDocsCount < MinRequiredCandidatesCount ->
+
+	%
+	% init
+	%
+	Testname = io_lib:format("~s ~s", [
+		itf:val(Doc, anptestcourseid),
+		itf:val(Doc, testname)
+	]),
+
+	dig:log(warning, io_lib:format("Skipped ~s. Number of documents in the test (~p) is less than required by rule the rule (~p)", [
+		Testname, TestDocsCount, MinRequiredCandidatesCount
+	]));
+
+
+handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc, _TestDocsCount, _MinRequiredCandidatesCount) ->
 
 	%
 	% init

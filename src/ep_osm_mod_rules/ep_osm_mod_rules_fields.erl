@@ -14,6 +14,14 @@ f(type = I) ->
 	itf:dropdown(?F(I, "Type"), options(I));
 
 
+f(min_required_candidates = I) ->
+	F = itf:textbox(?F(I, "Minimum candidates")),
+	F#field {
+		validators=[],
+		label_short_text="Minimum number of candidates required in the test for this rule"
+	};
+
+
 f(frommarks = I) ->
 	itf:textbox_int(?F(I, "From Marks"));
 
