@@ -17,6 +17,62 @@
 
 %..............................................................................
 %
+% layout - actions for bundle
+%
+%..............................................................................
+
+layout_actions_bundle(BundleDoc, _IsBundleActive = true) ->
+	layout_action_bundle_default() ++
+	layout_action_inwarding(BundleDoc) ++
+	layout_action_scanning(BundleDoc) ++
+	layout_action_uploading(BundleDoc) ++
+	layout_action_inward_form(BundleDoc) ++
+	layout_danger_actions_discard_bundle(BundleDoc, itxauth:role());
+layout_actions_bundle(_BundleDoc, _) ->
+	itl:disable_page_inputs(),
+	helper_ui:flash(error, "Inward disabled for this bundle!"),
+	[].
+
+
+
+
+%..............................................................................
+%
+% layout - actions for exam
+%
+%..............................................................................
+
+layout_actions_exam(_IsBundleActive = true) ->
+	case itxauth:role() of
+		?APPOSM_RECEIVER -> [
+			{create_bundle, "Create New Bundle", "Create New Bundle"},
+			{action_import, "+ Import", "+ Import"}
+		];
+		_ -> [
+		]
+	end;
+layout_actions_exam(_) ->
+	itl:disable_page_inputs(),
+	helper_ui:flash(error, "Inward disabled for this exam!"),
+	[].
+
+
+
+%..............................................................................
+%
+% layout - action bundle default
+%
+%..............................................................................
+
+layout_action_bundle_default() ->
+	[
+		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
+		{export_bundle_csv, "Export Bundle CSV", "Export Bundle CSV"},
+		{export_bundle_dir, "Export Bundle Folder", "Export Bundle Folder"}
+	]. 
+
+%..............................................................................
+%
 % layout - action inward form
 %
 %..............................................................................

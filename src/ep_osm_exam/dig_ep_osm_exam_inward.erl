@@ -121,6 +121,9 @@ fetch(D, _From, _Size, [
 	ExamDb = anpcandidates:db(OsmExamId),
 	{ok, ExamDoc} = ep_osm_exam_api:get(OsmExamId),
 	{ok, BundleDoc} = ep_osm_bundle_api:get(OsmBundleId),
+	SeasonId = itf:val(ExamDoc, season_fk),
+	{ok, SeasonDoc} = ep_core_exam_season_api:get(SeasonId),
+	IsBundleActive = is_bundle_active(SeasonDoc, ExamDoc),
 
 
 
@@ -152,21 +155,6 @@ fetch(D, _From, _Size, [
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
 		]
 	end, CandidateDocs1),
-
-
-	%
-	% actions
-	%
-	Actions = [
-		{print_bundle_cover, "Print Bundle Cover", "Print Bundle Cover"},
-		{export_bundle_csv, "Export Bundle CSV", "Export Bundle CSV"},
-		{export_bundle_dir, "Export Bundle Folder", "Export Bundle Folder"}
-	] ++
-		dig_ep_osm_exam_inward_actions:layout_action_inwarding(BundleDoc) ++
-		dig_ep_osm_exam_inward_actions:layout_action_scanning(BundleDoc) ++
-		dig_ep_osm_exam_inward_actions:layout_action_uploading(BundleDoc) ++
-		dig_ep_osm_exam_inward_actions:layout_action_inward_form(BundleDoc) ++
-		dig_ep_osm_exam_inward_actions:layout_danger_actions_discard_bundle(BundleDoc, itxauth:role()),
 
 
 	%
@@ -202,7 +190,9 @@ fetch(D, _From, _Size, [
 				get_bundle_state(BundleDoc)
 			])
 		},
-		actions=Actions
+		actions=dig_ep_osm_exam_inward_actions:layout_actions_bundle(
+			BundleDoc, IsBundleActive
+		)
 	}, [Header] ++ Results};
 
 
@@ -220,6 +210,14 @@ fetch(D, From, Size, [
 	% init
 	%
 	{ok, ExamDoc} = ep_osm_exam_api:get(OsmExamId),
+	SeasonId = itf:val(ExamDoc, season_fk),
+	{ok, SeasonDoc} = ep_core_exam_season_api:get(SeasonId),	
+	IsBundleActive = is_bundle_active(SeasonDoc, ExamDoc),
+
+
+	%
+	% get bundle docs
+	%
 	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
 		ep_osm_bundle_api:db(), Fs, From, Size
 	),
@@ -273,7 +271,9 @@ fetch(D, From, Size, [
 						itf:val(BDoc, inwardstate),
 						itf:val(BDoc, inward_date)
 					]),
-					layout_user_info(dict:find(itf:val(BDoc, createdby), ProfileDocsDict))
+					layout_user_info(
+						dict:find(itf:val(BDoc, createdby), ProfileDocsDict)
+					)
 				]
 			},
 			#dcell {
@@ -284,7 +284,8 @@ fetch(D, From, Size, [
 						itf:val(BDoc, scanned_date)
 					]),
 					layout_dtp_by(
-						scannedby, BDoc, ProfileDocsDict, {InwardState, ScanningState, UploadState}
+						scannedby, BDoc, ProfileDocsDict,
+						{InwardState, ScanningState, UploadState}
 					)
 				]
 			},
@@ -296,7 +297,8 @@ fetch(D, From, Size, [
 						itf:val(BDoc, uploaded_date)
 					]),
 					layout_dtp_by(
-						qualityby, BDoc, ProfileDocsDict, {InwardState, ScanningState, UploadState}
+						qualityby, BDoc, ProfileDocsDict,
+						{InwardState, ScanningState, UploadState}
 					)
 				]
 			},
@@ -310,18 +312,6 @@ fetch(D, From, Size, [
 		]
 	end, BundleDocsSorted),
 
-
-	%
-	% actions
-	%
-	Actions = case itxauth:role() of
-		?APPOSM_RECEIVER -> [
-			{create_bundle, "Create New Bundle", "Create New Bundle"},
-			{action_import, "+ Import", "+ Import"}
-		];
-		_ -> [
-		]
-	end,
 
 
 	%
@@ -344,7 +334,9 @@ fetch(D, From, Size, [
 		description=io_lib:format("~s / ~s", [
 			itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
 		]),
-		actions=Actions
+		actions=dig_ep_osm_exam_inward_actions:layout_actions_exam(
+			IsBundleActive
+		)
 	}, [Header] ++ Results};
 
 
@@ -1110,6 +1102,16 @@ get_bundle_state(BundleDoc) ->
 			itx:format("~s_~s_~s", [Is, Ss, Us])
 	end.
 
+
+
+
+is_bundle_active(SeasonDoc, ExamDoc) ->
+	case {itf:val(SeasonDoc, state), itf:val(ExamDoc, teststatus)} of
+		{?ACTIVE, TestStatus} when TestStatus /= ?COMPLETED ->
+			true;
+		_ ->
+			false
+	end.
 
 
 %------------------------------------------------------------------------------
