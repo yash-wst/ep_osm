@@ -881,15 +881,21 @@ event({assign_bundle, Type, BundleDoc}) ->
 
 
 event(export_bundle_csv) ->
-	dig_ep_osm_exam_inward_handler:handle_export_bundle_csv(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+	dig_ep_osm_exam_inward_handler:handle_export_bundle_csv(
+		wf:q(osm_exam_fk), wf:q(osm_bundle_fk)
+	);
 
 
 event(print_bundle_cover) ->
-	dig_ep_osm_exam_inward_handler:handle_print_bundle_cover(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+	dig_ep_osm_exam_inward_handler:handle_print_bundle_cover(
+		wf:q(osm_exam_fk), wf:q(osm_bundle_fk)
+	);
 
 
 event(textbox_enterkey) ->
-	dig_ep_osm_exam_inward_handler:handle_inward(wf:q(anp_paper_uid), wf:q(anpseatnumber), wf:q(total_pages));
+	dig_ep_osm_exam_inward_handler:handle_inward(
+		wf:q(anp_paper_uid), wf:q(anpseatnumber), wf:q(total_pages)
+	);
 
 
 event(refresh) ->

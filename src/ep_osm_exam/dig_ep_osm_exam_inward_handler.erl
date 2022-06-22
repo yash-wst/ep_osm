@@ -806,7 +806,18 @@ handle_inward(UId, SNo, TotalPages) ->
 		(TotalPages ==[]) or (helper:l2i(TotalPages) /= error),
 		"Total pages should be empty or an integer"
 	),
-
+	case UId of
+		[] ->
+			valid;
+		_ ->
+			validators:validate(UId, fields:get(anpseatnumber))
+	end,
+	case SNo of
+		[] ->
+			valid;
+		_ ->
+			validators:validate(SNo, fields:get(anpseatnumber))
+	end,
 
 
 
