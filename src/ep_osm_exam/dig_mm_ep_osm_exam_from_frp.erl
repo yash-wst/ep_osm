@@ -273,7 +273,7 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 	),
 
 
-	dig:log(warning, "PROCESSING ... " ++ itf:val(FrpSubjectDoc, subject_code)),
+	dig:log(warning, "PROCESSING ... " ++ itf:val(FrpSubjectDoc, subject_code) ++ " / " ++ itf:val(FrpSubjectDoc, pattern)),
 
 
 	%
@@ -362,6 +362,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 		end
 	end, FrpStudentList),
 	dig:log(info, io_lib:format("Missing found: ~p", [length(FrpStudentListMissing)])),
+	dig:log(info, io_lib:format("Already exit: ~p", [length(OsmCandidateDocs)])),
 
 
 	%
