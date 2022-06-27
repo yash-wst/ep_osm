@@ -361,6 +361,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 				dict:find(PRN1, OsmCandidateDocsDict) == error
 		end
 	end, FrpStudentList),
+	dig:log(info, io_lib:format("From RPS: ~p", [length(FrpStudentList)-1])), % Header in rps list
 	dig:log(info, io_lib:format("Missing found: ~p", [length(FrpStudentListMissing)])),
 	dig:log(info, io_lib:format("Already exit: ~p", [length(OsmCandidateDocs)])),
 
