@@ -26,6 +26,7 @@ handle_import_validate(List) ->
 	ok = handle_import_validate_csv_length(List),
 	ok = handle_import_validate_csv_non_empty(List),
 	ok = handle_import_validate_bundles_not_completed(List),
+	ok = handle_import_validate_seatnumber_format(List),
 	ok = handle_import_validate_duplicates_seatnumbers(List),
 	ok = handle_import_ensure_exam_dbs(),
 	ok.
@@ -163,6 +164,46 @@ handle_import_validate_bundles_not_completed(List) ->
 		import_validation,
 		BundlesCompleted == [],
 		{bundles_completed, BundlesCompleted}
+	).
+
+
+
+%..............................................................................
+%
+% validate seat number format
+%
+%..............................................................................
+
+handle_import_validate_seatnumber_format(List) ->
+
+
+	%
+	% init
+	%
+	FAnpSeatNumber = fields:get(anpseatnumber),
+
+
+	%
+	% find out errors
+	%
+	{_Oks, Errors} = lists:foldl(fun(Csv, {AccOKs, AccErrors}) ->
+		[_SubjectCode, _BundleNumber, SeatNumber] = Csv,
+		case  validators:is_valid(SeatNumber, FAnpSeatNumber) of
+			true ->
+				{AccOKs ++ [Csv], AccErrors};
+			_ ->
+				{AccOKs, AccErrors ++ [Csv]}
+		end
+	end, {[], []}, List),
+
+
+	%
+	% assert validation
+	%
+	?ASSERT(
+		import_validation,
+		Errors == [],
+		{invalid_seat_numbers, Errors}
 	).
 
 

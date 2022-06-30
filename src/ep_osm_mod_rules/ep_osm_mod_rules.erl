@@ -29,6 +29,7 @@ access(_, _) -> false.
 fs(basic) -> [
 	?OSMRLS(name),
 	?OSMRLS(type),
+	?OSMRLS(min_required_candidates),
 	?OSMRLS(rules)
 ];
 
@@ -51,6 +52,7 @@ fs(edit) ->
 fs({edit, Doc}) -> [
 	?OSMRLS(name),
 	?OSMRLS(type),
+	?OSMRLS(min_required_candidates),
 	?OSMRLS({rules, Doc})
 ];
 
