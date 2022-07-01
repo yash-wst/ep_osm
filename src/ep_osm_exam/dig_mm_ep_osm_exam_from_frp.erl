@@ -450,7 +450,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 			dig:log(success, "Created test for subject " ++ SubjectCode),
 			{ok,  OsmExamDoc0};
 		[OsmExamDoc0] ->
-			dig:log(info, "Found test for subject " ++ SubjectCode),
+			dig:log(info, "Found test for subject " ++ SubjectCode ++ " id:" ++ itf:idval(OsmExamDoc0)),
 			{ok, OsmExamDoc0};
 		_ ->
 			dig:log(error, "Skip: Multiple exam docs found on OSM for subject code " ++ SubjectCode),
@@ -478,6 +478,7 @@ handle_import_from_frp_examdoc_ensure_season_exists(FrpSeasonDoc) ->
 	%
 	case ep_core_exam_season_api:get(SeasonId) of
 		{ok, Doc} ->
+			dig:log(info, "Examseason exits, id:" ++ itf:idval(Doc)),
 			{ok, Doc};
 		_ ->
 			FsToCreate = itf:d2f(FrpSeasonDoc, [
