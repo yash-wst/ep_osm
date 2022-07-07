@@ -10,7 +10,9 @@ UN=$7
 PW=$8
 SHOW_MARKING=$9
 DBPREFIX=${10}
-FNAMES=${11}
+OBJECT_PREFIX_S3=${11}
+OBJECT_PREFIX_LOCAL=${12}
+FNAMES=${13}
 
 
 CPDF=`pwd`/lib/itx/scripts/cpdf/cpdf
@@ -31,7 +33,7 @@ cd $DIR
 # add evaluator canvas marking to images if specified
 #
 if [ "true" == "$SHOW_MARKING" ]; then
-	node $SDIR/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT $DBPREFIX
+	node $SDIR/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT $DBPREFIX $OBJECT_PREFIX_S3 $OBJECT_PREFIX_LOCAL
 fi
 
 

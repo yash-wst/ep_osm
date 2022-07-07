@@ -11,6 +11,8 @@ var pw = arguments[4];
 var dbhost = arguments[5];
 var dbport = arguments[6];
 var dbprefix = arguments[7];
+var object_prefix_s3 = arguments[8];
+var object_prefix_local = arguments[9];
 var auth = un + ':' + pw;
 
 if (dbprefix == "undefined")
@@ -80,7 +82,9 @@ http.get(options, function(resp) {
 	});
 
 	resp.on('end', function() {
-		var json = JSON.parse(body)
+
+		var body1 = body.split(object_prefix_s3).join(object_prefix_local);
+		var json = JSON.parse(body1);
 		var canvasJson = json[anptype];
 
 		oex.createImages(canvasJson);

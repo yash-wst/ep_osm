@@ -1206,7 +1206,7 @@ assert_entry_does_not_exist_elsewhere(UId, SNo, CandidateDoc) ->
 %------------------------------------------------------------------------------
 
 cfg_show_previous_uploads() ->
-	itxconfigs_cache:get2(dig_ep_osm_exam_inward_show_previous_uploads, false).
+	itxconfigs_cache:get2(dig_ep_osm_exam_inward_show_previous_uploads, true).
 
 
 
