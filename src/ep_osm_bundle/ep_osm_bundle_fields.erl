@@ -111,12 +111,27 @@ f(uploaded_date = I) ->
 f(comments = I) ->
 	itf:notes(?F(I, "Comments"));
 
+f(packet_number = I) ->
+	itf:textbox(?F(I, "Packet Number"),
+		[required, alphanumeric, validator(unique_packet_number)]);
+
+f(rack_location = I) ->
+	itf:textbox(?F(I, "Rack Location"), [required, alphanumeric]);
 
 f(O) -> throw(O).
 
 %------------------------------------------------------------------------------
 % validators
 %------------------------------------------------------------------------------
+
+validator(unique_packet_number) ->
+	{
+		"Must be unique in the test",
+		fun(_, V) ->
+			ep_osm_bundle_api:check_packet_number_exists(V)
+		end
+	};
+
 validator(O) ->
 	throw(O).
 

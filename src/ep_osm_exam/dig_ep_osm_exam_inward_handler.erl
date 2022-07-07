@@ -694,6 +694,18 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 					#tablecell {body="Bundle Number"},
 					#tablecell {class=CellClass, body=itf:val(BundleDoc, number)}
 				]
+			},
+			#tablerow {
+				cells=[
+					#tablecell {body="Packet Number"},
+					#tablecell {class=CellClass, body=itf:val(BundleDoc, packet_number)}
+				]
+			},
+			#tablerow {
+				cells=[
+					#tablecell {body="Rack Location"},
+					#tablecell {class=CellClass, body=itf:val(BundleDoc, rack_location)}
+				]
 			}
 		]
 	},
@@ -955,7 +967,7 @@ handle_insert_candidatedoc(BundleDoc, CDoc) ->
 %
 %..............................................................................
 
-handle_create_bundle(ExamId) ->
+handle_create_bundle(ExamId, PacketNumber, RackLocation) ->
 
 	%
 	% init
@@ -970,6 +982,8 @@ handle_create_bundle(ExamId) ->
 	FsToSave = [
 		itf:build(?COREXS(season_fk), SeasonId),
 		itf:build(?OSMBDL(osm_exam_fk), ExamId),
+		itf:build(?OSMBDL(packet_number),PacketNumber ),
+		itf:build(?OSMBDL(rack_location), RackLocation),
 		itf:build(?OSMBDL(createdby), itxauth:user()),
 		itf:build(?OSMBDL(createdon), helper:epochtimestr())
 	],
@@ -985,6 +999,40 @@ handle_create_bundle(ExamId) ->
 			helper_ui:flash(error, "Sorry, could not create bundle!")
 	end.
 
+
+
+
+%..............................................................................
+%
+% handle - create bundle form -
+%
+% shows confirmation popup and input textboxes for packet number and rack
+% location
+%
+%..............................................................................
+
+handle_create_bundle_form() ->
+	Fs = [
+		?OSMBDL(packet_number),
+		?OSMBDL(rack_location)
+	],
+
+	Es = itl:get(?CREATE, Fs, ite:get(create_bundle, "Create Bundle"), table),
+
+	Modal_layout = [ #panel {
+						class="mycenter",
+						body=[
+							Es,
+							#br{},
+							#span {text="Are you sure you want to create a new
+								bundle?"},
+							#br{},
+							#span {text="Please create new bundle only after
+								previous bundle is full"}
+						]
+					}],
+
+	itl:modal_fs(itl:section("Create a new bundle", Modal_layout)).
 
 
 %..............................................................................

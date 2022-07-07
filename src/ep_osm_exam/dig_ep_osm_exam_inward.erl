@@ -902,19 +902,15 @@ event(refresh) ->
 	dig:refresh();
 
 
-event({confirmation_yes, create_bundle}) ->
-	dig_ep_osm_exam_inward_handler:handle_create_bundle(wf:q(osm_exam_fk));
-
-
 event(create_bundle) ->
-	itl:confirmation(
-		#panel {class="mycenter", body=[
-			#p {text="Are you sure you want to create a new bundle?"},
-			#p {text="Please create new bundle only after previous bundle is full"}
-		]},
-		create_bundle
+	dig_ep_osm_exam_inward_handler:handle_create_bundle(
+		wf:q(osm_exam_fk),
+		wf:q(packet_number),
+		wf:q(rack_location)
 	);
 
+event(create_bundle_form) ->
+	dig_ep_osm_exam_inward_handler:handle_create_bundle_form();
 
 event({itx, E}) ->
 	ite:event(E).

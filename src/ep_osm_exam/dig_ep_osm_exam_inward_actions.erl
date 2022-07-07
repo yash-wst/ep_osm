@@ -45,7 +45,7 @@ layout_actions_bundle(_BundleDoc, _) ->
 layout_actions_exam(_IsBundleActive = true) ->
 	case itxauth:role() of
 		?APPOSM_RECEIVER -> [
-			{create_bundle, "Create New Bundle", "Create New Bundle"},
+			{create_bundle_form, "Create New Bundle", "Create New Bundle"},
 			{action_import, "+ Import", "+ Import"}
 		];
 		_ -> [
