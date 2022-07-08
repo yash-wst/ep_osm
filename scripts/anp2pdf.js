@@ -83,8 +83,11 @@ http.get(options, function(resp) {
 
 	resp.on('end', function() {
 
-		var body1 = body.split(object_prefix_s3).join(object_prefix_local);
-		var json = JSON.parse(body1);
+
+		var body1 = body.split(object_prefix_s3).join("file://" + object_prefix_local);
+		var body2 = body1.split("https://lib.weshinetech.in/images").join("file://" + object_prefix_local);
+
+		var json = JSON.parse(body2);
 		var canvasJson = json[anptype];
 
 		oex.createImages(canvasJson);

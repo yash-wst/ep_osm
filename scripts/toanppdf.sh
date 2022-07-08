@@ -33,7 +33,7 @@ cd $DIR
 # add evaluator canvas marking to images if specified
 #
 if [ "true" == "$SHOW_MARKING" ]; then
-	node $SDIR/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT $DBPREFIX OBJECT_PREFIX_S3 OBJECT_PREFIX_LOCAL
+	node $SDIR/anp2pdf.js $TID $ANPID $TYPE $UN $PW $DBHOST $DBPORT $DBPREFIX $OBJECT_PREFIX_S3 $OBJECT_PREFIX_LOCAL
 fi
 
 
