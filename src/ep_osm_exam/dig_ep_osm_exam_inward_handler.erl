@@ -1012,27 +1012,22 @@ handle_create_bundle(ExamId, PacketNumber, RackLocation) ->
 %..............................................................................
 
 handle_create_bundle_form() ->
+
+	%
+	% init
+	%
 	Fs = [
 		?OSMBDL(packet_number),
+		?OSMBDL(packet_count),
 		?OSMBDL(rack_location)
 	],
 
+
+	%
+	% show dialog
+	%
 	Es = itl:get(?CREATE, Fs, ite:get(create_bundle, "Create Bundle"), table),
-
-	Modal_layout = [ #panel {
-						class="mycenter",
-						body=[
-							Es,
-							#br{},
-							#span {text="Are you sure you want to create a new
-								bundle?"},
-							#br{},
-							#span {text="Please create new bundle only after
-								previous bundle is full"}
-						]
-					}],
-
-	itl:modal_fs(itl:section("Create a new bundle", Modal_layout)).
+	itl:modal_fs(itl:section("Create a new bundle", Es)).
 
 
 %..............................................................................

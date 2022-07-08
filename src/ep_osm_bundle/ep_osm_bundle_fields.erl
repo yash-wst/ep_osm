@@ -115,6 +115,9 @@ f(packet_number = I) ->
 	itf:textbox(?F(I, "Packet Number"),
 		[required, alphanumeric, validator(unique_packet_number)]);
 
+f(packet_count = I) ->
+	itf:textbox_int(?F(I, "Packet Count"));
+
 f(rack_location = I) ->
 	itf:textbox(?F(I, "Rack Location"), [required, alphanumeric]);
 
