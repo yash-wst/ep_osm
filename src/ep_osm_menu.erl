@@ -70,7 +70,9 @@ menu(?APPOSM_ANPADMIN) ->
 			{dig_ep_osm_exam_results, ?VIEW, ?LN("OSM Results")}
 		]},
 		{?LN("Reports"), [
-			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")}
+			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")},
+			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Status Report")},
+			{dig_mm_ep_osm_bundle, ?VIEW, ?LN("Bundle Status Report")}
 		]}
 	];
 
@@ -117,14 +119,17 @@ menu(?APPOSM_SCANUPLOADER) ->
 
 menu(?APPOSM_RECEIVER) ->
 	[
-		{?LN("Profiles"), [
-			{dig_mm_ep_osm_scanuploader, ?VIEW, ?LN("Scanner & Uploader")}
-		]},
 		{topmenu, [
 			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},
 			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")},
-			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Scanning Status")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")}
+		]},
+		{?LN("Profiles"), [
+			{dig_mm_ep_osm_scanuploader, ?VIEW, ?LN("Scanner & Uploader")}
+		]},
+		{?LN("Reports"), [
+			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Status Report")},
+			{dig_mm_ep_osm_bundle, ?VIEW, ?LN("Bundle Status Report")}
 		]}
 	];
 

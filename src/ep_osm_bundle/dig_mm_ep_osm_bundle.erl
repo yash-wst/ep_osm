@@ -56,7 +56,9 @@ fields(ep_osm_bundle, _Fs) ->
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
-access(_, ?ADMIN) -> true;
+access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_ANPADMIN) -> true;
+access(_, ?APPOSM_RECEIVER) -> true;
 access(_, _) -> false.
 
 
