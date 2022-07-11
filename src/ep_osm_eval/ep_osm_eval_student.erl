@@ -189,6 +189,42 @@ event(Event) ->
 %------------------------------------------------------------------------------
 
 
+%
+% get anpid anptestid
+%
+get_anptestid_anpid(SeasonId, SubjectId, PRN) ->
+	%
+	% get osm exam by season id and subject id
+	%
+	{ok, SubjectDoc} = ep_core_subject_api:get(SubjectId),
+	FsFind = [
+		fields:build(season_fk, SeasonId),
+		fields:build(anptestcourseid, itf:val(SubjectDoc, subject_code)),
+		fields:build(exam_pattern, itf:val(SubjectDoc, pattern))
+	],
+	ExamDocs =ep_osm_exam_api:fetch(0, 10, FsFind, [
+		{use_index, ["season_fk"]}
+	]),
+	get_anptestid_anpid(SeasonId, SubjectId, PRN, ExamDocs).
+
+
+get_anptestid_anpid(_SeasonId, _SubjectId, PRN, [ExamDoc]) ->
+	%
+	% get candidate doc
+	%
+	ExamId = itf:idval(ExamDoc),
+	case anpcandidates:get_by_sno(ExamId, PRN) of
+		{error, not_found} ->
+			{error, candidate_not_found};
+		CFs ->
+			{ExamId, itf:val(CFs, '_id')}
+	end;
+get_anptestid_anpid(_SeasonId, _SubjectId, _PRN, Docs) ->
+	{error, Docs}.
+
+
+
+
 
 %------------------------------------------------------------------------------
 % handle
