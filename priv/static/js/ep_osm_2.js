@@ -278,6 +278,17 @@ ANP.download_pdf = function (sno) {
 };
 
 
+///////////////////////////////////////////////////////////////////////////////
+
+ANP.disable_selection = function () {
+
+	for(var canvasid in ANP.canvasobjs) {
+		var canvas = ANP.canvasobjs[canvasid];
+		canvas.isDrawingMode = false;
+	}
+};
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
