@@ -52,7 +52,8 @@ get() ->
 		],
 		actions=[
 			{export_exam_folders, "Export Exam Folders", "Export Exam Folders"},
-			{action_import, "+ Import", "+ Import"},
+			{action_import_from_rps, "Import - Create exams from RPS", "Import - Create exams from RPS"},
+			{action_import, "Import - Create exams from CSV", "Import - Create exams from CSV"},
 			{action_import_student_data, "Import Student Data", "Import Student Data"},
 			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."},
 			{action_change_state, "Change State", "Change State"}
@@ -289,6 +290,9 @@ layout_upload_form() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event(action_import_from_rps) ->
+	helper:redirect("/dig_mm_ep_osm_exam_from_frp");
 
 event({browser_to_s3_completed, ObjectKey}) ->
 	handle_objectkey_upload_completed(ObjectKey);

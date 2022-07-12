@@ -83,6 +83,7 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
+		mode=?VIEW,
 		module=?MODULE,
 		filters=fs(form),
 		size=25
@@ -284,6 +285,13 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 	),
 
 
+	%
+	% check if subject doc exists else, create it
+	%
+	{ok, _OsmSubjectDoc} = handle_import_from_frp_examdoc_ensure_subject_exists(
+		FrpSubjectDoc
+	),
+
 
 	%
 	% check if exam doc exists else, create it
@@ -406,6 +414,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	% init
 	%
 	SeasonId = itf:idval(OsmSeasonDoc),
+	SubjectId = itf:idval(FrpSubjectDoc),
 	SubjectCode = itf:val(FrpSubjectDoc, subject_code),
 	SubjectPattern = itf:val(FrpSubjectDoc, pattern),
 	ExamName = itf:val(FrpExamDoc, exam_name),
@@ -434,6 +443,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 			),
 			FsToCreate = [
 				fields:build(season_fk, SeasonId),
+				fields:build(subject_code_fk, SubjectId),
 				fields:build(aws_s3_dir, S3Dir),
 				fields:build(anptestcourseid, SubjectCode),
 				fields:build(testname, ExamName),
@@ -502,6 +512,46 @@ handle_import_from_frp_examdoc_ensure_season_exists(FrpSeasonDoc) ->
 			{ok, OsmSeasonDoc}
 	end.
 
+
+%..............................................................................
+%
+% handle - ensure subject exists
+%
+%..............................................................................
+
+handle_import_from_frp_examdoc_ensure_subject_exists(FrpSubjectDoc) ->
+
+	%
+	% init
+	%
+	SubjectId = itf:idval(FrpSubjectDoc),
+
+
+	%
+	% create if does not exists
+	%
+	case ep_core_subject_api:get(SubjectId) of
+		{ok, Doc} ->
+			dig:log(info, "Subject doc exits, id:" ++ itf:idval(Doc)),
+			{ok, Doc};
+		_ ->
+			FsToCreate = itf:d2f(FrpSubjectDoc, [
+				itf:id(),
+				?CORSUB(subject_code),
+				?CORSUB(subject_name),
+				?CORSUB(subject_description),
+				?CORSUB(subject_short_name),
+				?CORSUB(state),
+				?CORSUB(pattern)
+			]),
+			{ok, OsmSubjectDoc} = ep_core_subject_api:save(FsToCreate),
+			dig:log(success, io_lib:format("Subject created: ~s, ~s, ~s", [
+				itf:val(OsmSubjectDoc, name),
+				itf:val(OsmSubjectDoc, state),
+				itf:val(OsmSubjectDoc, year)
+			])),
+			{ok, OsmSubjectDoc}
+	end.
 
 
 %..............................................................................
