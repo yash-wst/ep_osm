@@ -374,7 +374,7 @@ handle_import_validate_batch(_List) ->
 
 
 %------------------------------------------------------------------------------
-% handle import csv to fs
+% handle import csv to fs - imports student master data
 %------------------------------------------------------------------------------
 
 handle_import_csv_to_fs(List) ->
@@ -401,7 +401,7 @@ handle_import_csv_to_fs(List) ->
 			fields:build(anp_paper_uid, PRN),
 			fields:build(anpseatnumber, SeatNumber),
 			fields:build(anpfullname, Fullname),
-			fields:build(anpstate, "anpstate_not_uploaded")
+			fields:build(anpstate, "anpstate_expected")
 		],
 
 

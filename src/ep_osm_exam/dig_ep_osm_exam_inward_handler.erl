@@ -287,7 +287,7 @@ handle_edit_candidate(CId) ->
 %
 %..............................................................................
 
-handle_inward_completed() ->
+handle_inward_completed(ExamId, BundleId) ->
 
 	%
 	% init
@@ -303,6 +303,33 @@ handle_inward_completed() ->
 		itf:build(?OSMBDL(inward_date), helper:date_today_str()),
 		itf:build(?OSMBDL(bundle_size), ?I2S(length(get_bundle_docs())))
 	],
+
+	%
+	% mark all anpstate as NU
+    %
+	ExamDb = anpcandidates:db(ExamId),
+
+	%
+	% 1. get all candidate docs of this bundle
+	%
+	FsToSearch = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
+		itf:build(itf:textbox(?F(anpstate)), "anpstate_expected")
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearch, 0, ?INFINITY
+	),
+
+	%
+	% 2. change candidate state from expected to not uploaded
+	%
+	ListOfFsDoc = lists:map(fun(CDoc) ->
+		FsDoc = helper_api:doc2fields({ok, CDoc}),
+		itf:fs_merge(FsDoc, [
+			fields:build(anpstate, "anpstate_not_uploaded")
+		])
+	end, CandidateDocs),
+	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
 
 
 	%

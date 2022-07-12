@@ -793,7 +793,7 @@ event({edit_receiver, CId}) ->
 	dig_ep_osm_exam_inward_handler:handle_edit_candidate(CId);
 
 event({confirmation_yes, inward_completed}) ->
-	dig_ep_osm_exam_inward_handler:handle_inward_completed();
+	dig_ep_osm_exam_inward_handler:handle_inward_completed(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
 
 event(inward_completed) ->
 	itl:confirmation(

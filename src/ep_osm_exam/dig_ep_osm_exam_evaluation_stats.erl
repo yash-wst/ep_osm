@@ -804,6 +804,8 @@ states() ->
 %
 get_class(State, Number) when Number > 0 ->
 	case State of
+		"anpstate_expected" ->
+			"table-info";
 		"anpstate_not_uploaded" ->
 			"table-info";
 		"anpstate_yettostart" ->
