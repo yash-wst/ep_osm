@@ -661,6 +661,8 @@ layout_dtp_by(
 start_upload_event(_) ->
 	helper_ui:flash(warning, "Uploading. Please wait ...").
 
+finish_upload_event({_,file_import_student_data} = Tag, AttachmentName, LocalFileData, _Node) ->
+	dig_ep_osm_exam:finish_upload_event(Tag, AttachmentName, LocalFileData, _Node);
 
 finish_upload_event(Tag, Filename, Fileloc, Node) ->
 	case string:to_lower(filename:extension(Filename)) of
@@ -762,6 +764,10 @@ event(inward_form) ->
 
 event(export_bundle_dir) ->
 	dig_ep_osm_exam_inward_handler:handle_export_bundle_dir(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+
+event(import_master_data) ->
+	dig_mm:handle_show_action("Import Student Data", dig_ep_osm_exam:layout_import_student_data());
+
 
 event({browser_to_s3_completed, _BundleDoc, ObjectKey}) ->
 	case configs:getbool(process_via_minijob, false) of
