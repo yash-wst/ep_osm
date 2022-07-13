@@ -96,6 +96,9 @@ get() ->
 			{show_send_reminder, "Send Reminder", "Send Reminder"},
 			{show_reset_booklet_state, "Reset Booklet State", "Reset Booklet State"}
 		],
+		config=[
+			{responsive_type, scroll}
+		],
 		size=25
 	}.
 
@@ -294,6 +297,7 @@ dcell_days_since_test(TodaySeconds, Doc) ->
 	Testdate = itf:val(Doc, startdate),
 	DaysSinceTest = get_days_since_test(TodaySeconds, Testdate),
 	#dcell {
+		type=label,
 		bgcolor=get_class_days_since_test(DaysSinceTest),
 		val=[
 			#span {text=DaysSinceTest},
@@ -312,6 +316,7 @@ dcell_exam_actions(Doc) ->
 	Fs = itf:d2f(Doc, [itf:id()]),
 	Links = helper_ui:layout_slinks(anptest, Fs),
 	#dcell {
+		type=label,
 		val_export="",
 		val=Links
 	}.
