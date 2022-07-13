@@ -168,23 +168,42 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 %
 %..............................................................................
 
-handle_remove_candidate(CId) ->
+handle_remove_candidate(CandidateId) ->
 
 	%
 	% init
 	%
-	ExamDb = anpcandidates:db(wf:q(osm_exam_fk)),
+	ExamId = wf:q(osm_exam_fk),
+	ExamDb = anpcandidates:db(ExamId),
 
 
 	%
-	% delete
+	% delete - but don't delete from master data
 	%
-	case anpcandidates:delete(ExamDb, CId) of
-		{ok, _} ->
-			dig:refresh();
+	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CandidateId),
+	ANPstate = itf:val2(CandidateDoc, anpstate),
+	case ANPstate of
+		"anpstate_expected" ->
+			FsToSave = [
+				fields:build(osm_bundle_fk, []),
+				fields:build(timestamp_inward, [])
+			],
+			case ep_osm_candidate_api:update(ExamId, CandidateDoc, FsToSave) of
+				{ok, _} ->
+					dig:refresh();
+				_ ->
+					helper_ui:flash(error, "Error in updating master data.")
+			end;
+
 		_ ->
-			helper_ui:flash(error, "Sorry, could not delete!")
-	end.
+			case anpcandidates:delete(ExamDb, CandidateId) of
+				{ok, _} ->
+					dig:refresh();
+				_ ->
+					helper_ui:flash(error, "Sorry, could not delete!")
+			end
+		end.
+
 
 
 
