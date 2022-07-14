@@ -4,9 +4,18 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 
+pagejs() -> [
+	fabricjs,
+	"/lib/ep_osm/priv/static/js/ep_osm_eval_v2.js"
+].
+
+pagecss() -> [
+	"/lib/ep_osm/priv/static/css/ep_osm_eval_v2.css"
+].
+
+
 main() ->
-	helper:state(adminkit_enabled, true),
-	ita:auth(?APPOSM, ?MODULE, #template {file="lib/ep_osm/priv/static/templates/html/ep_osm_eval_v2.html"}).
+	ita:auth(?APPOSM, ?MODULE, #template {file="lib/itx/priv/static/adminkit/html/entered.html"}).
 
 title() ->
 	?LN("Evaluation").
@@ -24,9 +33,9 @@ access(_, ?APPOSM_REVALUATOR) -> true;
 access(_, ?APPOSM_MODERATOR_REVAL) -> true;
 access(_, _) -> false.
 
-%-----------------------------------------------------------------------------------------------
+%------------------------------------------------------------------------------
 % event
-%-----------------------------------------------------------------------------------------------
+%------------------------------------------------------------------------------
 
 event(E) ->
 	anpcandidate:event(E).
@@ -34,31 +43,47 @@ event(E) ->
 api_event(X, Y, Z) ->
 	anpcandidate:api_event(X, Y, Z).
 
-%-----------------------------------------------------------------------------------------------
+%------------------------------------------------------------------------------
 % layout
-%-----------------------------------------------------------------------------------------------
+%------------------------------------------------------------------------------
 layout() ->
 
+	%
+	% init data
+	%
 	TId = wf:q(anptest:id()),
 	TFs = anptests:get(TId),
 	Fs = anpcandidates:get(anpcandidate:db(), wf:q(anpcandidate:id())),
 
 
+
+	%
+	% init layout
+	%
+	layout_init_page(),
+
+
+
+	%
+	% layout elements
+	%
 	Elements = [
 
+		%
+		% layout nav bar
+		%
+		layout_navbar(),
+
     	marks_box(TFs, Fs),
-
     	toolbar(),
-
 		#panel {
 			id="placeholder",
 			class="placeholder2"
 		},
-
 		#panel {
 			class="review-area",
 			body=layout:grow([
-				review_area(TFs, Fs)
+				layout_review_area(TFs, Fs)
 			])
 		}
 
@@ -69,11 +94,41 @@ layout() ->
 	Elements.
 
 
+%..............................................................................
+%
+% layout - init page
+%
+%..............................................................................
 
+layout_init_page() ->
+	%
+	% hide sidebar
+	%
+	akit_sidebar:collapse().
+
+
+
+%..............................................................................
+%
+% layout - navbar
+%
+%..............................................................................
+
+layout_navbar() ->
+	layout:grow([
+		layout:g(6, ep_osm_eval_v2_navbar:get_navbar_left_section()),
+		layout:g(6, ep_osm_eval_v2_navbar:get_navbar_right_section())
+	]).
+
+
+
+%..............................................................................
 %
 % layout - review view panels
 %
-review_area(TFs, Fs) ->
+%..............................................................................
+
+layout_review_area(TFs, Fs) ->
 	#panel {
 	body=[
 		#panel {
@@ -126,6 +181,11 @@ review_area(TFs, Fs) ->
 	]}.
 
 
+%..............................................................................
+%
+% layout - answer paper
+%
+%..............................................................................
 layout_answerpaper(TFs, Fs) ->
 
 	%
@@ -197,6 +257,12 @@ layout_answerpaper(TFs, Fs) ->
 		}
 	].
 
+
+%..............................................................................
+%
+% layout - answer paper page
+%
+%..............................................................................
 
 layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 	%
