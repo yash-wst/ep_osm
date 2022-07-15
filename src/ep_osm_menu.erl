@@ -16,6 +16,7 @@ menu(?APPOSM_ADMIN) ->
 			{dig_mm_ep_osm_controller, ?VIEW, ?LN("Controller")},
 			{dig_mm_ep_osm_receiver, ?VIEW, ?LN("Receiver")},
 			{dig_mm_ep_osm_scanuploader, ?VIEW, ?LN("Scanner & Uploader")},
+			{dig_mm_ep_osm_qc, ?VIEW, ?LN("QC")},
 			{dig_mm_ep_osm_cap, ?VIEW, ?LN("CAPS Centre")},
 			{dig_mm_ep_core_institute, ?VIEW, ?LN("Institute")}
 		]},
@@ -109,6 +110,14 @@ menu(?APPOSM_CONTROLLER) ->
 
 
 menu(?APPOSM_SCANUPLOADER) ->
+	[
+		{topmenu, [
+			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},
+			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")}
+		]}
+	];
+
+menu(?APPOSM_QC) ->
 	[
 		{topmenu, [
 			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},

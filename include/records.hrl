@@ -10,6 +10,7 @@
 -define(APPOSM_RECEIVER, "osmreceiver").
 -define(APPOSM_SCANUPLOADER, "osmscanuploader").
 -define(APPOSM_CONTROLLER, "osmcontroller").
+-define(APPOSM_QC, "osmqc").
 
 -define(APPOSM_ANPADMIN, "anpadmin").
 -define(APPOSM_EVALUATOR, "anpevaluator").
@@ -40,6 +41,9 @@
 
 -define(OSMCAN(Id), itf:field(ep_osm_candidate_fields, Id)).
 -define(OSMCAN(Id, Field), itf:field(ep_osm_candidate_fields, Id, Field)).
+
+-define(OSMQC(Id), itf:field(ep_osm_qc_fields, Id)).
+-define(OSMQC(Id, Field), itf:field(ep_osm_qc_fields, Id, Field)).
 
 %
 % entities

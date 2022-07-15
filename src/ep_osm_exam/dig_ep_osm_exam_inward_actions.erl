@@ -26,6 +26,7 @@ layout_actions_bundle(BundleDoc, _IsBundleActive = true) ->
 	layout_action_inwarding(BundleDoc) ++
 	layout_action_scanning(BundleDoc) ++
 	layout_action_uploading(BundleDoc) ++
+	layout_action_qc(BundleDoc) ++
 	layout_action_inward_form(BundleDoc) ++
 	layout_danger_actions_discard_bundle(BundleDoc, itxauth:role());
 layout_actions_bundle(_BundleDoc, _) ->
@@ -181,6 +182,38 @@ layout_action_uploading(BundleDoc) ->
 		]
 	end.
 
+
+
+%..............................................................................
+%
+% layout - action qc
+%
+%..............................................................................
+
+layout_action_qc(BundleDoc) ->
+	layout_action_qc(BundleDoc, ep_osm_config:is_qc_enabled()).
+
+
+layout_action_qc(BundleDoc, true) ->
+	%
+	% init
+	%
+	User = itxauth:user(),
+
+
+	%
+	% action
+	%
+	case {itf:val(BundleDoc, qcby), itf:val(BundleDoc, qcstate)} of
+		{User, "assigned"} ->
+			[
+				{qc_completed, "QC Completed", "QC Completed"}
+			];
+		_ -> [
+		]
+	end;
+layout_action_qc(_BundleDoc, false) ->
+	[].
 
 
 %..............................................................................

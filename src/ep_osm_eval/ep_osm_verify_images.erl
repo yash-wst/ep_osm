@@ -22,6 +22,7 @@ heading() ->
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_RECEIVER) -> true;
 access(_, ?APPOSM_SCANUPLOADER) -> true;
+access(_, ?APPOSM_QC) -> true;
 access(_, _) -> false.
 
 

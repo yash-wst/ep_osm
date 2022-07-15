@@ -78,9 +78,12 @@ f(scannedby = I) ->
 	F#field {options=options(I)};
 
 f(qualityby = I) ->
-	F = itf:textbox_picker(?F(I, "QC/Uploaded By")),
+	F = itf:textbox_picker(?F(I, "Uploaded By")),
 	F#field {options=options(I)};
 
+f(qcby = I) ->
+	F = itf:textbox_picker(?F(I, "QC By")),
+	F#field {options=options(I)};
 
 f(inwardstate = I) ->
 	itf:dropdown(?F(I, "Inward State"), options(I));
@@ -93,6 +96,8 @@ f(scanningstate = I) ->
 f(uploadstate = I) ->
 	itf:dropdown(?F(I, "Upload State"), options(I));
 
+f(qcstate = I) ->
+	itf:dropdown(?F(I, "QC State"), options(I));
 
 f(bundle_size = I) ->
 	itf:textbox_readonly(?F(I, "Bundle Size"));
@@ -107,6 +112,8 @@ f(scanned_date = I) ->
 f(uploaded_date = I) ->
 	itf:date(?F(I, "Uploaded Date"));
 
+f(qc_date = I) ->
+	itf:date(?F(I, "QC Date"));
 
 f(comments = I) ->
 	itf:notes(?F(I, "Comments"));
@@ -119,7 +126,7 @@ f(packet_count = I) ->
 	itf:textbox_int(?F(I, "Packet Count"));
 
 f(rack_location = I) ->
-	itf:textbox(?F(I, "Rack Location"), [required, alphanumeric]);
+	itf:textbox(?F(I, "Rack Location"), [required, fullname]);
 
 f(O) -> throw(O).
 
@@ -142,6 +149,24 @@ validator(O) ->
 % options
 %------------------------------------------------------------------------------
 
+options(qcby) ->
+	#search {
+		title=?LN("Select User"),
+		db=itxprofiles:db(),
+		displayfs=[
+			?ITXPRF(username),
+			?ITXPRF(email),
+			?ITXPRF(mobile)
+		],
+		filterfs=[
+			itf:build(?ITXPRF(profiletype), ?APPOSM_QC),
+			?ITXPRF(username),
+			?ITXPRF(email),
+			?ITXPRF(mobile)
+		],
+		size=10
+	};
+
 options(Type) when Type == scannedby; Type == qualityby ->
 	#search {
 		title=?LN("Select User"),
@@ -161,7 +186,11 @@ options(Type) when Type == scannedby; Type == qualityby ->
 	};
 
 
-options(State) when State == inwardstate; State == scanningstate; State == uploadstate ->
+options(State) when 
+	State == inwardstate;
+	State == scanningstate;
+	State == uploadstate;
+	State == qcstate ->
 	itf:options([
 		?F(new, "New / Unassigned"),
 		?F(assigned, "Assigned"),

@@ -811,6 +811,10 @@ get_class(State, Number) when Number > 0 ->
 	case State of
 		"anpstate_expected" ->
 			"table-info";
+		"anpstate_quality_check" ->
+			"table-warning";
+		"anpstate_on_hold" ->
+			"table-danger";
 		"anpstate_not_uploaded" ->
 			"table-info";
 		"anpstate_yettostart" ->

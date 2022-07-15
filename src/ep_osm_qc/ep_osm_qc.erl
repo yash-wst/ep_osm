@@ -1,4 +1,4 @@
--module(ep_osm_bundle).
+-module(ep_osm_qc).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -7,13 +7,13 @@ main() ->
 	ita:auth(?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered.html"})).
 
 title() ->
-	?LN("ep_osm_bundle").
+	?LN("ep_osm_qc").
 
 heading() ->
-	?LN("ep_osm_bundle").
+	?LN("ep_osm_qc").
 
 db() ->
-	"ep_osm_bundle".
+	ep_osm_qc_api:db().
 
 %------------------------------------------------------------------------------
 % access
@@ -25,92 +25,13 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 fs(basic) -> [
-	?COREXS(season_fk),
-	?OSMBDL(osm_exam_fk),
-
-	?OSMBDL(number),
-	?OSMBDL(packet_number),
-	?OSMBDL(packet_count),
-	?OSMBDL(rack_location),
-
-	?OSMBDL(createdby),
-	?OSMBDL(createdon),
-	?OSMBDL(scannedby),
-	?OSMBDL(qualityby),
-	?OSMBDL(qcby),
-
-	?OSMBDL(inwardstate),
-	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate),
-	?OSMBDL(qcstate),
-
-	?OSMBDL(bundle_size),
-	?OSMBDL(inward_date),
-	?OSMBDL(scanned_date),
-	?OSMBDL(uploaded_date),
-	?OSMBDL(qc_date),
-
-	?OSMBDL(comments)
+	itf:build(?ITXPRF(profiletype), ?APPOSM_QC),
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email),
+	?ITXPRF(password_bcrypt)
 ];
-
-fs(index) -> [
-	?OSMBDL(osm_exam_fk),
-	?OSMBDL(number),
-	?OSMBDL(packet_number),
-	?OSMBDL(createdby),
-	?OSMBDL(createdon),
-	?OSMBDL(scannedby),
-	?OSMBDL(qualityby),
-	?OSMBDL(qcby),
-	?OSMBDL(inwardstate),
-	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate),
-	?OSMBDL(qcstate),
-	?OSMBDL(inward_date),
-	?OSMBDL(scanned_date),
-	?OSMBDL(uploaded_date),
-	?OSMBDL(qc_date)
-];
-
-fs(form) -> [
-	?COREXS(season_fk),
-	?OSMBDL(osm_exam_fk),
-	?OSMBDL(number),
-	?OSMBDL(packet_number),
-	?OSMBDL(packet_count),
-	?OSMBDL(rack_location),
-	?OSMBDL(bundle_size),
-	?OSMBDL(createdon),
-	?OSMBDL(createdby),
-	?OSMBDL(scannedby),
-	?OSMBDL(qualityby),
-	?OSMBDL(qcby),
-	?OSMBDL(inwardstate),
-	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate),
-	?OSMBDL(qcstate),
-	?OSMBDL(inward_date),
-	?OSMBDL(scanned_date),
-	?OSMBDL(uploaded_date),
-	?OSMBDL(qc_date)
-];
-
-fs(mybundle) -> [
-	?OSMBDL(osm_exam_fk),
-	?OSMBDL(number),
-	?OSMBDL(packet_number),
-	?OSMBDL(packet_count),
-	?OSMBDL(rack_location),
-	?OSMBDL(createdby),
-	?OSMBDL(scannedby),
-	?OSMBDL(qualityby),
-	?OSMBDL(qcby),
-	?OSMBDL(inwardstate),
-	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate),
-	?OSMBDL(qc_date)
-];
-
 
 fs(view) ->
 	fs(basic);
@@ -118,25 +39,41 @@ fs(view) ->
 fs(create) ->
 	fs(basic);
 
-fs(edit) -> [
-	?OSMBDL(inwardstate),
-	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate),
-	?OSMBDL(qcstate)
-];
+fs(edit) ->
+	fs(basic);
 
 fs(update) ->
 	fs(basic);
 
-fs(search) ->
-	fs(basic);
+fs(search) -> [
+	itf:build(?ITXPRF(profiletype), ?APPOSM_QC),
+	?ITXPRF(username),
+	?ITXPRF(mobile),
+	?ITXPRF(email)
+];
+
+fs(form) -> [
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email)
+];
+
+fs(displayfs) -> [
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email)
+];
+
+
+fs(index) ->
+	fs(search);
 
 fs(grid) ->
 	fs(basic);
 
 fs(import) -> [
-	?ITXF({sep, #pre {text="subject_code,bundle_number,anpseatnumber"}}),
-	itf:hidden(?F(osm_exam_fk)),
 	itf:attachment()
 ];
 

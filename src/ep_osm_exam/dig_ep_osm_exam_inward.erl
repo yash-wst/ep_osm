@@ -52,6 +52,7 @@ access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, ?APPOSM_CONTROLLER) -> true;
 access(_, ?APPOSM_RECEIVER) -> true;
 access(_, ?APPOSM_SCANUPLOADER) -> true;
+access(_, ?APPOSM_QC) -> true;
 access(_, _) -> false.
 
 
@@ -239,7 +240,8 @@ fetch(D, From, Size, [
 		Acc ++ [
 			itf:val(BDoc, createdby),
 			itf:val(BDoc, scannedby),
-			itf:val(BDoc, qualityby)
+			itf:val(BDoc, qualityby),
+			itf:val(BDoc, qcby)
 		]
 	end, [], BundleDocsSorted),
 	UsernamesUnique = helper:unique(Usernames),
@@ -261,47 +263,45 @@ fetch(D, From, Size, [
 		InwardState = itf:val(BDoc, inwardstate),
 		ScanningState = itf:val(BDoc, scanningstate),
 		UploadState = itf:val(BDoc, uploadstate),
+		QCState = itf:val(BDoc, qcstate),
+		BundleStates = {InwardState, ScanningState, UploadState, QCState},
 
 		[
 			#dcell {val=itf:val(BDoc, number)},
 			#dcell {
-				bgcolor=get_bgcolor(inwardstate, InwardState, ScanningState, UploadState),
+				bgcolor=get_bgcolor(inwardstate, BundleStates),
 				val=[
-					itx:format("~s ~s", [
-						itf:val(BDoc, inwardstate),
-						itf:val(BDoc, inward_date)
-					]),
-					layout_user_info(
-						dict:find(itf:val(BDoc, createdby), ProfileDocsDict)
-					)
+					itx:format("~s ~s", [InwardState, itf:val(BDoc, inward_date)]),
+					layout_user_info(dict:find(itf:val(BDoc, createdby), ProfileDocsDict))
 				]
 			},
 			#dcell {
-				bgcolor=get_bgcolor(scanningstate, InwardState, ScanningState, UploadState),
+				bgcolor=get_bgcolor(scanningstate, BundleStates),
 				val=[
-					itx:format("~s ~s", [
-						itf:val(BDoc, scanningstate),
-						itf:val(BDoc, scanned_date)
-					]),
-					layout_dtp_by(
-						scannedby, BDoc, ProfileDocsDict,
-						{InwardState, ScanningState, UploadState}
-					)
+					itx:format("~s ~s", [ScanningState, itf:val(BDoc, scanned_date)]),
+					layout_dtp_by(scannedby, BDoc, ProfileDocsDict, BundleStates)
 				]
 			},
 			#dcell {
-				bgcolor=get_bgcolor(uploadstate, InwardState, ScanningState, UploadState),
+				bgcolor=get_bgcolor(uploadstate, BundleStates),
 				val=[
-					itx:format("~s ~s", [
-						itf:val(BDoc, uploadstate),
-						itf:val(BDoc, uploaded_date)
-					]),
-					layout_dtp_by(
-						qualityby, BDoc, ProfileDocsDict,
-						{InwardState, ScanningState, UploadState}
-					)
+					itx:format("~s ~s", [UploadState, itf:val(BDoc, uploaded_date)]),
+					layout_dtp_by(qualityby, BDoc, ProfileDocsDict, BundleStates)
 				]
-			},
+			}
+		] ++ case ep_osm_config:is_qc_enabled() of
+			true -> [
+				#dcell {
+					bgcolor=get_bgcolor(qcstate, BundleStates),
+					val=[
+						itx:format("~s ~s", [itf:val(BDoc, qcstate), itf:val(BDoc, qc_date)]),
+						layout_dtp_by(qcby, BDoc, ProfileDocsDict, BundleStates)
+					]
+				}
+			];
+			false -> [
+			]
+		end ++ [
 			#dcell {
 				val=#span {
 					class="btn btn-sm btn-primary-outline",
@@ -321,7 +321,14 @@ fetch(D, From, Size, [
 		#dcell {type=header, val="Bundle Number"},
 		#dcell {type=header, val="Inward"},
 		#dcell {type=header, val="Scan"},
-		#dcell {type=header, val="QC / Uploader"},
+		#dcell {type=header, val="Upload"}
+	] ++ case ep_osm_config:is_qc_enabled() of
+		true -> [
+			#dcell {type=header, val="QC"}
+		];
+		false -> [
+		]
+	end ++ [
 		#dcell {type=header, val="Select"}
 	],
 
@@ -596,25 +603,23 @@ layout_dtp_by(Type, BundleDoc, ProfileDocsDict, BundleStates) ->
 		BundleStates
 	).
 
-layout_dtp_by(
-	?APPOSM_RECEIVER,
-	scannedby = Type,
-	BundleDoc,
-	_ProfileDocsDict,
-	[],
-	{InwardState, _, _}) when
+
+%
+% receiver
+%
+layout_dtp_by(?APPOSM_RECEIVER, scannedby = Type, BundleDoc, _ProfileDocsDict, [], 
+	{InwardState, _, _, _}) when
 		InwardState == ?COMPLETED ->
 	ite:button(
 		launch_assign_dtp_staff, "Assign", {launch_assign_dtp_staff, Type, BundleDoc}
 	);
 
-layout_dtp_by(
-	?APPOSM_SCANUPLOADER,
-	scannedby,
-	BundleDoc,
-	ProfileDocsDict,
-	User,
-	{_, ScanningState, _}) when
+
+%
+% scanner uploader
+%
+layout_dtp_by(?APPOSM_SCANUPLOADER, scannedby, BundleDoc, ProfileDocsDict, User,
+	{_, ScanningState, _, _}) when
 		ScanningState /= ?COMPLETED, User /= [] ->
 	[
 		layout_user_info(dict:find(User, ProfileDocsDict)),
@@ -623,25 +628,38 @@ layout_dtp_by(
 		)
 	];
 
-layout_dtp_by(
-	Role,
-	Type,
-	BundleDoc,
-	_ProfileDocsDict,
-	[],
-	_BundleStates)
-	when Role == ?APPOSM_SCANUPLOADER ->
+layout_dtp_by(?APPOSM_SCANUPLOADER, scannedby = Type, BundleDoc, _ProfileDocsDict, [],
+	{InwardState, ScanningState, _, _}) when 
+		InwardState == ?COMPLETED, ScanningState /= ?COMPLETED ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
 	);
 
-layout_dtp_by(
-	_Role,
-	_Type,
-	_BundleDoc,
-	ProfileDocsDict,
-	Val,
-	_BundleStates) ->
+layout_dtp_by(?APPOSM_SCANUPLOADER, qualityby = Type, BundleDoc, _ProfileDocsDict, [],
+	{_, ScanningState, UploadState, _}) when 
+		ScanningState == ?COMPLETED, UploadState /= ?COMPLETED ->
+	ite:button(
+		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
+	);
+
+
+
+%
+% qc
+%
+layout_dtp_by(?APPOSM_QC, qcby = Type, BundleDoc, _ProfileDocsDict, [],
+	{_, _, UploadState, QCState}) when 
+		UploadState == ?COMPLETED, QCState /= ?COMPLETED ->
+	ite:button(
+		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
+	);
+
+
+
+%
+% default
+%
+layout_dtp_by(_Role, _Type, _BundleDoc, ProfileDocsDict, Val, _BundleStates) ->
 	case Val of
 		[] ->
 			[];
@@ -841,6 +859,14 @@ event(scanning_completed) ->
 		scanning_completed
 	);
 
+event({confirmation_yes, qc_completed}) ->
+	dig_ep_osm_exam_inward_handler:handle_qc_completed(wf:q(osm_exam_fk), wf:q(osm_bundle_fk));
+
+event(qc_completed) ->
+	itl:confirmation(
+		"Are you sure you want to mark this bundle as 'QC Completed'?",
+		qc_completed
+	);
 
 event({confirmation_yes, {Type, BundleDoc}}) ->
 	dig_ep_osm_exam_inward_handler:handle_assign_bundle(Type, BundleDoc);
@@ -869,7 +895,8 @@ event({assign_bundle, Type, BundleDoc}) ->
 
 	TypeLabel = case Type of
 		scannedby -> "Scanning";
-		qualityby -> "Uploading"
+		qualityby -> "Uploading";
+		qcby -> "QC"
 	end,
 
 	itl:confirmation(
@@ -1030,21 +1057,27 @@ sort_candidate_docs(Docs) ->
 
 
 
-get_bgcolor(inwardstate, "completed", _, _) ->
+get_bgcolor(inwardstate, {"completed", _, _, _}) ->
 	"table-success";
-get_bgcolor(scanningstate, "completed", [], _) ->
+get_bgcolor(scanningstate, {"completed", [], _, _}) ->
 	"table-danger";
-get_bgcolor(scanningstate, "completed", "assigned", _) ->
+get_bgcolor(scanningstate, {"completed", "assigned", _, _}) ->
 	"table-warning";
-get_bgcolor(scanningstate, "completed", "completed", _) ->
+get_bgcolor(scanningstate, {"completed", "completed", _, _}) ->
 	"table-success";
-get_bgcolor(uploadstate, "completed", "completed", []) ->
+get_bgcolor(uploadstate, {"completed", "completed", [], _}) ->
 	"table-danger";
-get_bgcolor(uploadstate, "completed", "completed", "assigned") ->
+get_bgcolor(uploadstate, {"completed", "completed", "assigned", _}) ->
 	"table-warning";
-get_bgcolor(uploadstate, "completed", "completed", "completed") ->
+get_bgcolor(uploadstate, {"completed", "completed", "completed", _}) ->
 	"table-success";
-get_bgcolor(_, _, _, _) ->
+get_bgcolor(qcstate, {"completed", "completed", "completed", []}) ->
+	"table-danger";
+get_bgcolor(qcstate, {"completed", "completed", "completed", "assigned"}) ->
+	"table-warning";
+get_bgcolor(qcstate, {"completed", "completed", "completed", "completed"}) ->
+	"table-success";
+get_bgcolor(_, {_, _, _, _}) ->
 	[].
 
 

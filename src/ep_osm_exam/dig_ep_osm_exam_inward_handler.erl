@@ -426,10 +426,16 @@ handle_upload_completed(ExamId, BundleId) ->
 	%
 	% change candidate state to uploaded
 	%
+	AnpState = case ep_osm_config:is_qc_enabled() of
+		true ->
+			"anpstate_quality_check";
+		false ->
+			"anpstate_yettostart"
+	end,
 	ListOfFsDoc = lists:map(fun(CDoc) ->
 		FsDoc = helper_api:doc2fields({ok, CDoc}),
 		itf:fs_merge(FsDoc, [
-			fields:build(anpstate, "anpstate_yettostart")
+			fields:build(anpstate, AnpState)
 		])
 	end, CandidateDocs),
 	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
@@ -520,6 +526,66 @@ handle_scanning_completed(Id) ->
 
 %..............................................................................
 %
+% handle - qc completed
+%
+%..............................................................................
+
+handle_qc_completed(ExamId, BundleId) ->
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		itf:build(?OSMBDL(qcstate), "completed"),
+		itf:build(?OSMBDL(qc_date), helper:date_today_str())
+	],
+
+
+	%
+	% mark all anpstate as NU
+    %
+	ExamDb = anpcandidates:db(ExamId),
+
+	%
+	% 1. get all candidate docs of this bundle
+	%
+	FsToSearch = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
+		itf:build(itf:textbox(?F(anpstate)), "anpstate_quality_check")
+	],
+	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
+		ExamDb, FsToSearch, 0, ?INFINITY, [
+			{use_index, ["osm_bundle_fk"]}
+		]
+	),
+
+	%
+	% 2. change candidate state from expected to not uploaded
+	%
+	ListOfFsDoc = lists:map(fun(CDoc) ->
+		FsDoc = helper_api:doc2fields({ok, CDoc}),
+		itf:fs_merge(FsDoc, [
+			fields:build(anpstate, "anpstate_yettostart")
+		])
+	end, CandidateDocs),
+	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
+
+
+	%
+	% save
+	%
+	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), BundleId) of
+		{ok, _} ->
+			redirect_to_main();
+		_ ->
+			helper_ui:flash(error, "Sorry, could not save!")
+	end.
+
+
+
+
+%..............................................................................
+%
 % handle - assign bundle
 %
 %..............................................................................
@@ -536,7 +602,9 @@ handle_assign_bundle(Type, BundleDoc, User) ->
 		scannedby ->
 			scanningstate;
 		qualityby ->
-			uploadstate
+			uploadstate;
+		qcby ->
+			qcstate
 	end,
 	FsToSave = [
 		itf:build(?OSMBDL(Type), User),

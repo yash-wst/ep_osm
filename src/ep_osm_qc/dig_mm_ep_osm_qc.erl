@@ -1,5 +1,5 @@
 
--module(dig_ep_osm_exam_mybundle).
+-module(dig_mm_ep_osm_qc).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -13,10 +13,13 @@ main() ->
 	ita:auth(?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
-	?LN("My Bundles").
+	?LN("dig_mm_ep_osm_qc").
 
 heading() ->
 	title().
+
+form() ->
+	ep_osm_qc.
 
 
 %------------------------------------------------------------------------------
@@ -24,28 +27,36 @@ heading() ->
 %------------------------------------------------------------------------------
 
 
+%------------------------------------------------------------------------------
+% fields
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% options
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% fs
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% fs - group
+%------------------------------------------------------------------------------
+
+fields(ep_osm_qc, _Fs) ->
+	ep_osm_qc:fs(form).
+
+
 
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
 access(_, ?ADMIN) -> true;
-access(_, ?APPOSM_SCANUPLOADER) -> true;
-access(_, ?APPOSM_RECEIVER) -> true;
-access(_, ?APPOSM_QC) -> true;
 access(_, _) -> false.
 
-
-%------------------------------------------------------------------------------
-% fields
-%------------------------------------------------------------------------------
-
-f(myassignment) ->
-	itf:dropdown(?F(myassignment, "My Role"), itf:options([
-		?F(createdby, "Created By"),
-		?F(scannedby, "Scanning Assigned"),
-		?F(qualityby, "QC / Upload Assigned"),
-		?F(both, "Both")
-	])).
 
 
 %------------------------------------------------------------------------------
@@ -54,21 +65,10 @@ f(myassignment) ->
 
 get() ->
 	#dig {
+		mode=?EDIT,
 		module=?MODULE,
-		filters=[
-			itf:build(?COREXS(season_fk), get_active_season_id()),
-			?OSMBDL(osm_exam_fk),
-			itf:build(f(myassignment), get_default_myassignment()),
-			?OSMBDL(scanningstate),
-			?OSMBDL(uploadstate),
-			?OSMBDL(inward_date),
-			?OSMBDL(scanned_date),
-			?OSMBDL(uploaded_date)
-		],
-		config=[
-			{searchbar_visibility, "show"},
-			{responsive_type, scroll}
-		]
+		filters=ep_osm_qc:fs(basic),
+		size=25
 	}.
 
 
@@ -76,7 +76,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	title().
+	?LN("dig_mm_ep_osm_qc").
 
 
 
@@ -97,100 +97,7 @@ init() ->
 %
 %..............................................................................
 fetch(D, From, Size, Fs) ->
-
-	%
-	% fs to filter by my username
-	%
-	FsMe = case itf:val2(Fs, myassignment) of
-		"createdby" -> [
-			itf:build(?OSMBDL(createdby), itxauth:user())
-		];
-		"scannedby" -> [
-			itf:build(?OSMBDL(scannedby), itxauth:user())
-		];
-		"qualityby" -> [
-			itf:build(?OSMBDL(qualityby), itxauth:user())
-		];
-		_ -> [
-			itf:build(?OSMBDL(scannedby), itxauth:user()),
-			itf:build(?OSMBDL(qualityby), itxauth:user())
-		]
-	end,
-	FsFind = itf:fs_delete(Fs, f(myassignment)) ++ FsMe,
-
-
-	%
-	% fetch docs from db
-	%
-	Docs = ep_osm_bundle_api:fetch(From, Size, FsFind, [
-		{use_index, ["season_fk"]}
-	]),
-
-
-	%
-	% layout docs
-	%
-	FsForm = ep_osm_bundle:fs(mybundle),
-	Results = lists:map(fun(Doc) ->
-
-		%
-		% init
-		%
-		FsDoc = itf:d2f(Doc, FsForm),
-		ExamId = itf:val(Doc, osm_exam_fk),
-		BundleId = itf:idval(Doc),
-
-
-		lists:map(fun(F) ->
-			case F#field.id of
-				Id when Id == scannedby; Id == qualityby ->
-					#dcell {val=itf:val(F)};
-				_ ->
-					#dcell {val=itl:render(F)}
-			end
-		end, FsDoc) ++ [
-			#dcell {val=#link {
-				new=true,
-				text="View",
-				url=itx:format("/~p?id=~s&digx=~s", [
-					dig_ep_osm_exam_inward,
-					ExamId,
-					base64:encode_to_string(helper:t2l([
-						{osm_exam_fk, ExamId},
-						{osm_bundle_fk, BundleId}
-					]))
-				])
-			}}
-		]
-	end, Docs),
-
-
-	%
-	% header
-	%
-	Header = lists:map(fun(F) ->
-		#dcell {type=header, val=F#field.label}
-	end, FsForm) ++ [
-		#dcell {type=header, val="View"}
-	],
-
-
-	%
-	% return layout
-	%
-	{
-		D#dig {
-			total=?INFINITY
-		},
-		[Header | Results]
-	}.
-
-
-%------------------------------------------------------------------------------
-% function - exports
-%------------------------------------------------------------------------------
-exports() -> [
-].
+	dig_mm:fetch(D, From, Size, Fs).
 
 
 
@@ -198,16 +105,37 @@ exports() -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	dig:dig(?MODULE:get()).
+	dig_mm:layout(?MODULE).
 
 
 
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
-event({itx, E}) ->
-	ite:event(E).
+event(E) ->
+	dig_mm:event(E).
 
+start_upload_event(Event) ->
+	dig_mm:start_upload_event(Event).
+
+finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
+	dig_mm:finish_upload_event(Tag, AttachmentName, LocalFileData, Node).
+
+%------------------------------------------------------------------------------
+% assertions
+%------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% save
+%------------------------------------------------------------------------------
+
+
+%
+% override before save function
+%
+before_save(FsToSave, _FsAll, _Doc) ->
+	FsToSave.
 
 
 %------------------------------------------------------------------------------
@@ -220,22 +148,7 @@ event({itx, E}) ->
 % misc
 %------------------------------------------------------------------------------
 
-get_active_season_id() ->
-	case ep_core_exam_season_api:list_active() of
-		[{SeasonId, _} | _] ->
-			SeasonId;
-		_ ->
-			[]
-	end.
 
-
-get_default_myassignment() ->
-	get_default_myassignment(itxauth:role()).
-
-get_default_myassignment(?APPOSM_RECEIVER) ->
-	"createdby";
-get_default_myassignment(_) ->
-	"scannedby".
 
 %------------------------------------------------------------------------------
 % end
