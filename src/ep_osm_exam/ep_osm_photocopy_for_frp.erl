@@ -4,6 +4,9 @@
 
 
 photocopy_url(ExamSeasonId, SubjectCode, SubjectPattern, PRN) ->
+	photocopy_url(ExamSeasonId, SubjectCode, SubjectPattern, PRN, false).
+
+photocopy_url(ExamSeasonId, SubjectCode, SubjectPattern, PRN, ForceRegenerate) ->
 
 	wf_context:init_context(undefined),
 
@@ -19,10 +22,10 @@ photocopy_url(ExamSeasonId, SubjectCode, SubjectPattern, PRN) ->
 
 	Key = build_reval_file_s3_key(ExpectDir, AnpId),
 
-	case is_exist(Bucket, ExpectDir, AnpId) of
-		true ->
+	case {is_exist(Bucket, ExpectDir, AnpId), ForceRegenerate} of
+		{true, false} ->
 			skip;
-		_ ->
+		{_, _} ->
 			anpcandidate:create_anp_pdf(TId, AnpId, PRN, anpevaluator),
 			FPath = "/tmp/" ++ AnpId ++ ".pdf",
 			upload_to_s3(FPath, Key, Bucket)
