@@ -13,7 +13,7 @@ main() ->
 	ita:auth(?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
-	?LN("dig_mm_ep_osm_qc").
+	?LN("QC Profile").
 
 heading() ->
 	title().
@@ -76,7 +76,7 @@ get() ->
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("dig_mm_ep_osm_qc").
+	?LN("QC Profile").
 
 
 

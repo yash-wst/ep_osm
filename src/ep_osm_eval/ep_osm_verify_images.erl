@@ -26,6 +26,12 @@ access(_, ?APPOSM_QC) -> true;
 access(_, _) -> false.
 
 
+%------------------------------------------------------------------------------
+% fields
+%------------------------------------------------------------------------------
+
+f(comment = I) ->
+	itf:textarea(?F(I, "Comment")).
 
 %------------------------------------------------------------------------------
 % access
@@ -48,6 +54,7 @@ layout() ->
 	%
 	?AKIT({layout, card_list_group, [
 		layout_student_info(TFs, Fs),
+		layout_onhold(TFs, Fs),
 		layout_upload(TFs, Fs),
 		layout_page_nos(TFs, Fs, ImgUrls),
 		layout_answerpaper(TFs, Fs, ImgUrls)
@@ -71,7 +78,8 @@ layout_student_info(_TFs, Fs) ->
 	Es = layout:get(?VIEW, fields:getfields(Fs, [
 		anpseatnumber,
 		anpfullname,
-		anpstate
+		anpstate,
+		comments_dtp
 	]), [], table),
 	[
 		#p {class="font-weight-bold", text="Student Info"},
@@ -137,12 +145,11 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 % layout - upload
 %
 layout_upload(TFs, Fs) ->
-	layout_upload(TFs, Fs, itf:val(Fs, anpstate)).
+	AnpState = ?L2A(itf:val(Fs, anpstate)),
+	layout_upload(TFs, Fs, lists:member(AnpState, get_state_for_upload())).
 
 
-layout_upload(_TFs, Fs, AnpState) when
-	AnpState == "anpstate_discarded";
-	AnpState == "anpstate_evaluation_rejected" -> [
+layout_upload(_TFs, Fs, true) -> [
 	ite:button(
 		move_to_yet_to_start,
 		"Move to Yet-to-start",
@@ -158,9 +165,33 @@ layout_upload(_TFs, _Fs, _) ->
 
 
 
+
+%
+% layout - onhold
+%
+layout_onhold(TFs, Fs) ->
+	AnpState = ?L2A(itf:val(Fs, anpstate)),
+	layout_onhold(TFs, Fs, lists:member(AnpState, get_state_for_onhold())).
+
+
+layout_onhold(_TFs, _Fs, true) -> [
+	ite:button(
+		move_to_on_hold,
+		"Move to On-Hold",
+		move_to_on_hold,
+		"btn btn-sm btn-danger-outline pull-sm-right"
+	)
+];
+layout_onhold(_TFs, _Fs, _) ->
+	[].
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+
+event({itx, Event}) ->
+	ite:event(Event);
 
 event({confirmation_yes, move_to_yet_to_start}) ->
 	handle_move_to_yet_to_start(wf:q(anptestid), wf:q(anpid));
@@ -170,6 +201,20 @@ event(move_to_yet_to_start) ->
 		#p {text="Have you fixed the problem with images?"},
 		#p {text="Do you want to change state from Discarded to Yet To Start?"}
 	]}, move_to_yet_to_start);
+
+event(move_to_on_hold_confirmed) ->
+	handle_move_to_on_hold(wf:q(anptestid), wf:q(anpid));
+
+event(move_to_on_hold) ->
+	Event = ite:get(move_to_on_hold_confirmed, "Move to On-Hold"),
+	Es = [
+		#p {
+			class="fw-bold",
+			text="Please mention why this booklet is put on-hold?"
+		},
+		itl:get(?EDIT, [f(comment)], Event, table)
+	],
+	itl:modal_fs(Es);
 		 
 event(Event) ->
 	?D(Event).
@@ -229,7 +274,7 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 		fields:build(anpstate, "anpstate_yettostart")
 	],
 	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
-	FComment = itf:d2f(CandidateDoc, fields:get(comments)),
+	FComment = itf:d2f(CandidateDoc, fields:get(comments_dtp)),
 	FComment1 = itf:build_comment(FComment, Changelist), 
 
 
@@ -239,6 +284,55 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 	{ok, _} = ep_osm_candidate_api:update(ExamId, CandidateDoc, FsToSave ++ [FComment1]),
 	helper:redirect(wf:uri()).
 
+
+
+handle_move_to_on_hold(ExamId, CandidateId) ->
+
+	%
+	% init
+	%
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CandidateId),
+
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		fields:build(anpstate, "anpstate_on_hold")
+	],
+	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
+	NewComment = string:join([Changelist, wf:q(comment)], "\n"),
+	FCommentDtp = itf:d2f(CandidateDoc, fields:get(comments_dtp)),
+	FCommentDtp1 = itf:build_comment(FCommentDtp, NewComment), 
+
+
+	%
+	% save
+	%
+	FsToSave1 = FsToSave ++ [FCommentDtp1],
+	{ok, _} = ep_osm_candidate_api:update(ExamId, CandidateDoc, FsToSave1),
+	helper:redirect(wf:uri()).
+
+
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+get_state_for_upload() -> [
+	anpstate_on_hold,
+	anpstate_discarded,
+	anpstate_evaluation_rejected
+].
+
+get_state_for_onhold() -> [
+	anpstate_expected,
+	anpstate_not_uploaded,
+	anpstate_quality_check,
+	anpstate_yettostart,
+	anpstate_evaluation_rejected,
+	anpstate_discarded
+].
 
 %------------------------------------------------------------------------------
 % end
