@@ -659,6 +659,7 @@ handle_export_results_bulk(Fs, Email) ->
 	% export in batches
 	%
 	done = handle_export_results_bulk(Fs, Dir, 0),
+	dig_ep_osm_exam_evaluator_report:handle_generate_xlsx(Dir),
 
 
 	%

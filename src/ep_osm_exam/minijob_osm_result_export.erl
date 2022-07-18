@@ -142,6 +142,7 @@ do(Doc) ->
 	Fs = itf:d2f(Doc, DigModule:fs(search)),
 	Fs1 = itf:fs_delete(Fs, itf:hidden(osm_exam_fk)),
 	done = dig_ep_osm_exam_results:handle_export_results_bulk(Fs1, Dir, 0),
+	dig_ep_osm_exam_evaluator_report:handle_generate_xlsx(Dir),
 
 
 	%
