@@ -62,8 +62,14 @@ digmm_links(Doc) ->
 % fs - group
 %------------------------------------------------------------------------------
 
-fields(ProfileModule, _Fs) ->
-	ProfileModule:fs(form).
+fields(ProfileModule, _Fs) -> [
+	?ITXPRF(username),
+	?ITXPRF(fullname),
+	?ITXPRF(mobile),
+	?ITXPRF(email),
+	?ITXPRF(ip_address),
+	?CORSUB(subjects, #field {renderer=fun renderer_subjects/3})
+].
 
 
 
@@ -169,6 +175,25 @@ before_save(FsToSave, _FsAll, _Doc) ->
 % misc
 %------------------------------------------------------------------------------
 
+
+
+%------------------------------------------------------------------------------
+% renderers
+%------------------------------------------------------------------------------
+
+%
+% renderer subjects
+%
+renderer_subjects(_, _, #field {label=L, uivalue=SubjectIds}) ->
+
+	%
+	% get subject docs from cache
+	%
+	Docs = ep_core_subject_api:get_docs_from_cache(SubjectIds),
+	SubjectCodes = lists:map(fun(Doc) ->
+		itf:val(Doc, subject_code)
+	end, Docs),
+	{L, string:join(SubjectCodes, ",")}.
 
 
 %------------------------------------------------------------------------------
