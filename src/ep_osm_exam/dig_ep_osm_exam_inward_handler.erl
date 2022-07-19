@@ -628,6 +628,13 @@ handle_assign_bundle(Type, BundleDoc, User) ->
 	),
 
 
+	%
+	% assert - only X bundles at max can be self assigned for scanning
+	% or uploading state.
+	%
+
+	check_max_limits(Type, StateFId),
+
 
 	%
 	% assert - cannot assign uplaod till bundle scanning is completed
@@ -1178,6 +1185,53 @@ handle_uploaded_zip_file(ObjectKey) ->
 	end.
 
 
+
+%..............................................................................
+%
+% Utility functions
+%
+%..............................................................................
+
+check_max_limits(Type, DB_state_Key) when Type /= qcby ->
+
+	Settings_key = case Type of
+		scannedby ->
+			ep_osm_max_bundles_in_scanning_state_allowed;
+		qualityby ->
+			ep_osm_max_bundles_in_uploading_state_allowed
+		end,
+
+	Search_Index = atom_to_list(Type),
+
+	MaxBundleCount = itxconfigs:get2(Settings_key, 2),
+
+	FsFind = [
+			itf:build(?OSMBDL(Type), itxauth:user()),
+			itf:build(?OSMBDL(DB_state_Key), "assigned")
+	],
+
+	Docs = ep_osm_bundle_api:fetch(
+				0,
+				MaxBundleCount,
+				FsFind,
+				[{use_index, [Search_Index] }]
+	),
+
+	Count = length(Docs),
+
+	Message = case Type of
+		scannedby -> scanning;
+		qualityby -> uploading
+	end,
+
+	?ASSERT(
+		Count < MaxBundleCount,
+		itx:format("You cannot self assign more than ~p bundles in the ~p state",
+			[MaxBundleCount, Message])
+	);
+
+check_max_limits(_,_) ->
+	ok.
 
 
 %------------------------------------------------------------------------------
