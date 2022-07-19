@@ -152,7 +152,16 @@ fetch(D, _From, _Size, [
 			total=length(Results),
 			description="Evaluator Report",
 			events=[
-				ite:button(export_pdf, "Print", {itx, {dig, export_pdf}})
+				#button {
+					class="btn btn-primary-outline",
+					text="Download",
+					postback=export_pdf,
+					delegate=?MODULE,
+					actions=#event {
+						type=click,
+						actions=#add_class {class="disabled"}
+					}
+				}
 			],
 			actions=[],
 			dcell_headers=Header
@@ -522,6 +531,9 @@ layout_table_footer(_, _) ->
 % events
 %------------------------------------------------------------------------------
 
+event(export_pdf) ->
+	handle_print_evaluator_report(wf:q(id), wf:q(evaluatorid));
+
 event(export_evaluator_stats_bulk) ->
 	handle_export_evaluator_stats_bulk();
 
@@ -533,6 +545,26 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - print evaluator report
+%
+%..............................................................................
+
+handle_print_evaluator_report(ExamId, EvaluatorId) ->
+	%
+	% init
+	%
+	Dig = helper:state(dig),
+	Filename = itx:format("~s_~s", [
+		ExamId, EvaluatorId
+	]),
+	{Name, FilePath} = dig:get_filename_path(Filename, pdf),
+	dig:handle_export_pdf(Name, FilePath, Dig),
+	itxdownload:stream(Name, FilePath).
+
+
 
 
 %..............................................................................
