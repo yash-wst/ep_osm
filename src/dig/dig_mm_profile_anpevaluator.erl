@@ -63,7 +63,7 @@ digmm_links(Doc) ->
 %------------------------------------------------------------------------------
 
 fields(ProfileModule, _Fs) -> [
-	?ITXPRF(username),
+	?ITXPRF(username, #field{renderer=fun renderer_username/3}),
 	?ITXPRF(fullname),
 	?ITXPRF(mobile),
 	?ITXPRF(email),
@@ -93,6 +93,9 @@ get() ->
 		module=?MODULE,
 		filters=ProfileModule:fs(search),
 		size=25,
+		events=[
+			ite:button(export, "CSV", {itx, {dig, export}})
+		],
 		config=[
 			{responsive_type, collapse}
 		]
@@ -195,6 +198,12 @@ renderer_subjects(_, _, #field {label=L, uivalue=SubjectIds}) ->
 	end, Docs),
 	{L, string:join(SubjectCodes, ",")}.
 
+
+%
+% renderer username
+%
+renderer_username(_, _, #field {label=L, uivalue=Username}) ->
+	{L, Username}.
 
 %------------------------------------------------------------------------------
 % end
