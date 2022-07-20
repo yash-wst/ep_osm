@@ -23,7 +23,8 @@ menu(?APPOSM_ADMIN) ->
 		{?LN("Content"), [
 			{dig_ep_osm_exam, ?VIEW, ?LN("OSM Exams")},
 			{dig_ep_osm_mscheme, ?VIEW, ?LN("Marking Scheme")},
-			{dig_mm_ep_osm_mod_rules, ?VIEW, ?LN("Moderation Rules")}
+			{dig_mm_ep_osm_mod_rules, ?VIEW, ?LN("Moderation Rules")},
+			{dig_mm_ep_osm_apt, ?VIEW, ?LN("Appointments")}
 		]},
 		{?LN("Status"), [
 			{dig_ep_osm_exam_stats, ?VIEW, ?LN("Exam Status")},

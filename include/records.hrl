@@ -63,6 +63,9 @@
 -define(OSMRLS(Id), itf:field(ep_osm_mod_rules_fields, Id)).
 -define(OSMRLS(Id, Field), itf:field(ep_osm_mod_rules_fields, Id, Field)).
 
+-define(OSMAPT(Id), itf:field(ep_osm_apt_fields, Id)).
+-define(OSMAPT(Id, Field), itf:field(ep_osm_apt_fields, Id, Field)).
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
