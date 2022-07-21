@@ -229,7 +229,9 @@ handle_send_confirmed(Fs, SendCount, SentCount) ->
 	% get docs to send
 	% send only new apts
 	%
-	Fs1 = itf:fs_merge(Fs, [itf:build(?OSMAPT(apt_state), "sent")]),
+	Fs1 = itf:fs_merge(Fs, [
+		itf:build(?OSMAPT(apt_state), ?NEW)
+	]),
 	Docs = ep_osm_apt_api:fetch(0, FetchCount, Fs1, [
 		{use_index, ["apt_state"]}
 	]),
@@ -293,7 +295,7 @@ handle_send_apt(TDoc, AppDoc) ->
 	%
 	AppId = itf:idval(AppDoc),
 	FsToSave = [
-		itf:build(?OSMAPT(apt_state), ?NEW)
+		itf:build(?OSMAPT(apt_state), "sent")
 	],
 	{ok, _} = ep_osm_apt_api:save(FsToSave, ep_osm_apt:fs(all), AppId),
 
