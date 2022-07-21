@@ -23,7 +23,9 @@ form() ->
 
 digmm_actions() -> [
 	?F(view, "View"),
-	?F(edit, "Edit")
+	?F(edit, "Edit"),
+	?F(pdf, "PDF"),
+	?F(send, "Send")
 ].
 
 

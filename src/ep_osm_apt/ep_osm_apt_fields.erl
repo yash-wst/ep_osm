@@ -24,7 +24,38 @@ f(evaluator_type = I) ->
 
 
 f(evaluator_state = I) ->
-	itf:dropdown(?F(I, "Evaluator State"), options(I)).
+	itf:dropdown(?F(I, "Evaluator State"), options(I));
+
+
+f(evaluator_fullname = I) ->
+	F = itf:textbox(?F(I, "Evaluator Name")),
+	F#field {
+		doc=set,
+		renderer=fun(_, _, #field {label=L, doc=Doc}) ->
+			{ok, PDoc} = profiles:getdoc_from_cache(itf:val(Doc, evaluator_id)),
+			{L, itf:val(PDoc, fullname)}
+		end
+	};
+
+f(evaluator_mobile = I) ->
+	F = itf:textbox(?F(I, "Evaluator Mobile")),
+	F#field {
+		doc=set,
+		renderer=fun(_, _, #field {label=L, doc=Doc}) ->
+			{ok, PDoc} = profiles:getdoc_from_cache(itf:val(Doc, evaluator_id)),
+			{L, itf:val(PDoc, mobile)}
+		end
+	};
+
+f(evaluator_email = I) ->
+	F = itf:textbox(?F(I, "Evaluator Email")),
+	F#field {
+		doc=set,
+		renderer=fun(_, _, #field {label=L, doc=Doc}) ->
+			{ok, PDoc} = profiles:getdoc_from_cache(itf:val(Doc, evaluator_id)),
+			{L, itf:val(PDoc, email)}
+		end
+	}.
 
 
 %------------------------------------------------------------------------------
