@@ -75,7 +75,10 @@ get() ->
 		mode=?VIEW,
 		module=?MODULE,
 		filters=ep_osm_apt:fs(basic),
-		size=25
+		size=25,
+		actions=[
+			{send, "Send", "Send"}
+		]
 	}.
 
 
@@ -119,6 +122,12 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+event(send) ->
+	handle_send_action();
+
+event(send_confirmed) ->
+	handle_send_confirmed();
+
 event(E) ->
 	dig_mm:event(E).
 
@@ -150,12 +159,167 @@ before_save(FsToSave, _FsAll, _Doc) ->
 %------------------------------------------------------------------------------
 
 
+%..............................................................................
+%
+% handle - send action
+%
+%..............................................................................
+
+handle_send_action() ->
+	FSendCount = itf:textbox(?F(send_count, "Send Count")),
+	FSendCount1 = FSendCount#field {
+		validators=[required, integer, {
+			"1-1000",
+			validators:get(range_integer, 0, 1001)
+		}]
+	},
+	Es = itl:get(?EDIT, [FSendCount1], ite:get(send_confirmed, "Send"), table),
+	dig_mm:handle_show_action("Send Appointments", Es).
+
+
+
+%..............................................................................
+%
+% handle - send confirmed
+%
+%..............................................................................
+
+handle_send_confirmed() ->
+
+	%
+	% init
+	%
+	Dig = helper:state(dig),
+	SendCount = ?S2I(wf:q(send_count)),
+	Fs = dig:get_nonempty_fs(Dig),
+
+
+	%
+	% assert at least one filter is selected
+	%
+	?ASSERT(
+		Fs /= [],
+		"Please select at least one search filter"
+	),
+
+
+	%
+	% get appointments to send
+	%
+	handle_send_confirmed(Fs, SendCount, 0),
+	dig:log("Finished").
+
+
+handle_send_confirmed(_Fs, SendCount, SentCount) when SentCount >= SendCount ->
+	done;
+handle_send_confirmed(Fs, SendCount, SentCount) ->
+
+
+	%
+	% init
+	%
+	{ok, TDoc} = ep_core_template_api:get_templatedoc_for_type("ep_osm_apt"),
+	FetchCount = if
+		SendCount < 100 -> SendCount;
+		true -> 100
+	end,
+
+
+	%
+	% get docs to send
+	% send only new apts
+	%
+	Fs1 = itf:fs_merge(Fs, [itf:build(?OSMAPT(apt_state), "sent")]),
+	Docs = ep_osm_apt_api:fetch(0, FetchCount, Fs1, [
+		{use_index, ["apt_state"]}
+	]),
+	dig:log(itx:format("Found in this batch: ~p", [length(Docs)])),
+
+
+	%
+	% send apt
+	%
+	lists:foreach(fun(Doc) ->
+		handle_send_apt(TDoc, Doc)
+	end, Docs),
+
+
+	%
+	% recurse
+	%
+	case Docs of
+		[] ->
+			done;
+		_ ->
+			handle_send_confirmed(Fs, SendCount, SentCount + length(Docs))
+	end.
+
+
+
+%..............................................................................
+%
+% handle - send apt
+%
+%..............................................................................
+
+handle_send_apt(TDoc, AppDoc) ->
+
+	%
+	% create pdf
+	%
+	{_Filename, Filepath} = ep_core_template_handler:handle_generate_pdf(TDoc, AppDoc),
+	{ok, PDoc} = profiles:getdoc(itf:val(AppDoc, evaluator_id)),
+	AptNumber = itf:val(AppDoc, apt_number),
+
+
+	%
+	% send mail
+	% (From, ReplyTo, ToList, CCList, Subj, Body, FilePaths, ContentType)
+	%
+	Email = itf:val(PDoc, email),
+	helper_mailer:send_mail_attachment_async(
+		[],
+		[Email],
+		[Email],
+		[],
+		itx:format("CONFIDENTIAL: On-Screen Marking Appointment - ~s ", [AptNumber]),
+		layout_letter_cover(),
+		[Filepath],
+		html
+	),
+
+	%
+	% update state
+	%
+	AppId = itf:idval(AppDoc),
+	FsToSave = [
+		itf:build(?OSMAPT(apt_state), ?NEW)
+	],
+	{ok, _} = ep_osm_apt_api:save(FsToSave, ep_osm_apt:fs(all), AppId),
+
+
+
+	Message = itx:format("Sent ~p", [AptNumber]),
+	dig:log(Message).
+
 
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
 
+layout_letter_cover() ->
+	Es = [
+		#p {text="Respected Sir / Madam,"},
+		#p {text="We're pleased to inform you that you have been appointed you as evaluator."},
+		#p {text="Please find attached your appointment details."},
+		#p {text="This email is system generated. Please do not reply to this e-mail."},
+		#p {text="For any queries regarding appointment, please contact the university."},
+		#p {text="Yours faithfully,"},
+		#p {text="Controller of Examination"}
+	],
 
+	{ok, Html} = wf_render_elements:render_elements(Es),
+	Html.
 
 %------------------------------------------------------------------------------
 % end
