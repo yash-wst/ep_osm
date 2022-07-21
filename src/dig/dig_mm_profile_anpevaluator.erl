@@ -26,6 +26,8 @@ module(import) ->
 
 profile_module() ->
 	case minijobcontext:q(mode) of
+		[] ->
+			profile_anpevaluator;
 		undefined ->
 			profile_anpevaluator;
 		Module ->
@@ -62,7 +64,7 @@ digmm_links(Doc) ->
 % fs - group
 %------------------------------------------------------------------------------
 
-fields(ProfileModule, _Fs) -> [
+fields(_ProfileModule, _Fs) -> [
 	?ITXPRF(username, #field{renderer=fun renderer_username/3}),
 	?ITXPRF(fullname),
 	?ITXPRF(mobile),

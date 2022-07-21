@@ -274,8 +274,8 @@ get(?APPOSM_QC) ->
 			?OSMBDL(osm_exam_fk),
 			itf:build(?OSMBDL(inwardstate), "completed"),
 			itf:build(?OSMBDL(scanningstate), "completed"),
-			itf:build(?OSMBDL(uploadstate), "completed")
-			itf:build(?OSMBDL(qcstate), "new"),
+			itf:build(?OSMBDL(uploadstate), "completed"),
+			itf:build(?OSMBDL(qcstate), "new")
 		],
 		config=[
 			{searchbar_visibility, "show"},
