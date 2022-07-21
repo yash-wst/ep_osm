@@ -20,14 +20,60 @@
 
 handle_import_validate(List) ->
 	ok = ep_osm_exam_import:handle_import_validate_seasonid(),
-	ok = profile_anpevaluator_import:handle_import_validate_csv_length(List),
-	ok = profile_anpevaluator_import:handle_import_validate_csv_non_empty(List),
-	ok = profile_anpevaluator_import:handle_import_validate_duplicates(List),
+	ok = dig_mm_import_validator:handle_import_validate_csv_length(List, 8),
+	ok = dig_mm_import_validator:handle_import_validate_csv_non_empty(List),
+	ok = handle_import_validate_duplicates(List),
 	ok = dig_mm_import_validator:handle_import_validate_mobile(List, 3),
 	ok = dig_mm_import_validator:handle_import_validate_email(List, 4),
-	ok = profile_anpevaluator_import:handle_import_validate_subjects_exist(List),
+	ok = dig_mm_import_validator:handle_import_validate_faculties_exist(List, 6),
+	ok = dig_mm_import_validator:handle_import_validate_programs_exist(List, 7),
+	ok = dig_mm_import_validator:handle_import_validate_subjects_exist(List, 8),
 	ok = handle_import_validate_profiles_exist(List),
 	ok.
+
+
+
+%..............................................................................
+%
+% validate duplicates
+%
+%..............................................................................
+
+handle_import_validate_duplicates(List) ->
+	%
+	% find out errors
+	%
+	Dict = lists:foldl(fun(Csv, Acc) ->
+		Key = {lists:nth(1, Csv), lists:last(Csv)},
+		dict:update_counter(Key, 1, Acc)
+	end, dict:new(), List),
+
+
+
+	%
+	% find duplicates
+	%
+	Errors = lists:foldl(fun({Key, Count}, Acc) ->
+		case Count > 1 of
+			true ->
+				Acc ++ [Key];
+			_ ->
+				Acc
+		end
+	end, [], dict:to_list(Dict)),
+
+
+	%
+	% assert validation
+	%
+	?ASSERT(
+		import_validation,
+		Errors == [],
+		{duplicates_found, Errors}
+	).
+
+
+
 
 
 %..............................................................................
@@ -101,14 +147,13 @@ handle_import_csv_to_fs(List) ->
 
 
 	%
-	% create subjects dict by subject code
+	% get dicts
 	%
-	SubjectCodes = lists:foldl(fun(Csv, Acc) ->
-		Acc ++ lists:sublist(Csv, 6, length(Csv))
-	end, [], List),
-	SubjectCodesUnique = helper:unique(SubjectCodes),
-	SubjectDocs = ep_core_subject_api:getdocs_by_subject_codes(SubjectCodesUnique),
-	SubjectDocsDict = helper:get_dict_from_docs(SubjectDocs, subject_code),
+	FacultyDocsDict = dig_mm_import_helper:get_facultydocs_dict(List, 6),
+	ProgramDocsDict = dig_mm_import_helper:get_programdocs_dict(List, 7),
+	SubjectDocsDict = dig_mm_import_helper:get_subjectdocs_dict(List, 8),
+
+
 
 
 
@@ -120,39 +165,31 @@ handle_import_csv_to_fs(List) ->
 		_Fullname,
 		_Mobile,
 		_Email,
-		_IP | UserSubjectCodes0
+		_IP,
+		FacultyCode,
+		ProgramCode,
+		SubjectCode
 	], Acc) ->
-
-
 
 		%
 		% init
 		%
-		UserSubjectCodes = remove_empty_str(UserSubjectCodes0),
 		{ok, ProfileDoc} = dict:find(Username, ProfileDocsDict),
-
-
-		%
-		% get subjects
-		%
-		SubjectDocs = lists:map(fun(UserSubjectCode) ->
-			{ok, SubjectDoc} = dict:find(UserSubjectCode, SubjectDocsDict),
-			SubjectDoc
-		end, UserSubjectCodes),
+		{ok, FacultyDoc} = dict:find(FacultyCode, FacultyDocsDict),
+		{ok, ProgramDoc} = dict:find(ProgramCode, ProgramDocsDict),
+		{ok, SubjectDoc} = dict:find(SubjectCode, SubjectDocsDict),
 
 
 
 		%
 		% get fields for each subjectid
 		%
-		lists:foldl(fun(SubjectDoc, Acc1) ->
-			case handle_get_apt_fs(ProfileDoc, SubjectDoc) of
-				[] ->
-					Acc1;
-				Fs ->
-					Acc1 ++ [Fs]
-			end
-		end, Acc, SubjectDocs)
+		case handle_get_apt_fs(ProfileDoc, FacultyDoc, ProgramDoc, SubjectDoc) of
+			[] ->
+				Acc;
+			Fs ->
+				Acc ++ [Fs]
+		end
 
 
 	end, [], List).
@@ -163,7 +200,7 @@ handle_import_csv_to_fs(List) ->
 % handle get apt fs
 %
 %..............................................................................
-handle_get_apt_fs(ProfileDoc, SubjectDoc) ->
+handle_get_apt_fs(ProfileDoc, FacultyDoc, ProgramDoc, SubjectDoc) ->
 
 
 	%
@@ -171,6 +208,8 @@ handle_get_apt_fs(ProfileDoc, SubjectDoc) ->
 	%
 	SeasonId = get_import_season_fk(),
 	ProfileId = itf:idval(ProfileDoc),
+	FacultyId = itf:idval(FacultyDoc),
+	ProgramId = itf:idval(ProgramDoc),
 	SubjectId = itf:idval(SubjectDoc),
 	ProfileType = itf:val(ProfileDoc, profiletype),
 
@@ -188,12 +227,15 @@ handle_get_apt_fs(ProfileDoc, SubjectDoc) ->
 	]),
 
 
+
 	%
 	% return fields or empty
 	%
 	case AptDocs of
 		[] -> [
 			itf:build(?COREXS(season_fk), SeasonId),
+			itf:build(?CORFAC(faculty_code_fk), FacultyId),
+			itf:build(?CORPGM(program_code_fk), ProgramId),
 			itf:build(?CORSUB(subject_code_fk), SubjectId),
 			itf:build(?OSMAPT(apt_number), helper:uidintstr()),
 			itf:build(?OSMAPT(apt_state), "new"),

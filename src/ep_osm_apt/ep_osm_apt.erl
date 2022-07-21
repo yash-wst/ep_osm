@@ -75,7 +75,7 @@ fs(grid) ->
 
 fs(import) ->
 	[
-		?ITXF({sep, #pre {text="username,fullname,mobile,email,ip,subject1,subject2,..."}}),
+		?ITXF({sep, #pre {text="username,fullname,mobile,email,ip,faculty_code,program_code,subject_code"}}),
 		?COREXS(season_fk, #field {id=import_season_fk}),
 		itf:attachment()
 	];
