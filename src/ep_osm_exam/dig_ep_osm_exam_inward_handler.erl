@@ -663,7 +663,7 @@ handle_assign_bundle(Type, BundleDoc, User) ->
 	FsAll2 = itf:fs_merge(FsAll1, FsToSave),
 	case ep_osm_bundle_api:save(FsAll2) of
 		{ok, _} ->
-			dig:refresh();
+			dig_ep_osm_exam_inward:redirect_to_bundle(Id);
 		_ ->
 			helper_ui:flash(error, "Sorry, could not assign!")
 	end.
@@ -1103,6 +1103,7 @@ handle_create_bundle(ExamId, PacketNumber, RackLocation) ->
 	FsToSave = [
 		itf:build(?COREXS(season_fk), SeasonId),
 		itf:build(?OSMBDL(osm_exam_fk), ExamId),
+		itf:build(?OSMBDL(inwardstate), "new"),
 		itf:build(?OSMBDL(packet_number),PacketNumber ),
 		itf:build(?OSMBDL(rack_location), RackLocation),
 		itf:build(?OSMBDL(createdby), itxauth:user()),

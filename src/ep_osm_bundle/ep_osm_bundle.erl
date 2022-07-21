@@ -111,6 +111,22 @@ fs(mybundle) -> [
 	?OSMBDL(qc_date)
 ];
 
+fs(pendingbundles) -> [
+	?OSMBDL(inward_date),
+	?OSMBDL(osm_exam_fk),
+	?OSMBDL(number),
+	?OSMBDL(packet_number),
+	?OSMBDL(packet_count),
+	?OSMBDL(rack_location),
+	?OSMBDL(createdby),
+	?OSMBDL(scannedby),
+	?OSMBDL(qualityby),
+	?OSMBDL(qcby),
+	?OSMBDL(inwardstate),
+	?OSMBDL(scanningstate),
+	?OSMBDL(uploadstate),
+	?OSMBDL(qcstate)
+];
 
 fs(view) ->
 	fs(basic);

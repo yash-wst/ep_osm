@@ -119,7 +119,7 @@ layout_action_inwarding(BundleDoc) ->
 	% action
 	%
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, []} -> [
+		{User, State1} when State1 == [];State1 == "new" -> [
 			{inward_completed, "Inward Completed", "Inward Completed"}
 		];
 		_ -> [
