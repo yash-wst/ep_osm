@@ -235,6 +235,9 @@ fetch(D, _From, _Size, [
 		%
 		SFPSCells ++ [
 			#dcell {
+				val=itf:val(ProfileDoc, username)
+			},
+			#dcell {
 				val=itf:val(ProfileDoc, fullname)
 			},
 			#dcell {
@@ -274,9 +277,13 @@ fetch(D, _From, _Size, [
 	%
 	Header = [
 		#dcell {type=header, show_ui=false, val="Season"},
-		#dcell {type=header, show_ui=false, val="Faculty"},
-		#dcell {type=header, show_ui=false, val="Program"},
-		#dcell {type=header, show_ui=false, val="Subject"},
+		#dcell {type=header, show_ui=false, val="Faculty Code"},
+		#dcell {type=header, show_ui=false, val="Faculty Name"},
+		#dcell {type=header, show_ui=false, val="Program Code"},
+		#dcell {type=header, show_ui=false, val="Program Name"},
+		#dcell {type=header, show_ui=false, val="Subject Code"},
+		#dcell {type=header, show_ui=false, val="Subject Name"},
+		#dcell {type=header, val="Username"},
 		#dcell {type=header, val="Fullname"},
 		#dcell {type=header, val="Mobile"},
 		#dcell {type=header, val="Email"},
