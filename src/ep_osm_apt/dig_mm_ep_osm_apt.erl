@@ -312,8 +312,8 @@ handle_send_apt(TDoc, AppDoc) ->
 layout_letter_cover() ->
 	Es = [
 		#p {text="Respected Sir / Madam,"},
-		#p {text="We're pleased to inform you that you have been appointed you as evaluator."},
-		#p {text="Please find attached your appointment details."},
+		#p {text="We're pleased to inform you that you have been appointed as evaluator."},
+		#p {text="Please find attached (PDF) your appointment details."},
 		#p {text="This email is system generated. Please do not reply to this e-mail."},
 		#p {text="For any queries regarding appointment, please contact the university."},
 		#p {text="Yours faithfully,"},
