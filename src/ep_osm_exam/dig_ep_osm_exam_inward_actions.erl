@@ -91,7 +91,7 @@ layout_action_inward_form(BundleDoc) ->
 	% action
 	%
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, []} ->
+		{User, State} when State ==[]; State == "new" ->
 			event(inward_form),
 			[
 				{inward_form, "Inward Form", "Inward Form"}
@@ -119,7 +119,7 @@ layout_action_inwarding(BundleDoc) ->
 	% action
 	%
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, State1} when State1 == [];State1 == "new" -> [
+		{User, State} when State == []; State == "new" -> [
 			{inward_completed, "Inward Completed", "Inward Completed"}
 		];
 		_ -> [

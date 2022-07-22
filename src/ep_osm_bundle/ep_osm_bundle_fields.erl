@@ -126,7 +126,7 @@ f(packet_count = I) ->
 	itf:textbox_int(?F(I, "Packet Count"));
 
 f(rack_location = I) ->
-	itf:textbox(?F(I, "Rack Location"), [required, fullname]);
+	itf:textbox(?F(I, "Rack Location"), [required]);
 
 f(O) -> throw(O).
 

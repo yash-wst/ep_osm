@@ -442,7 +442,7 @@ layout_candidate_remove(BundleDoc, CDoc)  ->
 	User = itxauth:user(),
 
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, []} ->
+		{User, State} when State == []; State == "new" ->
 			ite:button(
 				remove_candidate,
 				"x",
@@ -474,7 +474,7 @@ layout_candidate_edit(BundleDoc, CDoc)  ->
 		{_, "discarded", _} ->
 			[];
 		{User, InwardState, ScanningState} when
-			InwardState == [];
+			InwardState == []; InwardState == "new";
 			ScanningState == [] ->
 			ite:button(
 				edit_candidate,
