@@ -275,14 +275,7 @@ fetch(D, _From, _Size, [
 	%
 	% header
 	%
-	Header = [
-		#dcell {type=header, show_ui=false, val="Season"},
-		#dcell {type=header, show_ui=false, val="Faculty Code"},
-		#dcell {type=header, show_ui=false, val="Faculty Name"},
-		#dcell {type=header, show_ui=false, val="Program Code"},
-		#dcell {type=header, show_ui=false, val="Program Name"},
-		#dcell {type=header, show_ui=false, val="Subject Code"},
-		#dcell {type=header, show_ui=false, val="Subject Name"},
+	Header = ep_core_dig_helper:get_sfps_cells_header() ++ [
 		#dcell {type=header, val="Username"},
 		#dcell {type=header, val="Fullname"},
 		#dcell {type=header, val="Mobile"},

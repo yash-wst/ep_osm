@@ -243,11 +243,7 @@ fetch(D, From, Size, Fs) ->
 	%
 	% header
 	%
-	Header = [
-		#dcell {type=header, show_ui=false, val="Season"},
-		#dcell {type=header, show_ui=false, val="Faculty"},
-		#dcell {type=header, show_ui=false, val="Program"},
-		#dcell {type=header, show_ui=false, val="Subject"},
+	Header = ep_core_dig_helper:get_sfps_cells_header() ++ [
 		#dcell {type=header, val="Exam Id"},
 		#dcell {type=header, val="Exam Name"},
 		#dcell {type=header, val="Total Marks"},

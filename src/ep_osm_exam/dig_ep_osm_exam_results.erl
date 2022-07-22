@@ -499,12 +499,8 @@ fetch(D, From, Size, Fs) ->
 	%
 	% header
 	%
-	Header = [
-		#dcell {type=header, show_ui=false, val="Season"},
-		#dcell {type=header, show_ui=false, val="Faculty"},
-		#dcell {type=header, show_ui=false, val="Program"},
-		#dcell {type=header, show_ui=false, val="Subject"}
-	] ++ lists:map(fun(#field {label=Label}) ->
+	Header = ep_core_dig_helper:get_sfps_cells_header() ++ 
+	lists:map(fun(#field {label=Label}) ->
 		#dcell {type=header, val=Label}
 	end, anptest:fs(form)) ++ [
 		#dcell {type=header, show_csv=false, val="Actions"}
