@@ -288,7 +288,7 @@ handle_send_apt(TDoc, AppDoc) ->
 	%
 	Email = itf:val(PDoc, email),
 	helper_mailer:send_mail_attachment_async(
-		[],
+		customer:get(mail_sender),
 		[Email],
 		[Email],
 		[],
