@@ -226,6 +226,7 @@ handle_send_confirmed(Fs, SendCount, SentCount) ->
 	% init
 	%
 	{ok, TDoc} = ep_core_template_api:get_templatedoc_for_type("ep_osm_apt"),
+	_ = ep_core_template_html:get_template_html(TDoc, undefined),
 	FetchCount = if
 		SendCount < 100 -> SendCount;
 		true -> 100
