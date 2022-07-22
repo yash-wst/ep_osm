@@ -160,7 +160,8 @@ handle_import_csv_to_fs(List) ->
 	%
 	% update fields
 	%
-	lists:foldl(fun([
+	AptCount = db:count(ep_osm_apt_api:db()),
+	{LoLFs, _ } = lists:foldl(fun([
 		Username,
 		_Fullname,
 		_Mobile,
@@ -169,7 +170,7 @@ handle_import_csv_to_fs(List) ->
 		FacultyCode,
 		ProgramCode,
 		SubjectCode
-	], Acc) ->
+	], {Acc, AptCountAcc}) ->
 
 		%
 		% init
@@ -184,15 +185,17 @@ handle_import_csv_to_fs(List) ->
 		%
 		% get fields for each subjectid
 		%
-		case handle_get_apt_fs(ProfileDoc, FacultyDoc, ProgramDoc, SubjectDoc) of
+		AptNumber = ?I2S(AptCountAcc),
+		case handle_get_apt_fs(ProfileDoc, FacultyDoc, ProgramDoc, SubjectDoc, AptNumber) of
 			[] ->
-				Acc;
+				{Acc, AptCountAcc};
 			Fs ->
-				Acc ++ [Fs]
+				{Acc ++ [Fs], AptCountAcc+1}
 		end
 
 
-	end, [], List).
+	end, {[], AptCount}, List),
+	LoLFs.
 
 
 %..............................................................................
@@ -200,7 +203,7 @@ handle_import_csv_to_fs(List) ->
 % handle get apt fs
 %
 %..............................................................................
-handle_get_apt_fs(ProfileDoc, FacultyDoc, ProgramDoc, SubjectDoc) ->
+handle_get_apt_fs(ProfileDoc, FacultyDoc, ProgramDoc, SubjectDoc, AptNumber) ->
 
 
 	%
@@ -237,7 +240,7 @@ handle_get_apt_fs(ProfileDoc, FacultyDoc, ProgramDoc, SubjectDoc) ->
 			itf:build(?CORFAC(faculty_code_fk), FacultyId),
 			itf:build(?CORPGM(program_code_fk), ProgramId),
 			itf:build(?CORSUB(subject_code_fk), SubjectId),
-			itf:build(?OSMAPT(apt_number), helper:uidintstr()),
+			itf:build(?OSMAPT(apt_number), AptNumber),
 			itf:build(?OSMAPT(apt_state), "new"),
 			itf:build(?OSMAPT(evaluator_id), ProfileId),
 			itf:build(?OSMAPT(evaluator_type), ProfileType),

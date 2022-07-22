@@ -38,6 +38,8 @@ digmm_actions() -> [
 % fields
 %------------------------------------------------------------------------------
 
+fs(search) ->
+	ep_osm_apt:fs(basic).
 
 %------------------------------------------------------------------------------
 % options
@@ -74,7 +76,7 @@ get() ->
 	#dig {
 		mode=?VIEW,
 		module=?MODULE,
-		filters=ep_osm_apt:fs(basic),
+		filters=fs(search),
 		size=25,
 		actions=[
 			{send, "Send", "Send"}
@@ -204,14 +206,19 @@ handle_send_confirmed() ->
 
 
 	%
-	% get appointments to send
+	% process
 	%
-	handle_send_confirmed(Fs, SendCount, 0),
-	dig:log("Finished").
+	case configs:getbool(process_via_minijob, false) of
+		false ->
+			handle_send_confirmed(Fs, SendCount, 0);
+		true ->
+			handle_send_confirmed_via_minijob()
+	end.
+
 
 
 handle_send_confirmed(_Fs, SendCount, SentCount) when SentCount >= SendCount ->
-	done;
+	dig:log("Finished");
 handle_send_confirmed(Fs, SendCount, SentCount) ->
 
 
@@ -251,7 +258,7 @@ handle_send_confirmed(Fs, SendCount, SentCount) ->
 	%
 	case Docs of
 		[] ->
-			done;
+			dig:log("Finished");
 		_ ->
 			handle_send_confirmed(Fs, SendCount, SentCount + length(Docs))
 	end.
@@ -303,6 +310,21 @@ handle_send_apt(TDoc, AppDoc) ->
 
 	Message = itx:format("Sent ~p", [AptNumber]),
 	dig:log(Message).
+
+
+
+%..............................................................................
+%
+% handle - process via minijob
+%
+%..............................................................................
+
+handle_send_confirmed_via_minijob() ->
+	Filters = itf:uivalue(fs(search)),
+	Fs = dig:get_nonempty_fs(Filters),
+	{ok, Doc} = minijob_ep_osm_apt:create_and_run(Fs),
+	minijob_status:show_status(Doc).
+
 
 
 %------------------------------------------------------------------------------
