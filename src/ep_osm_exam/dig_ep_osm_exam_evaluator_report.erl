@@ -36,6 +36,12 @@ heading() ->
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
+access(_, Role) when
+	Role == ?APPOSM_EVALUATOR;
+	Role == ?APPOSM_MODERATOR;
+	Role == ?APPOSM_REVALUATOR;
+	Role == ?APPOSM_MODERATOR_REVAL ->
+		true;
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, ?APPOSM_CONTROLLER) -> true;
@@ -48,27 +54,15 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 get() ->
+	RoleGroup = get_role_group(itxauth:role()),
 	#dig {
 		module=?MODULE,
 		pdf_orientation=portrait,
-		filters=[
-			?COREXS(season_fk),
-			?CORFAC(faculty_code_fk),
-			?CORPGM(program_code_fk),
-			?CORSUB(subject_code_fk),
-			fields:get(anptestcourseid),
-			fields:get(teststatus),
-			fields:get(exam_pattern),
-			itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id)),
-			itf:build(itf:hidden(profileid), itxcontext:q(evaluatorid))
-		],
+		filters=get_filters(RoleGroup),
+		show_filter=get_show_filter(RoleGroup),
 		size=25,
-		actions=[
-			{export_evaluator_stats_bulk, "Bulk Export Evaluator Report", "Bulk Export Evaluator Report"}
-		],
-		events=[
-			ite:button(export, "CSV", {itx, {dig, export}})
-		],
+		actions=get_actions(RoleGroup),
+		events=get_events(RoleGroup),
 		config=[
 			{responsive_type, scroll},
 			{show_slno, true},
@@ -76,6 +70,74 @@ get() ->
 			{pdf_table_footer, layout_table_footer()}
 		]
 	}.
+
+
+%
+% get - events
+%
+get_events(evaluator) -> [
+];
+get_events(admin) -> [
+	ite:button(export, "CSV", {itx, {dig, export}})
+].
+
+
+
+%
+% get - actions
+%
+get_actions(evaluator) -> [
+];
+get_actions(admin) -> [
+	{export_evaluator_stats_bulk, "Bulk Export Evaluator Report", "Bulk Export Evaluator Report"}
+].
+
+
+%
+% get - show filters
+%
+get_show_filter(evaluator) ->
+	false;
+get_show_filter(admin) ->
+	true.
+
+
+
+%
+% get - filters
+%
+get_filters(evaluator) -> [
+	itf:build(itf:textbox(?F(role)), itxauth:role()),
+	itf:build(itf:textbox(?F(profileid)), itxauth:profileid())
+];
+get_filters(admin) -> [
+	?COREXS(season_fk),
+	?CORFAC(faculty_code_fk),
+	?CORPGM(program_code_fk),
+	?CORSUB(subject_code_fk),
+	fields:get(anptestcourseid),
+	fields:get(teststatus),
+	fields:get(exam_pattern),
+	itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id)),
+	itf:build(itf:hidden(profileid), itxcontext:q(evaluatorid))
+].
+
+
+%
+% get role group
+%
+get_role_group(Role) ->
+	if
+		Role == ?APPOSM_EVALUATOR;
+		Role == ?APPOSM_MODERATOR;
+		Role == ?APPOSM_REVALUATOR;
+		Role == ?APPOSM_MODERATOR_REVAL -> evaluator;
+		Role == ?APPOSM_ADMIN;
+		Role == ?APPOSM_ANPADMIN;
+		Role == ?APPOSM_CONTROLLER -> admin;
+		true -> undefined
+	end.
+
 
 
 %------------------------------------------------------------------------------
@@ -96,6 +158,85 @@ init() ->
 %------------------------------------------------------------------------------
 % function - fetch
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% [osm_exam_fk]
+%
+%..............................................................................
+fetch(D, _From, _Size, [
+	#field {id=role},
+	#field {id=profileid, uivalue=EvaluatorId}
+]) ->
+
+	%
+	% init
+	%
+	ProfileFs = profiles:get(EvaluatorId),
+	Tests = index_anpevaluator:get_eligible_tests(
+		ProfileFs, index_anpevaluator:get_tests_from_cache()
+	),
+
+
+	%
+	% layout tests
+	%
+	Results = lists:map(fun(TDoc) ->
+
+		%
+		% init
+		%
+		SeasonName = case itf:val(TDoc, season_fk) of
+			[] ->
+				[];
+			SeasonId ->
+				SeasonDoc = ep_core_exam_season_api:get_from_cache(SeasonId),
+				itf:val(SeasonDoc, name)
+		end,
+
+
+		%
+		% cells
+		%
+		[
+			#dcell {val=SeasonName},
+			#dcell {val=itf:val(TDoc, anptestcourseid)},
+			#dcell {val=itf:val(TDoc, testname)},
+			#dcell {val=#button {
+				text="Download",
+				class="btn btn-primary-outline",
+				postback={download, itf:idval(TDoc), EvaluatorId},
+				delegate=?MODULE,
+				actions=#event {
+					type=click,
+					actions=#add_class {class="disabled"}
+				}
+			}}
+		]
+
+	end, Tests),
+
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Exam Season"},
+		#dcell {type=header, val="Exam Code"},
+		#dcell {type=header, val="Exam Name"},
+		#dcell {type=header, val="Download"}
+	],
+
+
+	{
+		D#dig {
+			description="Evaluation Reports",
+			total=length(Tests)
+		},
+		[Header | Results]
+	};
+
 
 %..............................................................................
 %
@@ -531,6 +672,9 @@ layout_table_footer(_, _) ->
 % events
 %------------------------------------------------------------------------------
 
+event({download, ExamId, ProfileId}) ->
+	handle_print_evaluator_report(ExamId, ProfileId);
+
 event(export_pdf) ->
 	handle_print_evaluator_report(wf:q(id), wf:q(evaluatorid));
 
@@ -556,7 +700,21 @@ handle_print_evaluator_report(ExamId, EvaluatorId) ->
 	%
 	% init
 	%
-	Dig = helper:state(dig),
+	Dig= #dig {
+		module=?MODULE,
+		size=1000,
+		filters=[
+			itf:build(itf:hidden(?F(osm_exam_fk)), ExamId),
+			itf:build(itf:hidden(?F(profileid)), EvaluatorId)
+		],
+		pdf_orientation=portrait,
+		config=[
+			{responsive_type, scroll},
+			{show_slno, true},
+			{pdf_table_summary, layout_table_summary(ExamId, EvaluatorId)},
+			{pdf_table_footer, layout_table_footer(ExamId, EvaluatorId)}
+		]
+	},
 	Filename = itx:format("~s_~s", [
 		ExamId, EvaluatorId
 	]),

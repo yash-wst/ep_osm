@@ -88,7 +88,8 @@ menu(Role) when
 			ProfileModule = ?L2A(itx:format("profile_~s", [Role])),
 			[
 				{topmenu, [
-					{ProfileModule, bank_details, ?LN("Bank Details")}
+					{ProfileModule, bank_details, ?LN("Bank Details")},
+					{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluation Report")}
 				]}
 			];
 		false -> [
