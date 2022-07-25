@@ -75,7 +75,6 @@ fetch(D, From, Size, Fs) ->
 	FsFind = Fs ++ [
 		?OSMBDL(inward_date, #field {db2sort=?SORT_ASC})
 	] ++ fsfind(itxauth:role()),
-	?D(FsFind),
 
 	%
 	% fetch docs from db
@@ -232,7 +231,7 @@ fsfind(?APPOSM_RECEIVER) -> [
 
 fsfind(?APPOSM_SCANUPLOADER) -> [
 	itf:build(itf:hidden(?F(inwardstate)), "completed"),
-	db2es_find:get_field_cond("$in", scanningstate, ["", "new"]),
+	db2es_find:get_field_cond("$in", scanningstate, ["", "new", "assigned"]),
 	db2es_find:get_field_cond("$in", uploadstate, ["", "new"])
 ];
 
