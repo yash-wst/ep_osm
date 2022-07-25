@@ -30,17 +30,23 @@ access(_, _) -> false.
 
 
 %------------------------------------------------------------------------------
-% fields
+% function - get
 %------------------------------------------------------------------------------
 
-f(myassignment) ->
-	itf:dropdown(?F(myassignment, "My Role"), itf:options([
-		?F(createdby, "Created By"),
-		?F(scannedby, "Scanning Assigned"),
-		?F(qualityby, "QC / Upload Assigned"),
-		?F(both, "Both")
-	])).
+get() ->
+	#dig {
+		module=?MODULE,
+		filters=[
+			itf:build(?COREXS(season_fk), get_active_season_id())
+		],
+		config=[
+			{responsive_type, scroll}
+		]
+	}.
 
+%------------------------------------------------------------------------------
+% fields
+%------------------------------------------------------------------------------
 
 
 %------------------------------------------------------------------------------
@@ -63,7 +69,13 @@ init() ->
 %------------------------------------------------------------------------------
 fetch(D, From, Size, Fs) ->
 
-	FsFind = itf:fs_delete(Fs, f(myassignment)),
+	%
+	% init
+	%
+	FsFind = Fs ++ [
+		?OSMBDL(inward_date, #field {db2sort=?SORT_ASC})
+	] ++ fsfind(itxauth:role()),
+	?D(FsFind),
 
 	%
 	% fetch docs from db
@@ -72,21 +84,10 @@ fetch(D, From, Size, Fs) ->
 		{use_index, ["inward_date"]}
 	]),
 
-
-	%
-	% sort bundles by inward date
-	%
-	BundleDocsSorted = lists:sort(fun(A, B) ->
-		itf:val(A, inward_date) < itf:val(B, inward_date)
+	lists:map(fun(Doc) ->
+		itf:val(Doc, inward_date)
 	end, BundleDocs),
 
-
-	%
-	% filter out entries with both scanning + uploading completed
-	%
-
-	PendingBundlesSorted = [ X  || X <- BundleDocsSorted,
-		true == isBundlePendingForScanOrUpload(X) ],
 
 	%
 	% layout sorted bundles
@@ -144,7 +145,7 @@ fetch(D, From, Size, Fs) ->
 			}}
 		]
 
-	end, PendingBundlesSorted),
+	end, BundleDocs),
 
 
 	%
@@ -202,12 +203,11 @@ exports() -> [
 % layouts
 %------------------------------------------------------------------------------
 layout() ->
-	dig:dig(?MODULE:get(itxauth:role())).
-
+	dig:dig(?MODULE:get()).
 
 
 %------------------------------------------------------------------------------
-% get
+% fsfind
 %------------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -216,21 +216,10 @@ layout() ->
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-get(?APPOSM_RECEIVER) ->
-	#dig {
-		module=?MODULE,
-		filters=[
-			itf:build(?COREXS(season_fk), get_active_season_id()),
-			?OSMBDL(osm_exam_fk),
-			itf:build(f(myassignment), get_default_myassignment()),
-			itf:build(?OSMBDL(inwardstate), "new")
-		],
-		config=[
-			{searchbar_visibility, "show"},
-			{responsive_type, scroll}
-		]
-	};
-
+fsfind(?APPOSM_RECEIVER) -> [
+	itf:build(?OSMBDL(createdby), itxauth:user()),
+	db2es_find:get_field_cond("$in", inwardstate, ["", "new"])
+];
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -241,22 +230,11 @@ get(?APPOSM_RECEIVER) ->
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-get(?APPOSM_SCANUPLOADER) ->
-
-	#dig {
-		module=?MODULE,
-		filters=[
-			itf:build(?COREXS(season_fk), get_active_season_id()),
-			?OSMBDL(osm_exam_fk),
-			itf:build(?OSMBDL(inwardstate), "completed"),
-			?OSMBDL(scanningstate),
-			?OSMBDL(uploadstate)
-		],
-		config=[
-			{searchbar_visibility, "show"},
-			{responsive_type, scroll}
-		]
-	};
+fsfind(?APPOSM_SCANUPLOADER) -> [
+	itf:build(itf:hidden(?F(inwardstate)), "completed"),
+	db2es_find:get_field_cond("$in", scanningstate, ["", "new"]),
+	db2es_find:get_field_cond("$in", uploadstate, ["", "new"])
+];
 
 
 
@@ -266,26 +244,10 @@ get(?APPOSM_SCANUPLOADER) ->
 % need to be marked QC complete
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-get(?APPOSM_QC) ->
-	#dig {
-		module=?MODULE,
-		filters=[
-			itf:build(?COREXS(season_fk), get_active_season_id()),
-			?OSMBDL(osm_exam_fk),
-			itf:build(?OSMBDL(inwardstate), "completed"),
-			itf:build(?OSMBDL(scanningstate), "completed"),
-			itf:build(?OSMBDL(uploadstate), "completed"),
-			itf:build(?OSMBDL(qcstate), "new")
-		],
-		config=[
-			{searchbar_visibility, "show"},
-			{responsive_type, scroll}
-		]
-	};
-
-
-get(_) ->
-	ok.
+fsfind(?APPOSM_QC) -> [
+	itf:build(?OSMBDL(uploadstate), "completed"),
+	db2es_find:get_field_cond("$in", qcstate, ["", "new"])
+].
 
 
 %------------------------------------------------------------------------------
@@ -300,17 +262,6 @@ get_active_season_id() ->
 			[]
 	end.
 
-get_default_myassignment() ->
-	get_default_myassignment(itxauth:role()).
-
-get_default_myassignment(?APPOSM_RECEIVER) ->
-	"createdby";
-get_default_myassignment(?APPOSM_QC) ->
-	"qcby";
-get_default_myassignment(?APPOSM_SCANUPLOADER) ->
-	"scannedby";
-get_default_myassignment(_) ->
-	"scannedby".
 
 isBundlePendingForScanOrUpload(BundleDoc) ->
 	UploadState = itf:val(BundleDoc, uploadstate),
