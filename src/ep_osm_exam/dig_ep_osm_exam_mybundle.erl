@@ -116,7 +116,9 @@ fetch(D, From, Size, Fs) ->
 			itf:build(?OSMBDL(qualityby), itxauth:user())
 		]
 	end,
-	FsFind = itf:fs_delete(Fs, f(myassignment)) ++ FsMe,
+	FsFind = itf:fs_delete(Fs, f(myassignment)) ++ FsMe ++ [
+		?OSMBDL(inward_date, #field {db2sort=?SORT_ASC})
+	],
 
 
 	%

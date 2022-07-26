@@ -978,12 +978,14 @@ handle_inward(UId, SNo, TotalPages) ->
 	%
 	% search for existing docs
 	%
+	SNo1 = ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo),
 	FsToSearchCandidate = [
-		itf:build(itf:textbox(?F(anp_paper_uid)), UId),
-		itf:build(itf:textbox(?F(anpseatnumber)), SNo)
+		itf:build(itf:textbox(?F(anpseatnumber)), SNo1)
 	],
 	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
-		ExamDb, FsToSearchCandidate, 0, ?INFINITY
+		ExamDb, FsToSearchCandidate, 0, ?INFINITY, [
+			{use_index, ["anpseatnumber"]}
+		]
 	),
 	handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, CandidateDocs).
 
