@@ -66,7 +66,6 @@ get() ->
 			?OSMBDL(uploaded_date)
 		],
 		config=[
-			{searchbar_visibility, "show"},
 			{responsive_type, scroll}
 		]
 	}.

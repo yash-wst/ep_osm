@@ -115,22 +115,7 @@ fetch(D, From, Size, Fs) ->
 		% Make each table cell corresponding to FsForm schema
 		%
 		lists:map(fun(F) ->
-			case F#field.id of
-				State when State == scanningstate;
-						 State == uploadstate;
-						 State == qcstate ->
-					#dcell { val= case itf:val(F) of
-							"completed" -> "Completed";
-							"assigned" -> "Assigned";
-							_ -> get_assign_button_based_on_role(
-									itxauth:role(),
-									State,
-									BundleDoc)
-							end
-						};
-				_ ->
-					#dcell {val=itl:render(F)}
-			end
+			#dcell {val=get_dcell(F, BundleDoc)}
 		end, FsDoc) ++
 
 		%
@@ -277,37 +262,64 @@ get_active_season_id() ->
 	end.
 
 
-isBundlePendingForScanOrUpload(BundleDoc) ->
-	UploadState = itf:val(BundleDoc, uploadstate),
-	ScanningState = itf:val(BundleDoc, scanningstate),
 
-	case ( ScanningState /= "completed" orelse UploadState /= "completed")  of
-		true -> true;
-		_ -> false
-	end.
+%
+% get dcell
+%
+get_dcell(#field {id=FId} = F, BundleDoc) when
+	FId == scanningstate;
+	FId == uploadstate;
+	FId == qcstate ->
+	get_assign_button_based_on_role(
+		itxauth:role(), F, itf:val(BundleDoc, FId), BundleDoc
+	);
+get_dcell(F, _BundleDoc) ->
+	itl:render(F).
 
-get_assign_button_based_on_role(Role, State, BundleDoc) ->
-	 case Role of
-	 	?APPOSM_RECEIVER -> [];
-	 	?APPOSM_SCANUPLOADER ->
-	 		case State /= qcstate of
-	 			true ->
-			 		ite:button(assign_bundle,
-					 	"Assign",
-					 	{assign_bundle, State, BundleDoc},
-					 	"btn btn-info");
-			 	_ -> []
-			 end;
-		?APPOSM_QC ->
-			case State == qcstate of
-				true ->
-					ite:button(assign_bundle,
-					 	"Assign",
-					 	{assign_bundle, State, BundleDoc},
-					 	"btn btn-info");
-				_ -> []
-			end
-    end.
+
+
+%
+% get assign button
+%
+get_assign_button_based_on_role(?APPOSM_RECEIVER, _, _, _) ->
+	[];
+get_assign_button_based_on_role(?APPOSM_SCANUPLOADER, #field {id=scanningstate}, Status, BundleDoc) when
+	Status == []; Status == ?NEW ->
+	case itf:val(BundleDoc, inwardstate) of
+		?COMPLETED ->
+			get_assign_button_for_id(scanningstate, BundleDoc);
+		_ ->
+			[]
+	end;
+get_assign_button_based_on_role(?APPOSM_SCANUPLOADER, #field {id=uploadstate}, Status, BundleDoc) when
+	Status == []; Status == ?NEW ->
+	case itf:val(BundleDoc, scanningstate) of
+		?COMPLETED ->
+			get_assign_button_for_id(uploadstate, BundleDoc);
+		_ ->
+			[]
+	end;
+get_assign_button_based_on_role(?APPOSM_QC, #field {id=qcstate}, Status, BundleDoc) when
+	Status == []; Status == ?NEW ->
+	case itf:val(BundleDoc, uploadstate) of
+		?COMPLETED ->
+			get_assign_button_for_id(qcstate, BundleDoc);
+		_ ->
+			[]
+	end;
+get_assign_button_based_on_role(_, F, _, _) ->
+	itl:render(F).
+
+
+
+
+%
+% get button
+%
+get_assign_button_for_id(Id) ->
+	ite:button(
+		assign_bundle, "Assign", {assign_bundle, Id, BundleDoc}, "btn btn-info"
+	).
 
 
 %------------------------------------------------------------------------------
