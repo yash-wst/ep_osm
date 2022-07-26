@@ -594,6 +594,22 @@ handle_assign_bundle(Type, BundleDoc) ->
 	handle_assign_bundle(Type, BundleDoc, itxauth:user()).
 
 handle_assign_bundle(Type, BundleDoc, User) ->
+	Fun = fun ({Type1, BundleDoc1, User1}) ->
+		handle_assign_bundle1(Type1, BundleDoc1, User1)
+	end,
+	{ok, Res} = mini_task_queue:now(Fun, {Type, BundleDoc, User}),
+	case Res of
+		{ok, Doc} ->
+			ExamId = itf:val(Doc, osm_exam_fk),
+			BundleId = itf:idval(BundleDoc),
+			dig_ep_osm_exam_inward:redirect_to_bundle(ExamId, BundleId);
+		_ ->
+			helper_ui:flash(error, "Sorry, could not assign!")
+	end.
+
+
+
+handle_assign_bundle1(Type, BundleDoc, User) ->
 
 	%
 	% init
@@ -623,7 +639,10 @@ handle_assign_bundle(Type, BundleDoc, User) ->
 	% assert - not assigned
 	%
 	?ASSERT(
-		itf:val(Doc, Type) == [],
+		(
+			(itf:val(Doc, Type) == []) or
+			(itf:val(Doc, Type) == ?NEW)
+		),
 		"ERROR: This bundle is already assigned!"
 	),
 
@@ -661,13 +680,7 @@ handle_assign_bundle(Type, BundleDoc, User) ->
 	FsAll = ep_osm_bundle:fs(all),
 	FsAll1 = itf:d2f(Doc, FsAll),
 	FsAll2 = itf:fs_merge(FsAll1, FsToSave),
-	case ep_osm_bundle_api:save(FsAll2) of
-		{ok, Doc1} ->
-			ExamId = itf:val2(Doc1,osm_exam_fk),
-			dig_ep_osm_exam_inward:redirect_to_bundle(ExamId,Id);
-		_ ->
-			helper_ui:flash(error, "Sorry, could not assign!")
-	end.
+	ep_osm_bundle_api:save(FsAll2).
 
 
 
