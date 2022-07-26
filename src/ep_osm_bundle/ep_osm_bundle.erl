@@ -108,7 +108,7 @@ fs(mybundle) -> [
 	?OSMBDL(inwardstate),
 	?OSMBDL(scanningstate),
 	?OSMBDL(uploadstate),
-	?OSMBDL(qc_date)
+	?OSMBDL(qcstate)
 ];
 
 fs(pendingbundles) -> [
