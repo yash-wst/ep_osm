@@ -43,8 +43,9 @@ f(myassignment) ->
 	itf:dropdown(?F(myassignment, "My Role"), itf:options([
 		?F(createdby, "Created By"),
 		?F(scannedby, "Scanning Assigned"),
-		?F(qualityby, "QC / Upload Assigned"),
-		?F(both, "Both")
+		?F(qualityby, "Upload Assigned"),
+		?F(both, "Both Scanning and Uploading"),
+		?F(qcby, "QC Assigned")
 	])).
 
 
@@ -61,9 +62,11 @@ get() ->
 			itf:build(f(myassignment), get_default_myassignment()),
 			?OSMBDL(scanningstate),
 			?OSMBDL(uploadstate),
+			?OSMBDL(qcstate),
 			?OSMBDL(inward_date),
 			?OSMBDL(scanned_date),
-			?OSMBDL(uploaded_date)
+			?OSMBDL(uploaded_date),
+			?OSMBDL(qc_date)
 		],
 		config=[
 			{responsive_type, scroll}
@@ -110,6 +113,9 @@ fetch(D, From, Size, Fs) ->
 		"qualityby" -> [
 			itf:build(?OSMBDL(qualityby), itxauth:user())
 		];
+		"qcby" -> [
+			itf:build(?OSMBDL(qcby), itxauth:user())
+		];
 		_ -> [
 			itf:build(?OSMBDL(scannedby), itxauth:user()),
 			itf:build(?OSMBDL(qualityby), itxauth:user())
@@ -144,7 +150,9 @@ fetch(D, From, Size, Fs) ->
 
 		lists:map(fun(F) ->
 			case F#field.id of
-				Id when Id == scannedby; Id == qualityby ->
+				Id when Id == scannedby;
+						Id == qualityby;
+						Id == qcby ->
 					#dcell {val=itf:val(F)};
 				_ ->
 					#dcell {val=itl:render(F)}
@@ -235,6 +243,8 @@ get_default_myassignment() ->
 
 get_default_myassignment(?APPOSM_RECEIVER) ->
 	"createdby";
+get_default_myassignment(?APPOSM_QC) ->
+	"qcby";
 get_default_myassignment(_) ->
 	"scannedby".
 
