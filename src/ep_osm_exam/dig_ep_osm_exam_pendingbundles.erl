@@ -316,7 +316,7 @@ get_assign_button_based_on_role(_, F, _, _) ->
 %
 % get button
 %
-get_assign_button_for_id(Id) ->
+get_assign_button_for_id(Id, BundleDoc) ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Id, BundleDoc}, "btn btn-info"
 	).
