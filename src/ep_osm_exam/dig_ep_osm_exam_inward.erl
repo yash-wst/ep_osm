@@ -741,7 +741,7 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 
 	case cfg_show_previous_uploads() of
 		true ->
-			redirect_to_bundle(OsmBundleId);
+			redirect_to_bundle( ExamId, OsmBundleId);
 		_ ->
 			minijob_status:show_status(Doc)
 	end.
@@ -1106,10 +1106,10 @@ redirect_to_main() ->
 	helper:redirect(Url).
 
 
-redirect_to_bundle(OsmBundleId) ->
+redirect_to_bundle(OsmExamId, OsmBundleId) ->
 	Url = itx:format("/~p?id=~s&digx=~s", [
-		?MODULE, wf:q(id), base64:encode_to_string(helper:t2l([
-			{osm_exam_fk, wf:q(id)},
+		?MODULE, OsmExamId, base64:encode_to_string(helper:t2l([
+			{osm_exam_fk, OsmExamId},
 			{osm_bundle_fk, OsmBundleId}
 		]))
 	]),

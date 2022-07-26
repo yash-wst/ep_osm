@@ -70,23 +70,33 @@ init() ->
 fetch(D, From, Size, Fs) ->
 
 	%
-	% init
+	% Get Fs based on role, containing multiple OR conditions
 	%
-	FsFind = Fs ++ [
-		?OSMBDL(inward_date, #field {db2sort=?SORT_ASC})
-	] ++ fsfind(itxauth:role()),
+	FsAuthBased = fsfind(itxauth:role()),
 
 	%
-	% fetch docs from db
+	% Get list of Bundles docs for each set of Fs
+	% to emulate an OR operation
 	%
-	BundleDocs = ep_osm_bundle_api:fetch(From, Size, FsFind, [
-		{use_index, ["inward_date"]}
-	]),
+	BundleDocs = lists:foldl( fun(FsFind1, Acc) ->
+		%
+		% get Fs for each OR condition
+		%
+		FsFind = Fs ++ FsFind1 ++ [
+			?OSMBDL(inward_date, #field {db2sort=?SORT_ASC})
+		],
+		%
+		% get bunldes matching each OR condition
+		%
+		Acc ++ ep_osm_bundle_api:fetch(From, Size, FsFind,
+		 	[{use_index, ["inward_date"]}])
 
-	lists:map(fun(Doc) ->
-		itf:val(Doc, inward_date)
-	end, BundleDocs),
+		end, [], FsAuthBased),
 
+	%
+	% remove duplicate docs, since some docs can match multiple OR conditions
+	%
+	UniqueDocs = helper:unique(BundleDocs),
 
 	%
 	% layout sorted bundles
@@ -106,9 +116,6 @@ fetch(D, From, Size, Fs) ->
 		%
 		lists:map(fun(F) ->
 			case F#field.id of
-				Id when Id == scannedby; Id == qualityby; Id == qcby ->
-					#dcell {  val=itf:val(F) };
-
 				State when State == scanningstate;
 						 State == uploadstate;
 						 State == qcstate ->
@@ -144,7 +151,7 @@ fetch(D, From, Size, Fs) ->
 			}}
 		]
 
-	end, BundleDocs),
+	end, UniqueDocs),
 
 
 	%
@@ -216,8 +223,10 @@ layout() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fsfind(?APPOSM_RECEIVER) -> [
-	itf:build(?OSMBDL(createdby), itxauth:user()),
-	db2es_find:get_field_cond("$in", inwardstate, ["", "new"])
+	[
+		itf:build(?OSMBDL(createdby), itxauth:user()),
+		db2es_find:get_field_cond("$in", inwardstate, ["", "new"])
+	]
 ];
 
 
@@ -230,11 +239,15 @@ fsfind(?APPOSM_RECEIVER) -> [
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fsfind(?APPOSM_SCANUPLOADER) -> [
-	itf:build(itf:hidden(?F(inwardstate)), "completed"),
-	db2es_find:get_field_cond("$in", scanningstate, ["", "new", "assigned"]),
-	db2es_find:get_field_cond("$in", uploadstate, ["", "new"])
+	[
+		itf:build(itf:hidden(?F(inwardstate)), "completed"),
+		db2es_find:get_field_cond("$in", scanningstate, ["","new"])
+	],
+	[
+		itf:build(itf:hidden(?F(inwardstate)), "completed"),
+		db2es_find:get_field_cond("$in", uploadstate, ["","new"])
+	]
 ];
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -243,9 +256,11 @@ fsfind(?APPOSM_SCANUPLOADER) -> [
 % need to be marked QC complete
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fsfind(?APPOSM_QC) -> [
-	itf:build(?OSMBDL(uploadstate), "completed"),
-	db2es_find:get_field_cond("$in", qcstate, ["", "new"])
+fsfind(?APPOSM_QC) ->[
+	[
+		itf:build(?OSMBDL(uploadstate), "completed"),
+		db2es_find:get_field_cond("$in", qcstate, ["","new"])
+	]
 ].
 
 

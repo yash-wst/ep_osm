@@ -662,8 +662,9 @@ handle_assign_bundle(Type, BundleDoc, User) ->
 	FsAll1 = itf:d2f(Doc, FsAll),
 	FsAll2 = itf:fs_merge(FsAll1, FsToSave),
 	case ep_osm_bundle_api:save(FsAll2) of
-		{ok, _} ->
-			dig_ep_osm_exam_inward:redirect_to_bundle(Id);
+		{ok, Doc1} ->
+			ExamId = itf:val2(Doc1,osm_exam_fk),
+			dig_ep_osm_exam_inward:redirect_to_bundle(ExamId,Id);
 		_ ->
 			helper_ui:flash(error, "Sorry, could not assign!")
 	end.

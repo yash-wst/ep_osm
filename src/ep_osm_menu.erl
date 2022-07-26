@@ -114,6 +114,7 @@ menu(?APPOSM_CONTROLLER) ->
 menu(?APPOSM_SCANUPLOADER) ->
 	[
 		{topmenu, [
+			{dig_ep_osm_exam_pendingbundles, ?VIEW, ?LN("Pending Bundles")},
 			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},
 			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")}
 		]}
@@ -122,6 +123,7 @@ menu(?APPOSM_SCANUPLOADER) ->
 menu(?APPOSM_QC) ->
 	[
 		{topmenu, [
+			{dig_ep_osm_exam_pendingbundles, ?VIEW, ?LN("Pending Bundles")},
 			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},
 			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")}
 		]}
@@ -131,6 +133,7 @@ menu(?APPOSM_QC) ->
 menu(?APPOSM_RECEIVER) ->
 	[
 		{topmenu, [
+			{dig_ep_osm_exam_pendingbundles, ?VIEW, ?LN("Pending Bundles")},
 			{dig_ep_osm_exam_mybundle, ?VIEW, ?LN("My Bundles")},
 			{dig_ep_osm_exam_bundle, ?VIEW, ?LN("Find Exams")},
 			{dig_ep_osm_bundle_stats, ?VIEW, ?LN("Scanning Status")}
