@@ -597,14 +597,18 @@ handle_assign_bundle(Type, BundleDoc, User) ->
 	Fun = fun ({Type1, BundleDoc1, User1}) ->
 		handle_assign_bundle1(Type1, BundleDoc1, User1)
 	end,
-	{ok, Res} = mini_task_queue:now(Fun, {Type, BundleDoc, User}),
-	case Res of
-		{ok, Doc} ->
-			ExamId = itf:val(Doc, osm_exam_fk),
-			BundleId = itf:idval(BundleDoc),
-			dig_ep_osm_exam_inward:redirect_to_bundle(ExamId, BundleId);
-		_ ->
-			helper_ui:flash(error, "Sorry, could not assign!")
+	case mini_task_queue:now(Fun, {Type, BundleDoc, User}) of
+		{ok, Res} ->
+			case Res of
+				{ok, Doc} ->
+					ExamId = itf:val(Doc, osm_exam_fk),
+					BundleId = itf:idval(BundleDoc),
+					dig_ep_osm_exam_inward:redirect_to_bundle(ExamId, BundleId);
+				_ ->
+					helper_ui:flash(error, "Sorry, could not assign!")
+			end;
+		{error, [mini_task_queue, throw, {Error, Message}]} ->
+			throw({Error, Message})
 	end.
 
 
