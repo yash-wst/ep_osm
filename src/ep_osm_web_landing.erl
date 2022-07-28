@@ -27,6 +27,7 @@ layout_nav() ->
 			#link {class="btn btn-link", text="Admin Login", url="/login"},
 			#link {class="btn btn-link", text="Evaluator Login", url="/login"},
 			#link {class="btn btn-link", text="Controller Login", url="/itxlogin"},
+			#link {class="btn btn-link", text="CAP Centre Login", url="/itxlogin"},
 			#link {class="btn btn-link", text="DTP Login", url="/itxlogin"}
 		]}
     ].
