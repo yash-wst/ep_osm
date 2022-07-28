@@ -67,6 +67,9 @@ get() ->
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
+		],
+		config=[
+			{responsive_type, scroll}
 		]
 	}.
 
