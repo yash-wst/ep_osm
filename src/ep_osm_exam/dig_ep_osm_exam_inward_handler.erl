@@ -656,7 +656,7 @@ handle_assign_bundle1(Type, BundleDoc, User) ->
 	% or uploading state.
 	%
 
-	check_max_limits(Type, StateFId),
+	check_max_limits(Type, StateFId, User),
 
 
 	%
@@ -1220,7 +1220,7 @@ handle_uploaded_zip_file(ObjectKey) ->
 %
 %..............................................................................
 
-check_max_limits(Type, DB_state_Key) when Type /= qcby ->
+check_max_limits(Type, DB_state_Key, User) when Type /= qcby ->
 
 	Settings_key = case Type of
 		scannedby ->
@@ -1234,7 +1234,7 @@ check_max_limits(Type, DB_state_Key) when Type /= qcby ->
 	MaxBundleCount = itxconfigs_cache:get2(Settings_key, 2),
 
 	FsFind = [
-			itf:build(?OSMBDL(Type), itxauth:user()),
+			itf:build(?OSMBDL(Type), User),
 			itf:build(?OSMBDL(DB_state_Key), "assigned")
 	],
 
@@ -1258,7 +1258,7 @@ check_max_limits(Type, DB_state_Key) when Type /= qcby ->
 			[MaxBundleCount, Message])
 	);
 
-check_max_limits(_,_) ->
+check_max_limits(_, _, _) ->
 	ok.
 
 
