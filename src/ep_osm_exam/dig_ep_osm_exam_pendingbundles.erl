@@ -37,7 +37,7 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
-			itf:build(?COREXS(season_fk), get_active_season_id())
+			?COREXS(season_fk)
 		],
 		config=[
 			{responsive_type, scroll}

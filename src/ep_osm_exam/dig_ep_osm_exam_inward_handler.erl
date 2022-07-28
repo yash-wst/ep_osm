@@ -1231,7 +1231,7 @@ check_max_limits(Type, DB_state_Key) when Type /= qcby ->
 
 	Search_Index = atom_to_list(Type),
 
-	MaxBundleCount = itxconfigs:get2(Settings_key, 2),
+	MaxBundleCount = itxconfigs_cache:get2(Settings_key, 2),
 
 	FsFind = [
 			itf:build(?OSMBDL(Type), itxauth:user()),

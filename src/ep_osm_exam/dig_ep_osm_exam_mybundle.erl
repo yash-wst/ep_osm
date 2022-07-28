@@ -57,7 +57,7 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
-			itf:build(?COREXS(season_fk), get_active_season_id()),
+			?COREXS(season_fk),
 			?OSMBDL(osm_exam_fk),
 			itf:build(f(myassignment), get_default_myassignment()),
 			?OSMBDL(scanningstate),
