@@ -115,7 +115,7 @@ get_show_filter(admin) ->
 %
 get_filters(regular) -> [
 	itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id)),
-	itf:build(itf:textbox(?F(profileid)), itxauth:profileid())
+	itf:build(itf:textbox(?F(profileid)), itxcontext:q(evaluatorid))
 ];
 get_filters(evaluator) -> [
 	itf:build(itf:textbox(?F(role)), itxauth:role()),
