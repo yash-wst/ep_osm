@@ -76,6 +76,7 @@ fs(search) -> [
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, ?APPOSM_CONTROLLER) -> true;
+access(_, ?APPOSM_CAPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -89,18 +90,41 @@ get() ->
 		description="Evaluation Statistics",
 		module=?MODULE,
 		filters=fs(search),
-		events=[
-			ite:button(export, "CSV", {itx, {dig, export}})
-		],
-		actions=[
-			{show_send_reminder, "Send Reminder", "Send Reminder"},
-			{show_reset_booklet_state, "Reset Booklet State", "Reset Booklet State"}
-		],
+		events=case get_role_type() of
+			admin -> [
+				ite:button(export, "CSV", {itx, {dig, export}})
+			];
+			_ -> [
+			]
+		end,
+		actions=case get_role_type() of
+			admin -> [
+				{show_send_reminder, "Send Reminder", "Send Reminder"},
+				{show_reset_booklet_state, "Reset Booklet State", "Reset Booklet State"}
+			];
+			_ -> [
+			]
+		end,
 		config=[
 			{responsive_type, scroll}
 		],
 		size=25
 	}.
+
+
+%
+% get role type
+%
+get_role_type() ->
+	case itxauth:role() of
+		Role when 
+			Role == ?APPOSM_ADMIN;
+			Role == ?APPOSM_ANPADMIN;
+			Role == ?APPOSM_CONTROLLER ->
+			admin;
+		_ ->
+			regular
+	end.
 
 
 %------------------------------------------------------------------------------
@@ -308,7 +332,22 @@ dcell_days_since_test(TodaySeconds, Doc) ->
 % dcell - exam actions
 %
 dcell_exam_actions(Doc) ->
+	dcell_exam_actions(Doc, get_role_type()).
 
+
+dcell_exam_actions(Doc, regular) ->
+	Links = [
+		#link {
+			text="Status of Evaluators",
+			url=itx:format("/dig_ep_osm_exam_evaluator_stats?id=~s", [itf:idval(Doc)])
+		}
+	],
+	#dcell {
+		type=label,
+		val_export="",
+		val=akit_dropdown:button_group("", Links)
+	};
+dcell_exam_actions(Doc, admin) ->
 	Fs = itf:d2f(Doc, [itf:id()]),
 	Links = helper_ui:layout_slinks(anptest, Fs),
 	#dcell {
@@ -557,7 +596,7 @@ handle_send_reminder_confirmed() ->
 
 
 
-handle_send_reminder_confirmed_via_minijob(RoleId) ->
+handle_send_reminder_confirmed_via_minijob(_RoleId) ->
 	{ok, Doc} = minijob_send_reminders_to_osm_evaluators:create_and_run([
 		fields:build(osm_profiletype, wf:q(osm_profiletype))
 	]),
@@ -794,6 +833,25 @@ handle_show_reset_booklet_state() ->
 % states
 %
 states() ->
+	states(get_role_type()).
+
+states(regular) ->
+	States = [
+		anpstate_yettostart,
+		anpstate_active,
+		anpstate_completed,
+		anpstate_moderation,
+		anpstate_moderation_completed,
+		anpstate_revaluation,
+		anpstate_revaluation_completed,
+		anpstate_moderation_reval,
+		anpstate_moderation_reval_completed,
+		anpstate_evaluation_rejected
+	],
+	lists:map(fun(State) ->
+		?A2L(State)
+	end, States);
+states(admin) ->
 	lists:map(fun(State) ->
 		?A2L(State)
 	end, helper_options:options(anpstate)).
@@ -846,7 +904,10 @@ get_class(_, _) ->
 %
 % get link
 %
-get_link(Doc, State, Number) when Number > 0 ->
+get_link(Doc, State, Number) ->
+	get_link(Doc, State, Number, get_role_type()).
+
+get_link(Doc, State, Number, admin) when Number > 0 ->
 	#link {
 		new=true,
 		text=Number,
@@ -854,7 +915,7 @@ get_link(Doc, State, Number) when Number > 0 ->
 			dig_ep_osm_exam_verification, itf:idval(Doc), State
 		])
 	};
-get_link(_, _, Number) ->
+get_link(_, _, Number, _) ->
 	Number.
 
 

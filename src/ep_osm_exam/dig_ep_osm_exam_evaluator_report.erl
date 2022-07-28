@@ -45,6 +45,7 @@ access(_, Role) when
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, ?APPOSM_CONTROLLER) -> true;
+access(_, ?APPOSM_CAPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -75,6 +76,8 @@ get() ->
 %
 % get - events
 %
+get_events(regular) -> [
+];
 get_events(evaluator) -> [
 ];
 get_events(admin) -> [
@@ -86,6 +89,8 @@ get_events(admin) -> [
 %
 % get - actions
 %
+get_actions(regular) -> [
+];
 get_actions(evaluator) -> [
 ];
 get_actions(admin) -> [
@@ -96,6 +101,8 @@ get_actions(admin) -> [
 %
 % get - show filters
 %
+get_show_filter(regular) ->
+	false;
 get_show_filter(evaluator) ->
 	false;
 get_show_filter(admin) ->
@@ -106,6 +113,10 @@ get_show_filter(admin) ->
 %
 % get - filters
 %
+get_filters(regular) -> [
+	itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id)),
+	itf:build(itf:textbox(?F(profileid)), itxauth:profileid())
+];
 get_filters(evaluator) -> [
 	itf:build(itf:textbox(?F(role)), itxauth:role()),
 	itf:build(itf:textbox(?F(profileid)), itxauth:profileid())
@@ -135,6 +146,7 @@ get_role_group(Role) ->
 		Role == ?APPOSM_ADMIN;
 		Role == ?APPOSM_ANPADMIN;
 		Role == ?APPOSM_CONTROLLER -> admin;
+		Role == ?APPOSM_CAPADMIN -> regular;
 		true -> undefined
 	end.
 

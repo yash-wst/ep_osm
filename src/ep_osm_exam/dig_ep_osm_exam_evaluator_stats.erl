@@ -3,7 +3,9 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
--import(dig_ep_osm_exam_evaluation_stats, [get_class/2, states/0]).
+-import(dig_ep_osm_exam_evaluation_stats, [
+	get_class/2, states/0, get_role_type/0
+]).
 
 %------------------------------------------------------------------------------
 % main
@@ -39,6 +41,7 @@ heading() ->
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, ?APPOSM_CONTROLLER) -> true;
+access(_, ?APPOSM_CAPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -50,6 +53,12 @@ access(_, _) -> false.
 get() ->
 	#dig {
 		module=?MODULE,
+		show_filter=case get_role_type() of
+			admin ->
+				true;
+			_ ->
+				false
+		end,
 		filters=[
 			?COREXS(season_fk),
 			?CORFAC(faculty_code_fk),
@@ -62,12 +71,20 @@ get() ->
 			itf:build(itf:hidden(profileid), itxcontext:q(evaluatorid))
 		],
 		size=25,
-		actions=[
-			{export_evaluator_stats_bulk, "Bulk Export Evaluator Stats", "Bulk Export Evaluator Stats"}
-		],
-		events=[
-			ite:button(export, "CSV", {itx, {dig, export}})
-		],
+		actions=case get_role_type() of
+			admin -> [
+				{export_evaluator_stats_bulk, "Bulk Export Evaluator Stats", "Bulk Export Evaluator Stats"}
+			];
+			_ -> [
+			]
+		end,
+		events=case get_role_type() of
+			admin -> [
+				ite:button(export, "CSV", {itx, {dig, export}})
+			];
+			_ -> [
+			]
+		end,
 		config=[
 			{responsive_type, scroll}
 		]
@@ -102,6 +119,15 @@ fetch(D, From, Size, [
 	#field {id=osm_exam_fk, uivalue=ExamId},
 	#field {id=profileid, uivalue=ProfileId}
 	]) ->
+
+
+	%
+	% assert
+	%
+	?ASSERT(
+		get_role_type() == admin,
+		"Unauthorised."
+	),
 
 
 	%
@@ -269,12 +295,22 @@ fetch(D, _From, _Size, [
 			"unassigned" ->
 				[];
 			_ ->
-				 #link {
-					text="View",
-					url=itx:format("~p?id=~s&evaluatorid=~s", [
-						?MODULE, ExamId, ProfileId
-					])
-				}
+				case get_role_type() of
+					admin ->
+						 #link {
+							text="Candidates",
+							url=itx:format("~p?id=~s&evaluatorid=~s", [
+								?MODULE, ExamId, ProfileId
+							])
+						};
+					_ ->
+						 #link {
+							text="Report",
+							url=itx:format("~p?id=~s&evaluatorid=~s", [
+								dig_ep_osm_exam_evaluator_report, ExamId, ProfileId
+							])
+						}
+				end
 		end,
 
 
@@ -343,17 +379,22 @@ fetch(D, _From, _Size, [
 	%
 	% return
 	%
+	Description = io_lib:format("~s / ~ts / ~s", [
+		itf:val(TFs, anptestcourseid),
+		itf:val(TFs, testname),
+		?LN(?L2A(itf:val(TFs, teststatus)))
+	]),
 	{
 		D#dig {
 			total=length(ProfileDocs),
-			description=#link {
-				url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
-				text=io_lib:format("~s / ~ts / ~s", [
-					itf:val(TFs, anptestcourseid),
-					itf:val(TFs, testname),
-					?LN(?L2A(itf:val(TFs, teststatus)))
-				])
-			}
+			description=case get_role_type() of
+				admin -> #link {
+					url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
+					text=Description
+				};
+				_ ->
+					Description
+			end
 		},
 		[Header] ++ tl(dig:append_total_cells(ResultsSorted))
 	};
