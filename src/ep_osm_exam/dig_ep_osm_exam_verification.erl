@@ -59,13 +59,19 @@ get() ->
 		size=25
 	}.
 
+
+
+%------------------------------------------------------------------------------
+% filters
+%------------------------------------------------------------------------------
+
 filters(ExamId) when ExamId /= undefined ->
 	[
 		itf:build(itf:hidden(osm_exam_fk), ExamId),
 		fields:build(anpcentercode, wf:q(centreid)),
 		fields:build(anpstate, wf:q(state)),
 		fields:get(anpseatnumber)
-	];
+	] ++ get_evaluator_filter() ;
 filters(_) ->
 	[
 		?COREXS(season_fk),
@@ -217,6 +223,11 @@ fetch(D, _From, _Size, [
 	};
 
 
+%..............................................................................
+%
+% [osm_exam_fk]
+% plus more filters incoming
+%..............................................................................
 
 fetch(D, From, Size, [
 	#field {id=osm_exam_fk, uivalue=ExamId} | Fs
@@ -363,6 +374,18 @@ handle_view_scanned_images(ExamId, CandidateId) ->
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
+
+%
+% get additional filter for evaluator
+%,
+get_evaluator_filter()->
+	get_evaluator_filter(wf:q(profiletype), wf:q(profileid)).
+
+get_evaluator_filter(undefined, _) -> [];
+get_evaluator_filter( _, undefined) -> [];
+get_evaluator_filter( _, "unassigned") -> [];
+get_evaluator_filter(ProfileType, ProfileId) ->
+	[itf:build(fields:get(?L2A(ProfileType)),ProfileId)].
 
 
 

@@ -113,7 +113,7 @@ init() ->
 %..............................................................................
 %
 % [osm_exam_fk]
-%
+% [profileid]
 %..............................................................................
 fetch(D, From, Size, [
 	#field {id=osm_exam_fk, uivalue=ExamId},
@@ -287,7 +287,8 @@ fetch(D, _From, _Size, [
 		% init
 		%
 		ProfileDoc = helper:get_doc_or_empty_doc_from_dict(ProfileId, ProfileDocsDict),
-
+		EvaluatorRole = itf:val(ProfileDoc, profiletype),
+		ProfileTypeKey = ?L2A("profileidfk_" ++ EvaluatorRole),
 		%
 		% get evaluator link
 		%
@@ -334,7 +335,7 @@ fetch(D, _From, _Size, [
 			),
 			#dcell {
 				bgcolor=get_class(State, Val),
-				val=Val
+				val=get_link(ExamId, State, Val, ProfileTypeKey, ProfileId)
 			}
 		end, states()) ++ [
 			#dcell {
@@ -551,6 +552,21 @@ layout_cell(RoleId, StatsDict, ProfileIds) ->
 		val=length(ProfileIds)
 	}.
 
+%..............................................................................
+%
+% get link
+%
+%..............................................................................
+get_link(ExamId, ANPState, Number, ProfileTypeKey, ProfileId) when Number > 0 ->
+	#link {
+		new=true,
+		text=Number,
+		url=itx:format("/~p?id=~s&state=~s&profiletype=~s&profileid=~s", [
+			dig_ep_osm_exam_verification, ExamId, ANPState, ProfileTypeKey, ProfileId
+		])
+	};
+get_link(_, _, Number, _ , _) ->
+	Number.
 
 %------------------------------------------------------------------------------
 % events
