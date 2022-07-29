@@ -1026,7 +1026,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, []) ->
 		itf:build(itf:textbox(?F(anpcentercode)), "B:" ++ BundleNumber),
 		itf:build(itf:textbox(?F(total_pages)), TotalPages),
 		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
-		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
+		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, OsmBundleId))
 	],
 	case anpcandidates:save(ExamDb, FsToSave) of
 		{ok, CandidateDoc} ->
@@ -1043,6 +1043,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, [Doc]) ->
 	%
 	% init
 	%
+	ExamDb = anpcandidates:db(ExamId),
 	BundleId = itf:val(Doc, osm_bundle_fk),
 	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
 	BundleNumber = get_bundle_number_from_cache(BundleId),
@@ -1061,7 +1062,7 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, [Doc]) ->
 	FsToSave = [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
 		itf:build(itf:textbox(?F(total_pages)), TotalPages),
-		itf:build(itf:textbox(?F(timestamp_inward)), helper:epochtimestr())
+		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, BundleId))
 	],
 	case ep_osm_candidate_api:update(ExamId, Doc, FsToSave) of
 		{ok, CandidateDoc} ->
@@ -1091,6 +1092,7 @@ handle_insert_candidatedoc(BundleDoc, CDoc) ->
 		#tablecell {body=[]},
 		#tablecell {body=itf:val(CDoc, anp_paper_uid)},
 		#tablecell {body=itf:val(CDoc, anpseatnumber)},
+		#tablecell {body=helper:epochstrtotime(itf:val(CDoc, timestamp_inward))},
 		#tablecell {body=?LN(?L2A(itf:val(CDoc, anpstate)))},
 		#tablecell {body=itf:val(CDoc, anpfullname)},
 		#tablecell {body=itf:val(CDoc, total_pages)},
@@ -1214,9 +1216,56 @@ handle_uploaded_zip_file(ObjectKey) ->
 
 
 
+
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+
+new_timestamp_inward(ExamDb, BundleId) ->
+
+	%
+	% init
+	%
+	EpochTime = helper:epochtimestr(),
+
+
+	%
+	% find docs
+	%
+	FsToSearchBundle = [
+		itf:build(itf:textbox(?F(osm_bundle_fk)), BundleId),
+		itf:build(itf:textbox(?F(timestamp_inward)), EpochTime)
+	],
+	Db2FindRec = db2_find:getrecord_by_fs(
+		ExamDb, FsToSearchBundle, 0, 10, [
+			{use_index, ["osm_bundle_fk"]}
+		]
+	),
+	#db2_find_response {docs=Docs} = db2_find:find(Db2FindRec#db2_find {
+		fields=[
+			itf:textbox(?F(timestamp_inward))
+		]
+	}),
+
+
+	%
+	% return epoch time
+	%
+	case Docs of
+		[] ->
+			EpochTime;
+		_ ->
+			LastDoc = lists:last(sort_candidate_docs(Docs)),
+			NewEpochtime = helper:s2i(itf:val(LastDoc, timestamp_inward)) + 1,
+			helper:i2s(NewEpochtime)
+	end.
+
+
+
 %..............................................................................
 %
-% Utility functions
+% check max limits
 %
 %..............................................................................
 

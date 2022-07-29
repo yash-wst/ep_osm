@@ -128,6 +128,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Seat Number"},
 			#dcell {type=header, val="Fullname"},
 			#dcell {type=header, val="Evaluation State"},
+			#dcell {type=header, val="Inward Timestamp"},
 			#dcell {type=header, val="Bundle Number"},
 			#dcell {type=header, val="Received By"},
 			#dcell {type=header, val="Inward State"},
@@ -228,10 +229,16 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 		anp_paper_uid,
 		anpseatnumber,
 		anpfullname,
-		anpstate
+		anpstate,
+		timestamp_inward
 	],
 	lists:map(fun(FId) ->
-		#dcell {val=itf:val(CandidateDoc, FId)}
+		case FId of
+			timestamp_inward ->
+				#dcell {val=helper:epochstrtotime(itf:val(CandidateDoc, timestamp_inward))};
+			_ ->
+				#dcell {val=itf:val(CandidateDoc, FId)}
+		end
 	end, FIds).
 
 

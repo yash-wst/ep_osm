@@ -148,6 +148,7 @@ fetch(D, _From, _Size, [
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
+			#dcell {val=helper:epochstrtotime(itf:val(CDoc, timestamp_inward))},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=itf:val(CDoc, total_pages)},
@@ -164,6 +165,7 @@ fetch(D, _From, _Size, [
 	Header = [
 		#dcell {type=header, val="Barcode / UID"},
 		#dcell {type=header, val="Seat No."},
+		#dcell {type=header, val="Inward Timestamp"},
 		#dcell {type=header, val="State"},
 		#dcell {type=header, val="Student Name"},
 		#dcell {type=header, val="Total Pages"},
@@ -1033,7 +1035,8 @@ get_bundle_docs(ExamId, OsmBundleId) ->
 	#db2_find_response {docs=BundleDocs} = db2_find:find(Db2FindRec#db2_find {
 		fields=[
 			itf:textbox(?F(anp_paper_uid)),
-			itf:textbox(?F(anpseatnumber))
+			itf:textbox(?F(anpseatnumber)),
+			itf:textbox(?F(timestamp_inward))
 		]
 	}),
 
