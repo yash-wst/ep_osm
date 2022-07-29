@@ -583,7 +583,7 @@ handle_apply_yes_test_doc_batch(Type, ApplyAcc, Rules, ExamDoc, From, CandidateD
 			[] ->
 				Acc;
 			Marks ->
-				Marks1 = trunc(helper:s2f(Marks)),
+				Marks1 = trunc(helper:ceiling(helper:s2f(Marks))),
 				Group = case dict:find(Marks1, Rules) of
 					{ok, Group0} ->
 						Group0;
