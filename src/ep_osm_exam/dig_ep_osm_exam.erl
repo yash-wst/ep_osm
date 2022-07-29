@@ -137,6 +137,11 @@ fetch(D, From, Size, Fs) ->
 			#dcell {
 				show_csv=false,
 				val=helper_ui:layout_slinks(anptest, FsIndex)
+			},
+			#dcell {
+				show_ui=false,
+				show_csv=true,
+				val=itf:idval(Doc)
 			}
 		]
 
@@ -151,8 +156,8 @@ fetch(D, From, Size, Fs) ->
 		#dcell {type=header, val=Label}
 	end, anptest:fs(form)) ++ [
 		#dcell {type=header, show_csv=false, val="Files"},
-		#dcell {type=header, show_csv=false, val="Actions"}
-
+		#dcell {type=header, show_csv=false, val="Actions"},
+		#dcell {type=header, show_csv=true,  val="Test Id", show_ui=false}
 	],
 
 	{
