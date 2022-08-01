@@ -121,9 +121,11 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 	%
 	% layout images
 	%
-	lists:map(fun(ImageUrl) ->
+	Cols = itxconfigs_cache:get2(ep_osm_verify_images_cols, 3),
+	ColSize = 12 div Cols,
+	Es = lists:map(fun(ImageUrl) ->
 		AName = anpcandidate:get_aname_from_imgurl(ImageUrl),
-		[
+		layout:g(ColSize, [
 			lists:flatten(io_lib:format("
 				<a id='~s' href='#'></a>", [AName]
 			)),
@@ -136,8 +138,9 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 				style="width: 100%",
 				image=ImageUrl
 			}
-		]
-	end, ImgUrls).
+		])
+	end, ImgUrls),
+	layout:grow(Es).
 
 
 
