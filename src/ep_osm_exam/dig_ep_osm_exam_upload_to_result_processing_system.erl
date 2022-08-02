@@ -34,9 +34,23 @@ f(frp_season_fk = I) ->
 		id=I,
 		label="Season - Result Processing System",
 		options=F#field.options#search{node=itxnode:frp()}
-	}.
+	};
+
+f(frp_mark_type = I) ->
+	itf:dropdown(?F(I, "Mark type"), options(frp_mark_type)).
 
 
+
+options(frp_mark_type) ->
+	Docs = rpc:call(
+		itxnode:frp(),
+		up_core_mark_type_api,
+		get_marktype_docs,
+		[]
+	),
+	?ASSERT(Docs =/= undefined, "Mark types not created!"),
+	L = [?F(itf:val2(Doc, mtype_id), itf:val2(Doc, lable)) || Doc <- Docs],
+	itf:options(L).
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
@@ -229,6 +243,7 @@ handle_action_upload_to_frp() ->
 	FEvaluatorType = fields:get(osm_profiletype),
 	FsUpload = [
 		f(frp_season_fk),
+		f(frp_mark_type),
 		FEvaluatorType#field {label="Upload Marks Of"}
 	],
 	Es = [
@@ -261,6 +276,7 @@ handle_upload() ->
 	Context = wf_context:context(),
 	OsmSeasonFk = wf:q(season_fk),
 	FrpSeasonFk = wf:q(frp_season_fk),
+	FrpMarkType = wf:q(frp_mark_type),
 	OsmEvaluatorType = wf:q(osm_profiletype),
 
 
@@ -269,7 +285,7 @@ handle_upload() ->
 	%
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType)
+		handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType)
 	end,
 
 
@@ -281,7 +297,7 @@ handle_upload() ->
 
 
 
-handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType) ->
+handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType) ->
 
 
 	%
@@ -350,14 +366,14 @@ handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType) ->
 	% handle upload of each exam doc
 	%
 	lists:foreach(fun(Doc) ->
-		handle_upload(OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc)
+		handle_upload(OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc, FrpMarkType)
 	end, Docs).
 
 
 
 
 
-handle_upload(_OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc) ->
+handle_upload(_OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc, FrpMarkType) ->
 
 	%
 	% init
@@ -396,7 +412,7 @@ handle_upload(_OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc) ->
 				SubjectCode, Pattern
 			]));
 		[MatchingSubjectDoc] ->
-			handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, Doc, MatchingSubjectDoc);
+			handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, Doc, MatchingSubjectDoc, FrpMarkType);
 		_ ->
 			dig:log(error, io_lib:format("Error! Subject (~s, ~s) has multiple documents on result processing system", [
 				SubjectCode, Pattern
@@ -408,19 +424,7 @@ handle_upload(_OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc) ->
 
 
 handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectDoc) ->
-
-	%
-	% init
-	%
-	FrpSeasonFk = itf:idval(FrpSeasonDoc),
 	FrpSeasonType = itf:val(FrpSeasonDoc, type),
-	ExamId = itf:idval(OsmExamDoc),
-	SubjectId = itf:idval(MatchingSubjectDoc),
-	SubjectCode = itf:val(OsmExamDoc, anptestcourseid),
-	Pattern = itf:val(OsmExamDoc, exam_pattern),
-	dig:log(warning, io_lib:format("Uploading ... (~s, ~s)", [SubjectCode, Pattern])),
-
-
 	%
 	% decide marktype to upload based on exam season type
 	%
@@ -429,6 +433,30 @@ handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectD
 			revaluation_marks;
 		_ ->
 			end_exam_marks
+	end,
+
+	handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectDoc, MarkTypeId).
+
+
+handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectDoc, MarkTypeId) when MarkTypeId==undefined; MarkTypeId==[] ->
+	handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectDoc);
+
+
+handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectDoc, MarkTypeId0) ->
+
+	%
+	% init
+	%
+	FrpSeasonFk = itf:idval(FrpSeasonDoc),
+	ExamId = itf:idval(OsmExamDoc),
+	SubjectId = itf:idval(MatchingSubjectDoc),
+	SubjectCode = itf:val(OsmExamDoc, anptestcourseid),
+	Pattern = itf:val(OsmExamDoc, exam_pattern),
+	dig:log(warning, io_lib:format("Uploading ... (~s, ~s)", [SubjectCode, Pattern])),
+
+	MarkTypeId = case is_list(MarkTypeId0) of
+		true -> ?L2A(MarkTypeId0);
+		_ -> MarkTypeId0
 	end,
 
 	%
