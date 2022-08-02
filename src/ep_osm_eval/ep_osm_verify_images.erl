@@ -121,7 +121,7 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 	%
 	% layout images
 	%
-	Cols = itxconfigs_cache:get2(ep_osm_verify_images_cols, 3),
+	Cols = itxconfigs_cache:get2(ep_osm_verify_images_cols, 1),
 	ColSize = 12 div Cols,
 	Es = lists:map(fun(ImageUrl) ->
 		AName = anpcandidate:get_aname_from_imgurl(ImageUrl),
