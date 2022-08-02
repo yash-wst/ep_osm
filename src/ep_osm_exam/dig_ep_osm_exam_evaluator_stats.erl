@@ -335,7 +335,8 @@ fetch(D, _From, _Size, [
 			),
 			#dcell {
 				bgcolor=get_class(State, Val),
-				val=get_link(ExamId, State, Val, ProfileTypeKey, ProfileId)
+				val=get_link(ExamId, State, Val, ProfileTypeKey, ProfileId),
+				val_export=Val
 			}
 		end, states()) ++ [
 			#dcell {
