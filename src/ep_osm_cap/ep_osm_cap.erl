@@ -52,6 +52,7 @@ fs(grid) ->
 	fs(basic);
 
 fs(import) -> [
+	?ITXF({sep, #pre {text="CAP Centre code, CAP Centre name"}}),
 	itf:attachment()
 ];
 
