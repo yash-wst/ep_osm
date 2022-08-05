@@ -145,10 +145,10 @@ after_create(Fs, SaveRes) ->
 	%
 	% init
 	%
-	Username = itf:val(Fs, username),
-	MobileNumber = itf:val(Fs, mobile),
-	Email = itf:val(Fs, email),
-	Password = itf:val(Fs, password_bcrypt),
+	Username = itf:val2(Fs, username),
+	MobileNumber = itf:val2(Fs, mobile),
+	Email = itf:val2(Fs, email),
+	Password = itf:val2(Fs, password_bcrypt),
 
 	%
 	% get welcome message
