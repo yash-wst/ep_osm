@@ -77,6 +77,7 @@ fs(grid) ->
 	fs(basic);
 
 fs(import) -> [
+	?ITXF({sep, #pre {text="username, fullname, mobile, email, cap centre code"}}),
 	itf:attachment()
 ];
 

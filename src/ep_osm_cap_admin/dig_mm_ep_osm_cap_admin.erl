@@ -22,6 +22,9 @@ form() ->
 	ep_osm_cap_admin.
 
 
+module(import) ->
+	ep_osm_cap_admin_import.
+
 %------------------------------------------------------------------------------
 % records
 %------------------------------------------------------------------------------
@@ -136,6 +139,29 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 %
 before_save(FsToSave, _FsAll, _Doc) ->
 	FsToSave.
+
+after_create(Fs, SaveRes) ->
+
+	%
+	% init
+	%
+	Username = itf:val(Fs, username),
+	MobileNumber = itf:val(Fs, mobile),
+	Email = itf:val(Fs, email),
+	Password = itf:val(Fs, password_bcrypt),
+
+	%
+	% get welcome message
+	%
+	Subject = itxprofile:get_welcome_email_subject(),
+	EmailBody = itxprofile:get_welcome_email_body_html(Username, Password),
+	Msg = itxprofile:get_welcome_sms_content(Username, Password),
+
+	%
+	% send email and sms
+	%
+	email:send([Email], Subject, EmailBody),
+	sms:send([MobileNumber], Msg).
 
 
 %------------------------------------------------------------------------------
