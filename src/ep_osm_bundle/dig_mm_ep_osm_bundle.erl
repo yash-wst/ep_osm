@@ -69,7 +69,7 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?EXPORT,
+		mode=?VIEW,
 		module=?MODULE,
 		filters=[
 			?COREXS(season_fk),
@@ -83,7 +83,10 @@ get() ->
 			?OSMBDL(uploaded_date)
 		],
 		events=[
-			ite:button(export, "CSV", {itx, {dig, export}})
+			ite:button(export, "CSV", {itx, {dig_mm, export}})
+		],
+		config=[
+			{responsive_type, scroll}
 		],
 		size=25
 	}.

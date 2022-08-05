@@ -52,6 +52,9 @@ get() ->
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
 		],
+		config=[
+			{responsive_type, scroll}
+		],
 		size=1
 	}.
 
@@ -138,7 +141,9 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Scanned Date"},
 			#dcell {type=header, val="Uploaded By"},
 			#dcell {type=header, val="Upload State"},
-			#dcell {type=header, val="Uploaded Date"}
+			#dcell {type=header, val="Uploaded Date"},
+			#dcell {type=header, val="QC State"},
+			#dcell {type=header, val="QC Date"}
 		]
 	}, Results1}.
 
@@ -274,7 +279,9 @@ layout_bundle_doc(BundleDoc) ->
 		?OSMBDL(scanned_date),
 		?OSMBDL(qualityby),
 		?OSMBDL(uploadstate),
-		?OSMBDL(uploaded_date)
+		?OSMBDL(uploaded_date),
+		?OSMBDL(qcstate),
+		?OSMBDL(qc_date)
 	],
 
 	lists:map(fun(#field {id=FId}) ->

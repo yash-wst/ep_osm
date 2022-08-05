@@ -7,10 +7,10 @@ main() ->
 	ita:auth(?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered.html"})).
 
 title() ->
-	?LN("ep_osm_bundle").
+	?LN("OSM Bundle").
 
 heading() ->
-	?LN("ep_osm_bundle").
+	?LN("OSM Bundle").
 
 db() ->
 	"ep_osm_bundle".
@@ -18,6 +18,7 @@ db() ->
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
+access(_, ?APPOSM_RECEIVER) -> true;
 access(_, _) -> false.
 
 %------------------------------------------------------------------------------
@@ -92,7 +93,8 @@ fs(form) -> [
 	?OSMBDL(inward_date),
 	?OSMBDL(scanned_date),
 	?OSMBDL(uploaded_date),
-	?OSMBDL(qc_date)
+	?OSMBDL(qc_date),
+	?ITXF({actions, ?MODULE})
 ];
 
 fs(mybundle) -> [
@@ -130,10 +132,9 @@ fs(create) ->
 	fs(basic);
 
 fs(edit) -> [
-	?OSMBDL(inwardstate),
-	?OSMBDL(scanningstate),
-	?OSMBDL(uploadstate),
-	?OSMBDL(qcstate)
+	?OSMBDL(packet_number),
+	?OSMBDL(packet_count),
+	?OSMBDL(rack_location)
 ];
 
 fs(update) ->
