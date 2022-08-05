@@ -256,6 +256,7 @@ fetch(D, From, Size, [
 		[
 			#dcell {val=itf:val(CDoc, anp_paper_uid)},
 			#dcell {val=itf:val(CDoc, anpseatnumber)},
+			#dcell {val=itf:val(CDoc, anpseatnumber_corrected)},
 			#dcell {val=itf:val(CDoc, anpfullname)},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {
@@ -287,6 +288,7 @@ fetch(D, From, Size, [
 	Header = [
 		#dcell {type=header, val="Barcode / UID"},
 		#dcell {type=header, val="Seat No."},
+		#dcell {type=header, val="Seat No. (Corrected)"},
 		#dcell {type=header, val="Full name"},
 		#dcell {type=header, val="State"},
 		#dcell {type=header, val="Candidate Doc"},

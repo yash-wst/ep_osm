@@ -3,12 +3,19 @@
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
 
+
+pagejs() -> [
+	fabricjs,
+	"/lib/ep_osm/priv/static/js/ep_osm_2.js"
+].
+
+pagecss() -> [
+	"/lib/ep_osm/priv/static/css/ep_osm_v2.css"
+].
+
+
 main() ->
-	%
-	% adminkit disabled for this page
-	%
-	helper:state(adminkit_enabled, false),
-	ita:auth(?APPOSM, ?MODULE, #template {file="lib/ep_osm/priv/static/templates/html/ep_osm_eval.html"}).
+	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/ep_osm/priv/static/templates/html/ep_osm_eval.html"})).
 
 title() ->
 	?LN("Evaluation View").
@@ -32,13 +39,13 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 
 nav() ->
-	Links = [
-		#link {id=anpevaluator, class="default", text="Evaluator", url=url(anpevaluator)},
-		#link {id=anpmoderator, text="Moderator", url=url(anpmoderator)},
-		#link {id=anprevaluator, text="Revaluator", url=url(anprevaluator)},
-		#link {id=anpmoderator_reval, text="Reval Moderator", url=url(anpmoderator_reval)}
-	],
-	itl:tabs(Links, ?L2A(wf:q(role))).
+	[
+		#link {id=anpcandidate, text="Candidate", url=url(anpcandidate)},
+		#link {id=anpevaluator, text="Evaluator Markings", url=url(anpevaluator)},
+		#link {id=anpmoderator, text="Moderator Markings", url=url(anpmoderator)},
+		#link {id=anprevaluator, text="Revaluator Markings", url=url(anprevaluator)},
+		#link {id=anpmoderator_reval, text="Reval Moderator Markings", url=url(anpmoderator_reval)}
+	].
 
 
 
@@ -69,39 +76,19 @@ layout() ->
 	end,
 
 
-
 	%
-	% layout info
+	% layout
 	%
-	Es1 = itl:section(layout:grow([
-		layout:g(4, layout_student_info(TFs, Fs)),
-		layout:g(4, layout_evaluator_marking(TFs, Fs, RoleFId)),
-		layout:g(4, layout_page_nos(TFs, Fs, RoleFId))
-	])),
-
-
-
-	%
-	% layout pages
-	%
-	Es2 = [
+	itl:wire_script("ANP.disable_selection();"),
+	Es = ?AKIT({layout, card_list_group, [
+		layout_student_info(TFs, Fs),
+		layout:grow([
+			layout:g(4, layout_evaluator_marking(TFs, Fs, RoleFId)),
+			layout:g(4, layout_page_nos(TFs, Fs, RoleFId))
+		]),
 		anpcandidate:layout_answerpaper(TFs, Fs)
-	],
-
-
-
-	%
-	% return
-	%
-	#panel {
-		style="padding-top: 100px;",
-		html_id="page-content-wrapper",
-		body=[
-			Es1,
-			#p {},
-			Es2
-		]
-	}.
+	]}),
+	akit_fullpage:layout(Es, nav()).
 
 
 
@@ -118,13 +105,13 @@ layout() ->
 layout_student_info(_TFs, Fs) ->
 	ProfileId = ?L2A("profileidfk_" ++ wf:q(role)),
 	MarkingId = ?L2A("anpcanvas_" ++ wf:q(role)),
-	Es = layout:get(?VIEW, fields:getfields(Fs, [
+	Es = itl:get(?VIEW, fields:getfields(Fs, [
 		anpseatnumber,
 		anpfullname,
 		anpstate,
 		ProfileId,
 		MarkingId
-	]), [], table),
+	]), noevent, table),
 
 	[
 		#p {class="font-weight-bold", text="Student Info"},
@@ -195,6 +182,10 @@ event(Event) ->
 %
 % url
 %
+url(anpcandidate) ->
+	io_lib:format("/anpcandidate?mode=~s&anptestid=~s&anpid=~s", [
+		?VIEW, wf:q(anptestid), wf:q(anpid)
+	]);
 url(Role) ->
 	io_lib:format("/ep_osm_eval_view?role=~p&anptestid=~s&anpid=~s", [
 		Role, wf:q(anptestid), wf:q(anpid)
