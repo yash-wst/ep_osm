@@ -65,7 +65,24 @@ exists(F = #field {}) ->
 % check for uniqueness.
 % Packet number must be unique in each test.
 %
-check_packet_number_exists(PacketNumber) ->
+check_packet_number_exists(PacketNumber, {ok, Doc}) ->
+	Filters = [
+		itf:build(?OSMBDL(packet_number), PacketNumber),
+		itf:build(?OSMBDL(osm_exam_fk), wf:q(osm_exam_fk))
+	],
+	FoundDocs = ?MODULE:fetch(0, 1, Filters, [
+		{use_index, ["packet_number"]}
+	]),
+	case FoundDocs of
+		[] ->
+			true;
+		[FoundDoc] ->
+			itf:idval(FoundDoc) == itf:idval(Doc);
+		_ ->
+			false
+	end;
+
+check_packet_number_exists(PacketNumber, _Other) ->
 	Filters = [
 		itf:build(?OSMBDL(packet_number), PacketNumber),
 		itf:build(?OSMBDL(osm_exam_fk), wf:q(osm_exam_fk))

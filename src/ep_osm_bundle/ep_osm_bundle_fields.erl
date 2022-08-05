@@ -137,8 +137,16 @@ f(O) -> throw(O).
 validator(unique_packet_number) ->
 	{
 		"Must be unique in the test",
-		fun(_, V) ->
-			ep_osm_bundle_api:check_packet_number_exists(V)
+		fun(DocFun, V) ->
+			ep_osm_bundle_api:check_packet_number_exists(V, DocFun())
+		end,
+		fun() ->
+			case {wf:page_module(), wf:q(mode), wf:q(id)} of
+				{ep_osm_bundle, ?EDIT, Id} ->
+					ep_osm_bundle_api:get(Id);
+				_ ->
+					undefined
+			end
 		end
 	};
 
