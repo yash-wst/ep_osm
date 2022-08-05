@@ -1078,12 +1078,28 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, [Doc]) ->
 
 
 handle_inward_focus_textbox() ->
+	UId = wf:q(anp_paper_uid),
+	SNo = wf:q(anpseatnumber),
+
 	wf:wire("
 		obj('anp_paper_uid').value = '';
 		obj('anpseatnumber').value = '';
-		obj('anp_paper_uid').focus();
-		obj('anp_paper_uid').select();
-	").
+	"),
+
+	if
+		UId /= [] ->
+			wf:wire("
+				obj('anp_paper_uid').focus();
+				obj('anp_paper_uid').select();
+			");
+		SNo /= [] ->
+			wf:wire("
+				obj('anpseatnumber').focus();
+				obj('anpseatnumber').select();
+			");
+		true ->
+			ok
+	end.
 
 
 
