@@ -140,7 +140,7 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 before_save(FsToSave, _FsAll, _Doc) ->
 	FsToSave.
 
-after_create(Fs, SaveRes) ->
+after_create(Fs, _SaveRes) ->
 
 	%
 	% init
@@ -155,13 +155,12 @@ after_create(Fs, SaveRes) ->
 	%
 	Subject = itxprofile:get_welcome_email_subject(),
 	EmailBody = itxprofile:get_welcome_email_body_html(Username, Password),
-	Msg = itxprofile:get_welcome_sms_content(Username, Password),
 
 	%
 	% send email and sms
 	%
 	email:send([Email], Subject, EmailBody),
-	sms:send([MobileNumber], Msg).
+	sms:sendt([MobileNumber], welcome, [customer:get(title), Username, Password]).
 
 
 %------------------------------------------------------------------------------
