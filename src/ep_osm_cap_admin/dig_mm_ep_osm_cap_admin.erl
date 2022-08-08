@@ -68,7 +68,7 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?VIEW,
+		mode=?EDIT,
 		module=?MODULE,
 		filters=ep_osm_cap_admin:fs(search),
 		size=25
