@@ -111,6 +111,21 @@ handle_export_bundle_dir(ExamId, BundleId) ->
 
 
 	%
+	% Only Scanner who has the bundle assigned to himself can export folders
+	%
+	case itxauth:role() of
+		?APPOSM_SCANUPLOADER ->
+			ScanningPerson = itf:val(BundleDoc, scannedby),
+			?ASSERT(
+				ScanningPerson == itxauth:user(),
+				"Unauthorised. This bundle is not assigned to you."
+				);
+		_ ->
+			[]
+	end,
+
+
+	%
 	% prepare cover uids
 	%
 	FsToSearchBundle = [
