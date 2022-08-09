@@ -26,7 +26,8 @@ access(_, _) -> false.
 
 fs(basic) -> [
 	?OSMCAP(code),
-	?OSMCAP(name)
+	?OSMCAP(name),
+	?OSMCAP(ips)
 ];
 
 fs(index) -> [

@@ -12,6 +12,12 @@ f(code = I) ->
 f(name = I) ->
 	itf:textbox(?F(I, "CAP Centre Name"));
 
+f(ips = I) ->
+	F = mylist:get(I, "IPs", list),
+	F#field {
+		validators=[]
+	};
+
 f(osm_cap_fk = I) ->
 	F = itf:textbox_picker(?F(I, "CAP Centre")),
 	F#field {

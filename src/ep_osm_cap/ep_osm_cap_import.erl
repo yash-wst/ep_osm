@@ -63,8 +63,9 @@ handle_import_validate(List) ->
 	%
 	% check if csv has right number of columns
 	%
-	ok = dig_mm_import_validator:handle_import_validate_csv_length(
-		List, ?CAP_CENTRE_CSV_LENGTH),
+	ok = dig_mm_import_validator:handle_import_validate_csv_length(List, fun(Csv) ->
+		length(Csv) > ?CAP_CENTRE_CSV_LENGTH
+	end),
 
 	%
 	% check if there are duplicate centre codes in csv
@@ -88,7 +89,7 @@ handle_import_validate(List) ->
 % handle import validate batch
 %------------------------------------------------------------------------------
 
-handle_import_validate_batch(List) ->
+handle_import_validate_batch(_List) ->
 	ok.
 
 
@@ -99,10 +100,11 @@ handle_import_validate_batch(List) ->
 handle_import_csv_to_fs(List) ->
 
 	lists:map( fun(ListItem) ->
-		[CAPCentreCode, CAPCentreName] = ListItem,
+		[CAPCentreCode, CAPCentreName | IPs] = ListItem,
 		[
 			itf:build(?OSMCAP(code), CAPCentreCode),
-			itf:build(?OSMCAP(name), CAPCentreName)
+			itf:build(?OSMCAP(name), CAPCentreName),
+			itf:build(?OSMCAP(ips), IPs)
 		]
 	end, List).
 
