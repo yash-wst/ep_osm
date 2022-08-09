@@ -69,7 +69,7 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=?VIEW,
+		mode=get_mode(),
 		module=?MODULE,
 		filters=[
 			?COREXS(season_fk),
@@ -90,6 +90,16 @@ get() ->
 		],
 		size=25
 	}.
+
+
+get_mode() ->
+	case erlang:get(minijobcontext) of
+		undefined ->
+			?VIEW;
+		_ ->
+			?EXPORT
+	end.
+
 
 
 %------------------------------------------------------------------------------
