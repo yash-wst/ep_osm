@@ -24,6 +24,21 @@ getdocs() ->
 	db:getdocs(db()).
 
 
+
+getdocs_dict_by_ip(IPs) ->
+	IPsUnique = helper:unique(IPs),
+	FsFinCap = [
+		db2es_find:get_field_cond("$in", ips, IPsUnique)
+	],
+	CapCentreDocs = ep_osm_cap_api:fetch(0, ?INFINITY, FsFinCap),
+	CapCentreDocsIPList = lists:foldl(fun(CapDoc, Acc) ->
+		Acc ++ lists:map(fun(IP) ->
+			{IP, CapDoc}
+		end, itf:val(CapDoc, ?OSMCAP(ips)))
+	end, [], CapCentreDocs),
+	dict:from_list(CapCentreDocsIPList).
+
+
 list() ->
 	lists:map(fun(D) ->
 		{helper:l2a(itf:idval(D)), itf:idval(D)}

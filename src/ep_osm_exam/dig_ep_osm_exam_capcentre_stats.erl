@@ -18,6 +18,8 @@ title() ->
 heading() ->
 	title().
 
+-define(BGCOLOR_INFO, "table-info").
+
 
 %------------------------------------------------------------------------------
 % records
@@ -29,6 +31,7 @@ heading() ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_CAPADMIN) -> true;
 access(_, _) -> false.
 
 
@@ -132,12 +135,28 @@ fetch(D, _From, _Size, [
 	% get unique ips, profileids, dates
 	%
 	Keys = dict:fetch_keys(StatsDict),
-	ProfileIds = lists:foldl(fun([_IPFn, _State, _Date, ProfileId], AccProfileIds) ->
-		AccProfileIds ++ [ProfileId]
-	end, [], Keys),
+	{ProfileIds, IPs} = lists:foldl(fun(
+		[IPFn, _State, _Date, ProfileId],
+		{AccProfileIds, AccIPs}) ->
+		{
+			AccProfileIds ++ [ProfileId],
+			AccIPs ++ [IPFn]
+		}
+	end, {[], []}, Keys),
+
+
+	%
+	% get profile docs dict
+	%
 	ProfileIdsUnique = helper:unique(ProfileIds),
 	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique),
 	ProfileDocsDict = helper:get_dict_from_docs(ProfileDocs),
+
+
+	%
+	% get cap centre dict
+	%
+	CapCentreDocsDict = ep_osm_cap_api:getdocs_dict_by_ip(IPs),
 
 
 
@@ -147,9 +166,16 @@ fetch(D, _From, _Size, [
 	Results = lists:map(fun({[IPx, Statex, Datex, ProfileIdx], Count}) ->
 
 		{ok, ProfileDoc} = dict:find(ProfileIdx, ProfileDocsDict),
+		CapCentreName = case dict:find(IPx, CapCentreDocsDict) of
+			{ok, CapDoc} ->
+				itf:val(CapDoc, name);
+			_ ->
+				IPx
+		end,
 
 		[
 			#dcell {val=IPx},
+			#dcell {val=CapCentreName},
 			#dcell {val=Datex},
 			#dcell {val=?LN(?L2A(Statex))},
 			#dcell {val=itf:val(ProfileDoc, fullname)},
@@ -166,6 +192,7 @@ fetch(D, _From, _Size, [
 	%
 	Header = [
 		#dcell {type=header, val="IP Address"},
+		#dcell {type=header, val="CAP Centre"},
 		#dcell {type=header, val="Date Submitted"},
 		#dcell {type=header, val="Evaluation State"},
 		#dcell {type=header, val="Full name"},
@@ -221,18 +248,34 @@ fetch(D, _From, _Size, [
 	IPs1 = helper:sort(helper:unique(IPs)),
 
 
+	%
+	% get cap centre dict
+	%
+	CapCentreDocsDict = ep_osm_cap_api:getdocs_dict_by_ip(IPs),
+
+
 
 	%
 	% results
 	%
 	Results = lists:map(fun(IP) ->
+
+		CapCentreName = case dict:find(IP, CapCentreDocsDict) of
+			{ok, CapDoc} ->
+				itf:val(CapDoc, name);
+			_ ->
+				IP
+		end,
+
+
 		[
-			#dcell {val=IP}
+			#dcell {val=IP},
+			#dcell {val=CapCentreName}
 		] ++ lists:map(fun(State) ->
 			Key = [IP, State],
 			case dict:find(Key, StatsDict) of
 				{ok, Val} ->
-					#dcell {val=Val};
+					#dcell {bgcolor=?BGCOLOR_INFO, val=Val};
 				_ ->
 					#dcell {val=0}
 			end
@@ -247,6 +290,7 @@ fetch(D, _From, _Size, [
 				}
 			}
 		]
+
 	end, IPs1),
 
 
@@ -254,7 +298,8 @@ fetch(D, _From, _Size, [
 	% header
 	%
 	Header = [
-		#dcell {type=header, val="IP"}
+		#dcell {type=header, val="IP"},
+		#dcell {type=header, val="CAP Centre"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State))}
 	end, states()) ++ [
@@ -325,7 +370,7 @@ fetch(D, From, Size, Fs) ->
 		StatsCells = lists:map(fun(State) ->
 			case dict:find(State, StatsDict) of
 				{ok, Val} ->
-					#dcell {val=Val};
+					#dcell {bgcolor=?BGCOLOR_INFO, val=Val};
 				_ ->
 					#dcell {val=0}
 			end
