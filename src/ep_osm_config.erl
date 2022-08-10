@@ -11,9 +11,12 @@ is_qc_enabled() ->
 % Default 0 seconds.
 %------------------------------------------------------------------------------
 get_min_time_for_evaluation() ->
-	itxconfigs_cache:get2(
-		ep_osm_min_evaluation_time_in_secs,
-		0
-	).
+	Val = itxconfigs_cache:get2(ep_osm_min_evaluation_time_in_secs, 0),
+	case is_list(Val) of
+		true ->
+			helper:s2i(Val);
+		_ ->
+			Val
+	end.
 
 
