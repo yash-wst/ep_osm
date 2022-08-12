@@ -477,7 +477,7 @@ get_capcentre_stats_dashboard(TestId, IPs) ->
 %
 %..............................................................................
 
-get_capcentre_stats_test(TestId) ->
+get_capcentre_stats_test(TestId, all) ->
 	%
 	% init
 	%
@@ -496,8 +496,16 @@ get_capcentre_stats_test(TestId) ->
 
 
 	lists:foldl(fun({[IP, State], Count}, Acc) ->
-		dict:update_counter([IP, State], Count, Acc)
-	end, dict:new(), Stats).
+		[IP1 | _] = string:tokens(IP, ","),
+		dict:update_counter([IP1, State], Count, Acc)
+	end, dict:new(), Stats);
+
+
+get_capcentre_stats_test(TestId, IPs) ->
+	Dict = get_capcentre_stats_test(TestId, all),
+	dict:filter(fun([IP | _], _Val) ->
+		lists:member(IP, IPs)
+	end, Dict).
 
 
 

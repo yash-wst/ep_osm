@@ -230,8 +230,8 @@ fetch(D, _From, _Size, [
 %..............................................................................
 
 fetch(D, _From, _Size, [
-	#field {id=profileid},
-	#field {id=role},
+	#field {id=profileid, uivalue=ProfileId},
+	#field {id=role, uivalue=Role},
 	#field {id=osm_exam_fk, uivalue=TestId}
 ]) ->
 
@@ -239,12 +239,13 @@ fetch(D, _From, _Size, [
 	% init
 	%
 	{ok, ExamDoc} = ep_osm_exam_api:get(TestId),
+	UserIPs = get_user_ips(ProfileId, Role),
 
 
 	%
 	% get stats
 	%
-	StatsDict = ep_osm_exam_api:get_capcentre_stats_test(TestId),
+	StatsDict = ep_osm_exam_api:get_capcentre_stats_test(TestId, UserIPs),
 
 
 	%
