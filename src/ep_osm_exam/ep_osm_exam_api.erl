@@ -438,23 +438,18 @@ get_capcentre_stats_dashboard(TestId, all) ->
 	lists:foldl(fun({[_IP, State], Count}, Acc) ->
 		dict:update_counter(State, Count, Acc)
 	end, dict:new(), Stats);
+
+
+
 get_capcentre_stats_dashboard(TestId, IPs) ->
-	lists:foldl(fun(IP, Acc) ->
-		get_capcentre_stats_dashboard_ip(TestId, IP, Acc)
-	end, dict:new(), IPs).
-
-
-
-get_capcentre_stats_dashboard_ip(TestId, IP, AccDict) ->
-	?D(IP),
 
 	%
 	% init
 	%
 	Db = anpcandidates:db(TestId),
 	Viewname = "ip_state_date_evaluator",
-	SK = [?L2B(IP), <<"">>, <<"">>, <<"">>],
-	EK = [?L2B(IP), <<"z\\ufff0">>, <<"z\\ufff0">>, <<"z\\ufff0">>],
+	SK = [<<"">>],
+	EK = [<<"z\\ufff0">>],
 
 	Stats = try
 		itxview:get_stats(Db, Viewname, SK, EK, 2)
@@ -464,9 +459,15 @@ get_capcentre_stats_dashboard_ip(TestId, IP, AccDict) ->
 	end,
 
 
-	lists:foldl(fun({[_IP, State], Count}, Acc) ->
-		dict:update_counter(State, Count, Acc)
-	end, AccDict, Stats).
+	lists:foldl(fun({[IP, State], Count}, Acc) ->
+		[IP1 | _] = string:tokens(IP, ","),
+		case lists:member(IP1, IPs) of
+			true ->
+				dict:update_counter(State, Count, Acc);
+			_ ->
+				Acc
+		end
+	end, dict:new(), Stats).
 
 
 
