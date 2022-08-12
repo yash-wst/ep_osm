@@ -410,11 +410,13 @@ getstats_evaldate_profileid(TestId, Evaldate, ProfileId) ->
 % cap centre stats
 %------------------------------------------------------------------------------
 
-
+%..............................................................................
 %
 % cap centre dashbaord
 %
-get_capcentre_stats_dashboard(TestId) ->
+%..............................................................................
+
+get_capcentre_stats_dashboard(TestId, all) ->
 
 	%
 	% init
@@ -435,13 +437,45 @@ get_capcentre_stats_dashboard(TestId) ->
 
 	lists:foldl(fun({[_IP, State], Count}, Acc) ->
 		dict:update_counter(State, Count, Acc)
-	end, dict:new(), Stats).
+	end, dict:new(), Stats);
+get_capcentre_stats_dashboard(TestId, IPs) ->
+	lists:foldl(fun(IP, Acc) ->
+		get_capcentre_stats_dashboard_ip(TestId, IP, Acc)
+	end, dict:new(), IPs).
 
 
 
+get_capcentre_stats_dashboard_ip(TestId, IP, AccDict) ->
+	?D(IP),
+
+	%
+	% init
+	%
+	Db = anpcandidates:db(TestId),
+	Viewname = "ip_state_date_evaluator",
+	SK = [?L2B(IP), <<"">>, <<"">>, <<"">>],
+	EK = [?L2B(IP), <<"z\\ufff0">>, <<"z\\ufff0">>, <<"z\\ufff0">>],
+
+	Stats = try
+		itxview:get_stats(Db, Viewname, SK, EK, 2)
+	catch error:{badmatch,{error,not_found}} ->
+		anptests:setup(TestId),
+		itxview:get_stats(Db, Viewname, SK, EK, 2)
+	end,
+
+
+	lists:foldl(fun({[_IP, State], Count}, Acc) ->
+		dict:update_counter(State, Count, Acc)
+	end, AccDict, Stats).
+
+
+
+%..............................................................................
 %
 % cap centre test
 %
+%..............................................................................
+
 get_capcentre_stats_test(TestId) ->
 	%
 	% init
@@ -466,10 +500,12 @@ get_capcentre_stats_test(TestId) ->
 
 
 
-
+%..............................................................................
 %
 % cap centre ip
 %
+%..............................................................................
+
 get_capcentre_stats_ip(TestId, IP) ->
 	%
 	% init

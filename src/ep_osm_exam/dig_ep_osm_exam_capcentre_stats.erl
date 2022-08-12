@@ -55,6 +55,8 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
+			itf:build(itf:hidden(profileid), itxauth:profileid()),
+			itf:build(itf:hidden(role), itxauth:role()),
 			?COREXS(season_fk),
 			?CORFAC(faculty_code_fk),
 			?CORPGM(program_code_fk),
@@ -94,8 +96,11 @@ init() ->
 % function - fetch
 %------------------------------------------------------------------------------
 
-fetch(D, From, Size, []) ->
-	fetch(D, From, Size, [
+fetch(D, From, Size, [
+	#field {id=profileid},
+	#field {id=role} | []
+] = Fs) ->
+	fetch(D, From, Size, Fs ++ [
 		fields:build(teststatus, ?ACTIVE)
 	]);
 
@@ -107,6 +112,8 @@ fetch(D, From, Size, []) ->
 %..............................................................................
 
 fetch(D, _From, _Size, [
+	#field {id=profileid},
+	#field {id=role},
 	#field {id=osm_exam_fk, uivalue=TestId},
 	#field {id=ip, uivalue=IP}
 ]) ->
@@ -223,6 +230,8 @@ fetch(D, _From, _Size, [
 %..............................................................................
 
 fetch(D, _From, _Size, [
+	#field {id=profileid},
+	#field {id=role},
 	#field {id=osm_exam_fk, uivalue=TestId}
 ]) ->
 
@@ -326,7 +335,10 @@ fetch(D, _From, _Size, [
 % Any
 %
 %..............................................................................
-fetch(D, From, Size, Fs) ->
+fetch(D, From, Size, [
+	#field {id=profileid, uivalue=ProfileId},
+	#field {id=role, uivalue=Role} | Fs
+]) ->
 
 	%
 	% init
@@ -336,6 +348,7 @@ fetch(D, From, Size, Fs) ->
 	]),
 	{SeasonDocsDict, FacultyDocsDict, ProgramDocsDict, SubjectDocsDict} =
 		ep_core_helper:get_sfps_dicts(Docs),
+	IPs = get_user_ips(ProfileId, Role),
 
 
 
@@ -366,7 +379,7 @@ fetch(D, From, Size, Fs) ->
 		% get stats
 		%
 		TestId = itf:idval(Doc),
-		StatsDict = ep_osm_exam_api:get_capcentre_stats_dashboard(TestId),
+		StatsDict = ep_osm_exam_api:get_capcentre_stats_dashboard(TestId, IPs),
 		StatsCells = lists:map(fun(State) ->
 			case dict:find(State, StatsDict) of
 				{ok, Val} ->
@@ -456,6 +469,17 @@ states() -> [
 	"anpstate_moderation_reval_completed"
 ].
 
+
+get_user_ips(_ProfileId, ?APPOSM_ADMIN) ->
+	all;
+get_user_ips(ProfileId, ?APPOSM_CAPADMIN) ->
+
+	%
+	% init
+	%
+	{ok, PDoc} = ep_osm_cap_admin_api:get(ProfileId),
+	{ok, CapDoc} = ep_osm_cap_api:get(itf:val(PDoc, osm_cap_fk)),
+	itf:val(CapDoc, ?OSMCAP(ips)).
 
 
 %------------------------------------------------------------------------------
