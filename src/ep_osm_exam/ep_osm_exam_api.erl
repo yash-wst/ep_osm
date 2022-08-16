@@ -410,74 +410,13 @@ getstats_evaldate_profileid(TestId, Evaldate, ProfileId) ->
 % cap centre stats
 %------------------------------------------------------------------------------
 
-%..............................................................................
-%
-% cap centre dashbaord
-%
-%..............................................................................
-
-get_capcentre_stats_dashboard(TestId, all) ->
-
-	%
-	% init
-	%
-	Db = anpcandidates:db(TestId),
-	Viewname = "ip_state_date_evaluator",
-	SK = [<<"">>],
-	EK = [<<"z\\ufff0">>],
-
-
-	Stats = try
-		itxview:get_stats(Db, Viewname, SK, EK, 2)
-	catch error:{badmatch,{error,not_found}} ->
-		anptests:setup(TestId),
-		itxview:get_stats(Db, Viewname, SK, EK, 2)
-	end,
-
-
-	lists:foldl(fun({[_IP, State], Count}, Acc) ->
-		dict:update_counter(State, Count, Acc)
-	end, dict:new(), Stats);
-
-
-
-get_capcentre_stats_dashboard(TestId, IPs) ->
-
-	%
-	% init
-	%
-	Db = anpcandidates:db(TestId),
-	Viewname = "ip_state_date_evaluator",
-	SK = [<<"">>],
-	EK = [<<"z\\ufff0">>],
-
-	Stats = try
-		itxview:get_stats(Db, Viewname, SK, EK, 2)
-	catch error:{badmatch,{error,not_found}} ->
-		anptests:setup(TestId),
-		itxview:get_stats(Db, Viewname, SK, EK, 2)
-	end,
-
-
-	lists:foldl(fun({[IP, State], Count}, Acc) ->
-		[IP1 | _] = string:tokens(IP, ","),
-		case lists:member(IP1, IPs) of
-			true ->
-				dict:update_counter(State, Count, Acc);
-			_ ->
-				Acc
-		end
-	end, dict:new(), Stats).
-
-
 
 %..............................................................................
 %
 % cap centre test
 %
 %..............................................................................
-
-get_capcentre_stats_test(TestId, all) ->
+get_capcentre_stats_test(TestId, all, GroupLevel) ->
 	%
 	% init
 	%
@@ -486,36 +425,26 @@ get_capcentre_stats_test(TestId, all) ->
 	SK = [<<"">>],
 	EK = [<<"z\\ufff0">>],
 
-
-	Stats = try
-		itxview:get_stats(Db, Viewname, SK, EK, 2)
+	try
+		itxview:get_stats(Db, Viewname, SK, EK, GroupLevel)
 	catch error:{badmatch,{error,not_found}} ->
 		anptests:setup(TestId),
-		itxview:get_stats(Db, Viewname, SK, EK, 2)
-	end,
+		itxview:get_stats(Db, Viewname, SK, EK, GroupLevel)
+	end;
 
-
-	lists:foldl(fun({[IP, State], Count}, Acc) ->
-		[IP1 | _] = string:tokens(IP, ","),
-		dict:update_counter([IP1, State], Count, Acc)
-	end, dict:new(), Stats);
-
-
-get_capcentre_stats_test(TestId, IPs) ->
-	Dict = get_capcentre_stats_test(TestId, all),
-	dict:filter(fun([IP | _], _Val) ->
-		lists:member(IP, IPs)
-	end, Dict).
-
+get_capcentre_stats_test(TestId, IPs, GroupLevel) ->
+	lists:foldl(fun(IP, Acc) ->
+		Acc ++ get_capcentre_stats_test_ip(TestId, IP, GroupLevel)
+	end, [], IPs).
 
 
 %..............................................................................
 %
-% cap centre ip
+% cap centre test ip
 %
 %..............................................................................
 
-get_capcentre_stats_ip(TestId, IP) ->
+get_capcentre_stats_test_ip(TestId, IP, GroupLevel) ->
 	%
 	% init
 	%
@@ -525,13 +454,13 @@ get_capcentre_stats_ip(TestId, IP) ->
 	EK = [?L2B(IP), <<"z\\ufff0">>, <<"z\\ufff0">>, <<"z\\ufff0">>],
 
 
-	Stats = try
-		itxview:get_stats(Db, Viewname, SK, EK, 4)
+	try
+		itxview:get_stats(Db, Viewname, SK, EK, GroupLevel)
 	catch error:{badmatch,{error,not_found}} ->
 		anptests:setup(TestId),
-		itxview:get_stats(Db, Viewname, SK, EK, 4)
-	end,
-	dict:from_list(Stats).
+		itxview:get_stats(Db, Viewname, SK, EK, GroupLevel)
+	end.
+
 
 %------------------------------------------------------------------------------
 % misc

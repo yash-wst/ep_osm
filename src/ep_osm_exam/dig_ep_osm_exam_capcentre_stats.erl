@@ -65,13 +65,12 @@ get() ->
 			fields:get(teststatus),
 			fields:get(exam_pattern),
 			itf:build(itf:hidden(osm_exam_fk), minijobcontext:q(osm_exam_fk_)),
-			itf:build(itf:hidden(ip), minijobcontext:q(ip_))
+			itf:build(itf:hidden(mode), minijobcontext:q(mode_))
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
 		],
 		config=[
-			{responsive_type, scroll}
 		],
 		size=25
 	}.
@@ -107,27 +106,210 @@ fetch(D, From, Size, [
 
 %..............................................................................
 %
-% [osm_exam_fk, ip]
+% [osm_exam_fk] ip group
 %
 %..............................................................................
 
 fetch(D, _From, _Size, [
-	#field {id=profileid},
-	#field {id=role},
+	#field {id=profileid, uivalue=ProfileId},
+	#field {id=role, uivalue=Role},
 	#field {id=osm_exam_fk, uivalue=TestId},
-	#field {id=ip, uivalue=IP}
+	#field {id=mode, uivalue="ip"}
 ]) ->
+
 	%
 	% init
 	%
 	{ok, ExamDoc} = ep_osm_exam_api:get(TestId),
+	UserIPs = get_user_ips(ProfileId, Role),
 
 
 	%
 	% get stats
 	%
-	StatsDict = ep_osm_exam_api:get_capcentre_stats_ip(TestId, IP),
-	Stats = dict:to_list(StatsDict),
+	Stats = ep_osm_exam_api:get_capcentre_stats_test(TestId, UserIPs, 2),
+	StatsDict = lists:foldl(fun({[IP, State], Count}, AccDict) ->
+		dict:update_counter([IP, State], Count, AccDict)
+	end, dict:new(), Stats),
+
+
+	%
+	% get unique ips
+	%
+	Keys = dict:fetch_keys(StatsDict),
+	IPs = lists:map(fun([IP, _]) ->
+		IP
+	end, Keys),
+	IPs1 = helper:sort(helper:unique(IPs)),
+
+
+	%
+	% get cap centre dict
+	%
+	CapCentreDocsDict = ep_osm_cap_api:getdocs_dict_by_ip(IPs),
+
+
+
+	%
+	% results
+	%
+	Results = lists:map(fun(IP) ->
+
+		CapCentreName = case dict:find(IP, CapCentreDocsDict) of
+			{ok, CapDoc} ->
+				itf:val(CapDoc, name);
+			_ ->
+				IP
+		end,
+
+
+		[
+			#dcell {val=IP},
+			#dcell {val=CapCentreName}
+		] ++ lists:map(fun(State) ->
+			Key = [IP, State],
+			case dict:find(Key, StatsDict) of
+				{ok, Val} ->
+					#dcell {bgcolor=?BGCOLOR_INFO, val=Val};
+				_ ->
+					#dcell {val=0}
+			end
+		end, states())
+
+	end, IPs1),
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="IP"},
+		#dcell {type=header, val="CAP Centre"}
+	] ++ lists:map(fun(State) ->
+		#dcell {type=header, val=?LN(?L2A(State))}
+	end, states()),
+
+
+
+	{
+		D#dig {
+			description=itx:format("~s / ~s", [
+				itf:val(ExamDoc, anptestcourseid), itf:val(ExamDoc, testname)
+			]),
+			show_filter=false
+		},
+		[Header | Results]
+	};
+
+
+
+
+%..............................................................................
+%
+% [osm_exam_fk] date group
+%
+%..............................................................................
+
+fetch(D, _From, _Size, [
+	#field {id=profileid, uivalue=ProfileId},
+	#field {id=role, uivalue=Role},
+	#field {id=osm_exam_fk, uivalue=TestId},
+	#field {id=mode, uivalue="date"}
+]) ->
+
+	%
+	% init
+	%
+	{ok, ExamDoc} = ep_osm_exam_api:get(TestId),
+	UserIPs = get_user_ips(ProfileId, Role),
+
+
+	%
+	% get stats
+	%
+	Stats = ep_osm_exam_api:get_capcentre_stats_test(TestId, UserIPs, 3),
+	StatsDict = lists:foldl(fun({[_IP, State, Date], Count}, AccDict) ->
+		dict:update_counter([Date, State], Count, AccDict)
+	end, dict:new(), Stats),
+
+
+	%
+	% get unique ips
+	%
+	Keys = dict:fetch_keys(StatsDict),
+	Dates = lists:map(fun([Date, _State]) ->
+		Date
+	end, Keys),
+	Dates1 = helper:sort(helper:unique(Dates)),
+
+
+	%
+	% results
+	%
+	Results = lists:map(fun(Date) ->
+		[
+			#dcell {val=Date}
+		] ++ lists:map(fun(State) ->
+			Key = [Date, State],
+			case dict:find(Key, StatsDict) of
+				{ok, Val} ->
+					#dcell {bgcolor=?BGCOLOR_INFO, val=Val};
+				_ ->
+					#dcell {val=0}
+			end
+		end, states())
+
+	end, Dates1),
+
+
+	%
+	% header
+	%
+	Header = [
+		#dcell {type=header, val="Date"}
+	] ++ lists:map(fun(State) ->
+		#dcell {type=header, val=?LN(?L2A(State))}
+	end, states()),
+
+
+
+	{
+		D#dig {
+			description=itx:format("~s / ~s", [
+				itf:val(ExamDoc, anptestcourseid), itf:val(ExamDoc, testname)
+			]),
+			show_filter=false
+		},
+		[Header | Results]
+	};
+
+
+
+
+%..............................................................................
+%
+% [osm_exam_fk] evaluator group
+%
+%..............................................................................
+
+fetch(D, _From, _Size, [
+	#field {id=profileid, uivalue=ProfileId},
+	#field {id=role, uivalue=Role},
+	#field {id=osm_exam_fk, uivalue=TestId},
+	#field {id=mode, uivalue="evaluator"}
+]) ->
+	%
+	% init
+	%
+	{ok, ExamDoc} = ep_osm_exam_api:get(TestId),
+	UserIPs = get_user_ips(ProfileId, Role),
+
+
+	%
+	% get stats
+	%
+	Stats = ep_osm_exam_api:get_capcentre_stats_test(TestId, UserIPs, 4),
+	StatsDict = dict:from_list(Stats),
 	StatsSorted = lists:sort(fun(A, B) ->
 		{[_, _, Date1, _], _} = A,
 		{[_, _, Date2, _], _} = B,
@@ -143,10 +325,10 @@ fetch(D, _From, _Size, [
 	%
 	Keys = dict:fetch_keys(StatsDict),
 	{ProfileIds, IPs} = lists:foldl(fun(
-		[IPFn, _State, _Date, ProfileId],
+		[IPFn, _State, _Date, ProfileIdFn],
 		{AccProfileIds, AccIPs}) ->
 		{
-			AccProfileIds ++ [ProfileId],
+			AccProfileIds ++ [ProfileIdFn],
 			AccIPs ++ [IPFn]
 		}
 	end, {[], []}, Keys),
@@ -223,111 +405,6 @@ fetch(D, _From, _Size, [
 
 
 
-%..............................................................................
-%
-% [osm_exam_fk]
-%
-%..............................................................................
-
-fetch(D, _From, _Size, [
-	#field {id=profileid, uivalue=ProfileId},
-	#field {id=role, uivalue=Role},
-	#field {id=osm_exam_fk, uivalue=TestId}
-]) ->
-
-	%
-	% init
-	%
-	{ok, ExamDoc} = ep_osm_exam_api:get(TestId),
-	UserIPs = get_user_ips(ProfileId, Role),
-
-
-	%
-	% get stats
-	%
-	StatsDict = ep_osm_exam_api:get_capcentre_stats_test(TestId, UserIPs),
-
-
-	%
-	% get unique ips
-	%
-	Keys = dict:fetch_keys(StatsDict),
-	IPs = lists:map(fun([IP, _]) ->
-		IP
-	end, Keys),
-	IPs1 = helper:sort(helper:unique(IPs)),
-
-
-	%
-	% get cap centre dict
-	%
-	CapCentreDocsDict = ep_osm_cap_api:getdocs_dict_by_ip(IPs),
-
-
-
-	%
-	% results
-	%
-	Results = lists:map(fun(IP) ->
-
-		CapCentreName = case dict:find(IP, CapCentreDocsDict) of
-			{ok, CapDoc} ->
-				itf:val(CapDoc, name);
-			_ ->
-				IP
-		end,
-
-
-		[
-			#dcell {val=IP},
-			#dcell {val=CapCentreName}
-		] ++ lists:map(fun(State) ->
-			Key = [IP, State],
-			case dict:find(Key, StatsDict) of
-				{ok, Val} ->
-					#dcell {bgcolor=?BGCOLOR_INFO, val=Val};
-				_ ->
-					#dcell {val=0}
-			end
-		end, states()) ++ [
-			#dcell {
-				val_export=[],
-				val=#link {
-					text="View",
-					url=itx:format("/~p?osm_exam_fk_=~s&ip_=~s", [
-						?MODULE, TestId, IP
-					])
-				}
-			}
-		]
-
-	end, IPs1),
-
-
-	%
-	% header
-	%
-	Header = [
-		#dcell {type=header, val="IP"},
-		#dcell {type=header, val="CAP Centre"}
-	] ++ lists:map(fun(State) ->
-		#dcell {type=header, val=?LN(?L2A(State))}
-	end, states()) ++ [
-		#dcell {type=header, val="Action"}
-	],
-
-
-
-	{
-		D#dig {
-			description=itx:format("~s / ~s", [
-				itf:val(ExamDoc, anptestcourseid), itf:val(ExamDoc, testname)
-			]),
-			show_filter=false
-		},
-		[Header | Results]
-	};
-
 
 
 
@@ -380,7 +457,12 @@ fetch(D, From, Size, [
 		% get stats
 		%
 		TestId = itf:idval(Doc),
-		StatsDict = ep_osm_exam_api:get_capcentre_stats_dashboard(TestId, IPs),
+		Stats = ep_osm_exam_api:get_capcentre_stats_test(TestId, IPs, 2),
+		StatsDict = lists:foldl(fun({[_, State], Count}, AccDict) ->
+			dict:update_counter(State, Count, AccDict)
+		end, dict:new(), Stats),
+
+
 		StatsCells = lists:map(fun(State) ->
 			case dict:find(State, StatsDict) of
 				{ok, Val} ->
@@ -397,12 +479,7 @@ fetch(D, From, Size, [
 		ActionCells = [
 			#dcell {
 				val_export=[],
-				val=#link {
-					text="View",
-					url=itx:format("/~p?osm_exam_fk_=~s", [
-						?MODULE, TestId
-					])
-				}
+				val=get_links(Doc)
 			}
 		],
 
@@ -481,6 +558,28 @@ get_user_ips(ProfileId, ?APPOSM_CAPADMIN) ->
 	{ok, PDoc} = ep_osm_cap_admin_api:get(ProfileId),
 	{ok, CapDoc} = ep_osm_cap_api:get(itf:val(PDoc, osm_cap_fk)),
 	itf:val(CapDoc, ?OSMCAP(ips)).
+
+
+
+get_links(Doc) ->
+
+	TestId = itf:idval(Doc),
+	Modes = [
+		{ip, "IPs"},
+		{date, "Dates"},
+		{evaluator, "Evaluators"}
+	],
+
+	Links = lists:map(fun({Mode, Label}) ->
+		#link {
+			text=Label,
+			url=itx:format("/~p?osm_exam_fk_=~s&mode_=~p", [
+				?MODULE, TestId, Mode
+			])
+		}
+	end, Modes),
+
+	akit_dropdown:button_group("", Links).
 
 
 %------------------------------------------------------------------------------
