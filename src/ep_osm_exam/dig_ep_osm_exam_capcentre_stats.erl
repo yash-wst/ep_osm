@@ -57,7 +57,7 @@ get() ->
 		filters=[
 			itf:build(itf:hidden(profileid), itxauth:profileid()),
 			itf:build(itf:hidden(role), itxauth:role()),
-			?COREXS(season_fk),
+			?COREXS({season_fk, ?ACTIVE}),
 			?CORFAC(faculty_code_fk),
 			?CORPGM(program_code_fk),
 			?CORSUB(subject_code_fk),
