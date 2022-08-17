@@ -308,6 +308,27 @@ ANP.update_page_no_display = function() {
 
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// sticky-top class does not work if any parent element has overflow property
+// set
+//
+////////////////////////////////////////////////////////////////////////////////
+
+ANP.MakeNavbarSticky = function() {
+	let parent = document.querySelector('.sticky-top').parentElement;
+
+	while (parent) {
+	    const hasOverflow = getComputedStyle(parent).overflow;
+	    if (hasOverflow !== 'visible') {
+	        parent.style.overflow = "unset";
+	    }
+	    parent = parent.parentElement;
+	}
+};
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // TIMER for elapsed time since started evaluation
@@ -351,6 +372,7 @@ WstTimer.unload = function () {
 ///////////////////////////////////////////////////////////////////////////////
 
 $(document).ready(function() {
+	ANP.MakeNavbarSticky();
 
 	ANP.update_page_no_display();
 

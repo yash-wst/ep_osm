@@ -115,10 +115,13 @@ layout_init_page() ->
 %..............................................................................
 
 layout_navbar() ->
-	layout:grow([
-		layout:g(6, ep_osm_eval_v2_navbar:get_navbar_left_section()),
-		layout:g(6, ep_osm_eval_v2_navbar:get_navbar_right_section())
-	]).
+	#panel{
+		class="sticky-top row g-0",
+		body=[
+			layout:g(6, ep_osm_eval_v2_navbar:get_navbar_left_section()),
+			layout:g(6, ep_osm_eval_v2_navbar:get_navbar_right_section())
+		]
+	}.
 
 
 
