@@ -27,7 +27,8 @@ get_navbar_left_section() ->
 
 				#link {
 					body=#panel{
-						class="toolbar-icons navbar-page-nav-expand"
+						style="height: 24px;width: 24px;",
+						class="d-block my-0 mx-auto navbar-page-nav-expand"
 						}
 				},
 

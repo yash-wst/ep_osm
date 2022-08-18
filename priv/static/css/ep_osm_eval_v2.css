@@ -424,104 +424,7 @@
 
 }
 
-
 /*END TITLE BAR */
-
-
-
-
-
-/*START TOOLBAR*/
-
-.toolbar-float-right {
-    position: fixed;
-    display: flex;
-    flex-direction: column;
-	top: 90px;
-	right: 0;
-	bottom: 0;
-
-    overflow-y: auto;
-    overflow-x: hidden;
-    z-index: 2000;
-}
-
-.toolbar-row {
-	display:flex;
-	flex-direction: row;
-	align-items: center;
-
-	height: 45px;
-	background-color:#f7f8fc;
-
-	border-bottom: 1px solid #bbc0c4;
-}
-
-.toolbar-col-left {
-	display:flex;
-	padding: 0;
-	margin-left: 30px;
-}
-
-.toolbar-col-center {
-	padding: 0;
-	display:flex;
-	align-items: center;
-}
-
-.toolbar-col-right {
-	padding: 0;
-	margin-right: 25px;
-	display:flex;
-	flex-direction: row-reverse;
-}
-
-.toolbar-icon-container {
-	display: inline-block;
-	text-align: justify;
-
-	/*padding: 20px 10px 10px 10px;*/
-	padding: 10px 10px 0 10px;
-}
-
-
-/*
- *
- Text related
- *
- */
-
-.toolbar-text {
-	letter-spacing: 0px;
-	text-align: left;
-	color: #666666;
-	text-align: left;
-}
-
-.toolbar-label-evaluated-percent {
-	display: inline-block;
-	font: normal normal normal 12px/17px 'Open Sans';
-}
-
-.toolbar-icon-text {
-	text-align: center;
-	font: normal normal 9px/13px 'Open Sans';
-}
-
-
-/*
- *
- Icon and Image related
- *
- */
-
-
-.toolbar-icons {
-	height: 24px;
-	width: 24px;
-	display: block;
-    margin: 0 auto;
-}
 
 .toolbar-icon-eraseall {
 	background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4326%22%20data-name%3D%22Group%204326%22%20transform%3D%22translate(-10098%20-3340)%22%3E%0A%20%20%20%20%3Cg%20id%3D%22Rectangle_1513%22%20data-name%3D%22Rectangle%201513%22%20transform%3D%22translate(10098%203340)%22%20fill%3D%22%23fff%22%20stroke%3D%22%23707070%22%20stroke-width%3D%221%22%20opacity%3D%220%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20stroke%3D%22none%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20fill%3D%22none%22%2F%3E%0A%20%20%20%20%3C%2Fg%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_awesome-eraser%22%20data-name%3D%22Icon%20awesome-eraser%22%20d%3D%22M17.784%2C10.891a1.714%2C1.714%2C0%2C0%2C0%2C0-2.424L12.069%2C2.752a1.714%2C1.714%2C0%2C0%2C0-2.424%2C0L.5%2C11.895a1.714%2C1.714%2C0%2C0%2C0%2C0%2C2.424l3.429%2C3.429a1.714%2C1.714%2C0%2C0%2C0%2C1.212.5H17.857a.429.429%2C0%2C0%2C0%2C.429-.429V16.393a.429.429%2C0%2C0%2C0-.429-.429H12.71l5.073-5.074ZM6.975%2C8.654l4.906%2C4.906-2.4%2C2.4H5.38L2.522%2C13.107%2C6.975%2C8.654Z%22%20transform%3D%22translate(10101%203341.75)%22%20fill%3D%22%23666%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
@@ -538,5 +441,3 @@
 .toolbar-icon-flip {
 	background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4323%22%20data-name%3D%22Group%204323%22%20transform%3D%22translate(-10099%20-3340)%22%3E%0A%20%20%20%20%3Cg%20id%3D%22Rectangle_1513%22%20data-name%3D%22Rectangle%201513%22%20transform%3D%22translate(10099%203340)%22%20fill%3D%22%23fff%22%20stroke%3D%22%23707070%22%20stroke-width%3D%221%22%20opacity%3D%220%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20stroke%3D%22none%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20fill%3D%22none%22%2F%3E%0A%20%20%20%20%3C%2Fg%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_material-flip%22%20data-name%3D%22Icon%20material-flip%22%20d%3D%22M13.227%2C16.045h1.455V14.591H13.227Zm2.909-8.727h1.455V5.864H16.136ZM4.5%2C4.409V14.591a1.459%2C1.459%2C0%2C0%2C0%2C1.455%2C1.455H8.864V14.591H5.955V4.409H8.864V2.955H5.955A1.459%2C1.459%2C0%2C0%2C0%2C4.5%2C4.409ZM16.136%2C2.955V4.409h1.455A1.459%2C1.459%2C0%2C0%2C0%2C16.136%2C2.955ZM10.318%2C17.5h1.455V1.5H10.318Zm5.818-4.364h1.455V11.682H16.136ZM13.227%2C4.409h1.455V2.955H13.227Zm2.909%2C5.818h1.455V8.773H16.136Zm0%2C5.818a1.459%2C1.459%2C0%2C0%2C0%2C1.455-1.455H16.136Z%22%20transform%3D%22translate(10099.5%203342.5)%22%20fill%3D%22%23666%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
 }
-
-/*END TOOLBAR*/
