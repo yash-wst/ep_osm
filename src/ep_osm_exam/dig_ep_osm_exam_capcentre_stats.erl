@@ -65,12 +65,13 @@ get() ->
 			fields:get(teststatus),
 			fields:get(exam_pattern),
 			itf:build(itf:hidden(osm_exam_fk), minijobcontext:q(osm_exam_fk_)),
-			itf:build(itf:hidden(mode), minijobcontext:q(mode_))
+			itf:build(itf:hidden(group), minijobcontext:q(group_))
 		],
 		events=[
 			ite:button(export, "CSV", {itx, {dig, export}})
 		],
 		config=[
+			{responsive_type, scroll}
 		],
 		size=25
 	}.
@@ -114,7 +115,7 @@ fetch(D, _From, _Size, [
 	#field {id=profileid, uivalue=ProfileId},
 	#field {id=role, uivalue=Role},
 	#field {id=osm_exam_fk, uivalue=TestId},
-	#field {id=mode, uivalue="ip"}
+	#field {id=group, uivalue="ip"}
 ]) ->
 
 	%
@@ -164,8 +165,8 @@ fetch(D, _From, _Size, [
 
 
 		[
-			#dcell {val=IP},
-			#dcell {val=CapCentreName}
+			#dcell {type=label, val=IP},
+			#dcell {type=label, val=CapCentreName}
 		] ++ lists:map(fun(State) ->
 			Key = [IP, State],
 			case dict:find(Key, StatsDict) of
@@ -187,7 +188,9 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="CAP Centre"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State))}
-	end, states()),
+	end, states()) ++ [
+		#dcell {type=header, val="Total"}
+	],
 
 
 
@@ -199,7 +202,7 @@ fetch(D, _From, _Size, [
 			]),
 			show_filter=false
 		},
-		[Header | Results]
+		[Header | dig:append_total_cells(Results)]
 	};
 
 
@@ -215,7 +218,7 @@ fetch(D, _From, _Size, [
 	#field {id=profileid, uivalue=ProfileId},
 	#field {id=role, uivalue=Role},
 	#field {id=osm_exam_fk, uivalue=TestId},
-	#field {id=mode, uivalue="date"}
+	#field {id=group, uivalue="date"}
 ]) ->
 
 	%
@@ -249,7 +252,7 @@ fetch(D, _From, _Size, [
 	%
 	Results = lists:map(fun(Date) ->
 		[
-			#dcell {val=Date}
+			#dcell {type=label, val=Date}
 		] ++ lists:map(fun(State) ->
 			Key = [Date, State],
 			case dict:find(Key, StatsDict) of
@@ -270,7 +273,9 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Date"}
 	] ++ lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State))}
-	end, states()),
+	end, states()) ++ [
+		#dcell {type=header, val="Total"}
+	],
 
 
 
@@ -282,7 +287,7 @@ fetch(D, _From, _Size, [
 			]),
 			show_filter=false
 		},
-		[Header | Results]
+		[Header | dig:append_total_cells(Results)]
 	};
 
 
@@ -298,7 +303,7 @@ fetch(D, _From, _Size, [
 	#field {id=profileid, uivalue=ProfileId},
 	#field {id=role, uivalue=Role},
 	#field {id=osm_exam_fk, uivalue=TestId},
-	#field {id=mode, uivalue="evaluator"}
+	#field {id=group, uivalue="evaluator"}
 ]) ->
 	%
 	% init
@@ -365,14 +370,14 @@ fetch(D, _From, _Size, [
 		end,
 
 		[
-			#dcell {val=IPx},
-			#dcell {val=CapCentreName},
-			#dcell {val=Datex},
-			#dcell {val=?LN(?L2A(Statex))},
-			#dcell {val=itf:val(ProfileDoc, fullname)},
-			#dcell {val=itf:val(ProfileDoc, mobile)},
-			#dcell {val=itf:val(ProfileDoc, email)},
-			#dcell {val=?LN(?L2A(itf:val(ProfileDoc, profiletype)))},
+			#dcell {type=label, val=IPx},
+			#dcell {type=label, val=CapCentreName},
+			#dcell {type=label, val=Datex},
+			#dcell {type=label, val=?LN(?L2A(Statex))},
+			#dcell {type=label, val=itf:val(ProfileDoc, fullname)},
+			#dcell {type=label, val=itf:val(ProfileDoc, mobile)},
+			#dcell {type=label, val=itf:val(ProfileDoc, email)},
+			#dcell {type=label, val=?LN(?L2A(itf:val(ProfileDoc, profiletype)))},
 			#dcell {val=Count}
 		]
 	end, StatsSorted),
@@ -390,7 +395,8 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Mobile"},
 		#dcell {type=header, val="E-mail"},
 		#dcell {type=header, val="Role"},
-		#dcell {type=header, val="Count"}
+		#dcell {type=header, val="Count"},
+		#dcell {type=header, val="Total"}
 	],
 
 
@@ -403,7 +409,7 @@ fetch(D, _From, _Size, [
 			]),
 			show_filter=false
 		},
-		[Header | Results]
+		[Header | dig:append_total_cells(Results)]
 	};
 
 
@@ -452,7 +458,7 @@ fetch(D, From, Size, [
 		% test cells
 		%
 		ExamCells = lists:map(fun(F) ->
-			#dcell {val=itl:render(F)}
+			#dcell {type=label, val=itl:render(F)}
 		end, itf:d2f(Doc, fs(anptest))),
 
 
@@ -481,6 +487,7 @@ fetch(D, From, Size, [
 		%
 		ActionCells = [
 			#dcell {
+				type=label,
 				val_export=[],
 				val=get_links(Doc)
 			}
@@ -503,11 +510,12 @@ fetch(D, From, Size, [
 	lists:map(fun(State) ->
 		#dcell {type=header, val=?LN(?L2A(State))}
 	end, states()) ++ [
-		#dcell {type=header, val="Actions"}
+		#dcell {type=header, val="Actions"},
+		#dcell {type=header, val="Total"}
 	],
 
 
-	{D#dig {total=?INFINITY}, [Header | Results]}.
+	{D#dig {total=?INFINITY}, [Header | dig:append_total_cells(Results)]}.
 
 
 %------------------------------------------------------------------------------
@@ -567,20 +575,20 @@ get_user_ips(ProfileId, ?APPOSM_CAPADMIN) ->
 get_links(Doc) ->
 
 	TestId = itf:idval(Doc),
-	Modes = [
+	Groups = [
 		{ip, "IPs"},
 		{date, "Dates"},
 		{evaluator, "Evaluators"}
 	],
 
-	Links = lists:map(fun({Mode, Label}) ->
+	Links = lists:map(fun({Group, Label}) ->
 		#link {
 			text=Label,
-			url=itx:format("/~p?osm_exam_fk_=~s&mode_=~p", [
-				?MODULE, TestId, Mode
+			url=itx:format("/~p?osm_exam_fk_=~s&group_=~p", [
+				?MODULE, TestId, Group
 			])
 		}
-	end, Modes),
+	end, Groups),
 
 	akit_dropdown:button_group("", Links).
 
