@@ -9,14 +9,18 @@ get_page_navigation_widget(Filenames) ->
 	Elements =
 	 [
 		#panel{
-			html_id ="page_nav_widget",
-			class="page-nav-widget-main hidden",
+			class="table-responsive-sm page-nav-widget-main hidden",
 			body = [
-				#table {class="table table-page-nav-widget", rows=Rows}
+				#table {
+					html_id ="page_nav_widget1",
+					class="table table-sm table-borderless m-0",
+					rows=Rows
+				}
 			]
 		}
 	],
-	wf:update(placeholder, Elements).
+
+	wf:update("navbar-page-nav-widget", Elements).
 
 layout_page_nos_rows(CanvasDataVal, List) ->
 	layout_page_nos_rows(CanvasDataVal, List, 5).
@@ -47,7 +51,7 @@ layout_page_nos_cells(CanvasDataVal, {Index, AName}) ->
 	end,
 	#tablecell {body=[
 		#link {
-			class="page-nav-round-button btn btn-sm " ++ Class,
+			class="align-bottom text-center page-nav-round-button btn btn-sm " ++ Class,
 			url="#" ++ AName,
 			text=Index,
 			postback={page_nos, Index, AName}

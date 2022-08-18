@@ -77,10 +77,6 @@ layout() ->
     	marks_box(TFs, Fs),
     	toolbar(),
 		#panel {
-			id="placeholder",
-			class="placeholder2"
-		},
-		#panel {
 			class="review-area",
 			body=layout:grow([
 				layout_review_area(TFs, Fs)
@@ -293,8 +289,7 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 					#panel {
 						body=[AnchorTag]
 					},
-					CanvasTag,
-					#hr{}
+					CanvasTag
 				]
 			},
 

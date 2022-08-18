@@ -12,16 +12,37 @@ get_navbar_link(Text, Url, Action) ->
 
 get_page_number() ->
 	[
-		#span {
-			html_id="page_no_display",
-			text=""
+
+
+		%
+		% dropdown for page navigation widget
+		%
+		#panel {
+			class="dropdown",
+			body=[
+
+				#panel{
+					body=[
+						#span {
+							html_id="page_no_display",
+							text="",
+							class="dropdown-toggle"
+						}
+					]
+				},
+				#panel {
+					id="navbar-page-nav-widget",
+					class="placeholder2"
+				}
+			]
+
 		},
-			#link {
-				body=#panel{
-					style="height:24px;width:24px;",
-					class="d-block my-0 mx-auto navbar-page-nav-expand"
-					}
-			}
+		#link {
+			body=#panel{
+				style="height:24px;width:24px;",
+				class="d-block my-0 mx-auto navbar-page-nav-expand"
+				}
+		}
 	].
 
 get_navbar_left_section() ->

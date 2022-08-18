@@ -11,7 +11,7 @@ ANP.BG_HEIGHT = 900;
 ANP.canvasobjs = {};
 ANP.cursorText = undefined;
 
-ANP.OFFSET_TOP = 70;
+ANP.OFFSET_TOP = 40;
 
 ANP.showing_marking_scheme = true;
 
@@ -277,7 +277,7 @@ ANP.download_pdf = function (sno) {
 
 ANP.get_page_no = function(){
 	var scrolled = $(document).scrollTop() + ANP.OFFSET_TOP;
-	var pageHeight = ANP.BG_HEIGHT + 50;
+	var pageHeight = ANP.BG_HEIGHT ;
 
 	pageNo = 1 + Math.floor(scrolled/pageHeight);
 
@@ -316,7 +316,7 @@ ANP.update_page_no_display = function() {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-ANP.MakeNavbarSticky = function() {
+ANP.fixForStickyNavbar = function() {
 	let parent = document.querySelector('.sticky-top').parentElement;
 
 	while (parent) {
@@ -325,6 +325,22 @@ ANP.MakeNavbarSticky = function() {
 	        parent.style.overflow = "unset";
 	    }
 	    parent = parent.parentElement;
+	}
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Make DropDown Z-index over sticky
+//
+///////////////////////////////////////////////////////////////////////////////
+
+ANP.raiseDropDownOverStickyNavbar = function() {
+	let dropdown = document.querySelector('.navbar-collapse');
+ console.log( dropdown);
+ console.log( $('.navbar-collapse'));
+
+	if (dropdown) {
+	    dropdown.style.zIndex = "1021";
 	}
 };
 
@@ -372,9 +388,16 @@ WstTimer.unload = function () {
 ///////////////////////////////////////////////////////////////////////////////
 
 $(document).ready(function() {
-	ANP.MakeNavbarSticky();
 
+	//
+	// One time necessary init functions
+	//
+	ANP.fixForStickyNavbar();
+	ANP.raiseDropDownOverStickyNavbar();
 	ANP.update_page_no_display();
+
+	// remove padding from main container
+	$("main").removeClass("px-3 py-4");
 
 	var viewFullScreen = document.getElementById("view-fullscreen");
 
@@ -524,9 +547,12 @@ document.addEventListener("scroll", function(event) {
 		ANP.update_page_no_display();
 });
 
+
+///////////////////////////////////////////////////////////////////////////////
 //
-// disable context menu
+// disable right click context menu
 //
+///////////////////////////////////////////////////////////////////////////////
 document.oncontextmenu = RightMouseDown;
 document.onmousedown = mouseDown;
 function mouseDown(e) {

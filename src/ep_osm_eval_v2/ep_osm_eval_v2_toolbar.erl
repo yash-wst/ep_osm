@@ -23,7 +23,7 @@ toolbar_on_right() ->
 	[
 		#span {
 			style="z-index:2000;",
-			class="float-end d-flex position-fixed bottom-0 end-0 m-2",
+			class="float-end d-flex position-fixed end-0 bottom-0",
 			body=[
 				get_toolbar_card("Rotate", "toolbar-icon-rotate", "toolbar_rotate"),
 				get_toolbar_card("Flip", "toolbar-icon-flip", "toolbar_flip"),
