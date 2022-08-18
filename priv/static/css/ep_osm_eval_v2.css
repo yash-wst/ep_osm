@@ -124,34 +124,6 @@
 
 /*START NAVBAR*/
 
-.navbar-main {
-	width:100%;
-	top:60px;
-	position:fixed;
-	z-index:1030;
-
-}
-
-.navbar-col {
-	display:flex;
-	align-items: center;
-	padding: 0;
-
-	height:30px;
-    border-top: 1px solid #bbc0c4;
-   	border-bottom: 1px solid #bbc0c4;
-	background-color:#ffffff;
-	/*background-color:#f7f8fc;*/
-}
-
-
-.navbar-col-right {
-	display:flex;
-	margin-left: auto;
-	margin-right: 25px;
-}
-
-
 /*
  *
  Text related
@@ -191,12 +163,10 @@
 .navbar-icons{
 	width: 24px;
 	height: 24px;
-	margin: 0 10px 0 10px;
 }
 
 .navbar-page-nav-expand{
 	mix-blend-mode: normal;
-	margin: 0 5px 0 5px;
     background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4319%22%20data-name%3D%22Group%204319%22%20transform%3D%22translate(-1280%20-113)%22%20style%3D%22mix-blend-mode%3A%20normal%3Bisolation%3A%20isolate%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_953%22%20data-name%3D%22Rectangle%20953%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(1280%20113)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_ionic-ios-arrow-forward%22%20data-name%3D%22Icon%20ionic-ios-arrow-forward%22%20d%3D%22M16.039%2C12.194%2C11.5%2C7.657a.854.854%2C0%2C0%2C1%2C0-1.211.865.865%2C0%2C0%2C1%2C1.215%2C0l5.145%2C5.141a.856.856%2C0%2C0%2C1%2C.025%2C1.183l-5.166%2C5.177A.858.858%2C0%2C0%2C1%2C11.5%2C16.735Z%22%20transform%3D%22translate(1304.196%20110.753)%20rotate(90)%22%20fill%3D%22%23666%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
 }
 

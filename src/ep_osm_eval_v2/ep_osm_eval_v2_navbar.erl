@@ -2,48 +2,40 @@
 -compile(export_all).
 -include("records.hrl").
 
+get_navbar_link(Text, Url, Action) ->
+	#link {
+		class="link-secondary text-center mx-2 px-2",
+		text=Text,
+		url=Url,
+		actions=Action
+	}.
+
+get_page_number() ->
+	[
+		#span {
+			html_id="page_no_display",
+			text=""
+		},
+			#link {
+				body=#panel{
+					style="height:24px;width:24px;",
+					class="d-block my-0 mx-auto navbar-page-nav-expand"
+					}
+			}
+	].
+
 get_navbar_left_section() ->
 	[
 		#panel{
-			class="navbar-col",
+			class="d-flex align-items-center p-0",
 			body=[
-				#link {
-					class="navbar-links navbar-links-left",
-					text="Home",
-					url="/"
-				},
+				get_navbar_link("Home", "/",""),
+				get_navbar_link("Answer Booklet", "",anpcandidate:actions(anpcandidate_answerpaper)),
+				get_page_number(),
 
-				#link {
-					class="navbar-links navbar-links-left",
-					text="Answer Booklet",
-					actions=anpcandidate:actions(anpcandidate_answerpaper)
-				},
+				get_navbar_link("Remarks", "",anpcandidate:actions(anpcandidate_comments)),
 
-				#span {
-					html_id="page_no_display",
-					text="",
-					class="navbar-links navbar-links-left"
-				},
-
-				#link {
-					body=#panel{
-						style="height: 24px;width: 24px;",
-						class="d-block my-0 mx-auto navbar-page-nav-expand"
-						}
-				},
-
-				#link {
-					class="navbar-links navbar-links-left",
-					text="Remarks",
-					actions=anpcandidate:actions(anpcandidate_comments)
-				},
-
-				#link {
-					class="navbar-links navbar-links-left",
-					text="Skip Evaluation",
-					actions=anpcandidate:actions(anpcandidate_reject)
-				}
-
+				get_navbar_link("Skip Evaluation", "",anpcandidate:actions(anpcandidate_reject))
 			]
 		}
 	].
@@ -51,27 +43,20 @@ get_navbar_left_section() ->
 get_navbar_right_section() ->
 	[
 		#panel{
-				class="navbar-col navbar-col-right",
+				class="d-flex justify-content-end align-items-center ms-auto me-1",
 				body=[
-					#link {
-						text="Question Paper",
-						class="navbar-links navbar-links-right",
-						actions=anpcandidate:actions(anpcandidate_questionpaper)
-					},
-
-					#link {
-						text="Model Answers",
-						class="navbar-links navbar-links-right",
-						actions=anpcandidate:actions(anpcandidate_modelanswers)
-					},
+					get_navbar_link("Question Paper", "",anpcandidate:actions(anpcandidate_questionpaper)),
+					get_navbar_link("Model Answers", "",anpcandidate:actions(anpcandidate_modelanswers)),
 
 					#panel {
-						class="navbar-icons navbar-icon-help",
+						style="height:24px;width:24px;",
+						class="mx-2 navbar-icon-help",
 						actions=anpcandidate:actions(help)
 					},
 
 					#panel {
-						class="navbar-icons navbar-icon-fullscreen",
+						style="height:24px;width:24px;",
+						class="mx-2 navbar-icon-fullscreen",
 						html_id="view-fullscreen"
 					}
 				]

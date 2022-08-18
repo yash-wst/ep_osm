@@ -116,7 +116,7 @@ layout_init_page() ->
 
 layout_navbar() ->
 	#panel{
-		class="sticky-top row g-0",
+		class="bg-white sticky-top row g-0 p-2 border-top border-bottom border-secondary ",
 		body=[
 			layout:g(6, ep_osm_eval_v2_navbar:get_navbar_left_section()),
 			layout:g(6, ep_osm_eval_v2_navbar:get_navbar_right_section())
