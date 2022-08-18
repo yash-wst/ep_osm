@@ -193,6 +193,7 @@ fetch(D, _From, _Size, [
 
 	{
 		D#dig {
+			total=length(Results),
 			description=itx:format("~s / ~s", [
 				itf:val(ExamDoc, anptestcourseid), itf:val(ExamDoc, testname)
 			]),
@@ -275,6 +276,7 @@ fetch(D, _From, _Size, [
 
 	{
 		D#dig {
+			total=length(Results),
 			description=itx:format("~s / ~s", [
 				itf:val(ExamDoc, anptestcourseid), itf:val(ExamDoc, testname)
 			]),
@@ -395,6 +397,7 @@ fetch(D, _From, _Size, [
 
 	{
 		D#dig {
+			total=length(Results),
 			description=itx:format("~s / ~s", [
 				itf:val(ExamDoc, anptestcourseid), itf:val(ExamDoc, testname)
 			]),
@@ -504,7 +507,7 @@ fetch(D, From, Size, [
 	],
 
 
-	{D#dig {}, [Header | Results]}.
+	{D#dig {total=?INFINITY}, [Header | Results]}.
 
 
 %------------------------------------------------------------------------------

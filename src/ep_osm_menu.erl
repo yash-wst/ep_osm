@@ -112,6 +112,13 @@ menu(?APPOSM_CONTROLLER) ->
 		]}
 	];
 
+menu(?APPOSM_CAPADMIN) ->
+	[
+		{topmenu, [
+			{dig_ep_osm_exam_evaluation_stats, ?VIEW, ?LN("Evaluation Status")},
+			{dig_ep_osm_exam_capcentre_stats, ?VIEW, ?LN("Centre Status")}
+		]}
+	];
 
 menu(?APPOSM_SCANUPLOADER) ->
 	[
