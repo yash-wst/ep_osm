@@ -70,7 +70,8 @@ filters(ExamId) when ExamId /= undefined ->
 		itf:build(itf:hidden(osm_exam_fk), ExamId),
 		fields:build(anpcentercode, wf:q(centreid)),
 		fields:build(anpstate, wf:q(state)),
-		fields:get(anpseatnumber)
+		fields:get(anpseatnumber),
+		fields:get(anpseatnumber_corrected)
 	] ++ get_evaluator_filter() ;
 filters(_) ->
 	[
