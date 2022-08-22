@@ -27,17 +27,26 @@ get_page_number_table_dropdown() ->
 		},
 
 		#span {
+
 				class="dropdown",
 				body=[
 					#panel {
-						id="navbar-page-no-dropdown-toggle-btn",
 						class="dropdown-toggle dropdown-toggle-split",
 						data_fields=[
 							{"bs-toggle", "dropdown"}
 						]
 					},
 					#panel{
-						id='navbar-page-nav-widget'
+						class="dropdown-menu p-1",
+						style="z-index:2000;border: 1px solid #CFD1D7;border-radius: 8px;box-shadow: 0px 3px 6px #00000029;overflow: auto;",
+						% id='navbar-page-nav-widget-1',
+						body =
+						[
+							#panel{
+								id='navbar-page-nav-widget',
+								body=[ "Hello"]
+							}
+						]
 					}
 				]
 		}

@@ -66,18 +66,19 @@ marks_box_eval_progress() ->
 
 		#panel {
 			text="0 % Evaluated",
-			class="text-center marks_box_progress_id"
+			html_id=marks_box_progress_text_id,
+			class="text-center"
 		}
 	].
 
-marking_scheme_layout(TFs, Fs) ->
+layout_marking_scheme(TFs, Fs) ->
 
 	MarkingLayout = anpcandidate:layout_marking(TFs, Fs),
 
 	[
 		#panel {
 			html_id="marks_box_mscheme",
-			class="marks-box-mscheme hidden",
+			class="hidden mb-2",
 			body=[
 				#panel {id=anpcandidate_marks, body=MarkingLayout}
 			]
@@ -93,7 +94,7 @@ get_marks_box(TFs, Fs) ->
 			body=[
 				marks_box_header(TFs, Fs),
 
-				marking_scheme_layout(TFs, Fs),
+				layout_marking_scheme(TFs, Fs),
 
 				marks_box_eval_progress(),
 

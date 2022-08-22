@@ -1,23 +1,3 @@
-
-.review-area {
-    display: block;
-    text-align: center;
-    margin: auto;
-}
-
-.remarks-section {
-    margin: auto;
-}
-
-/* START MARKS BOX */
-
-.marks-box-mscheme {
-	height: 450px;
-	width: 195px;
-	overflow: auto;
-}
-
-
 .marks-box-tick {
     background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4333%22%20data-name%3D%22Group%204333%22%20transform%3D%22translate(-23%20-542)%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_1528%22%20data-name%3D%22Rectangle%201528%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(23%20542)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_ionic-md-checkmark-circle-outline%22%20data-name%3D%22Icon%20ionic-md-checkmark-circle-outline%22%20d%3D%22M8.095%2C9.855l-1.12%2C1.12%2C3.6%2C3.6%2C8-8-1.12-1.12-6.88%2C6.84Zm9.68%2C1.52a6.373%2C6.373%2C0%2C1%2C1-4.64-6.16l1.24-1.24a7.441%2C7.441%2C0%2C0%2C0-3-.6%2C8%2C8%2C0%2C1%2C0%2C8%2C8Z%22%20transform%3D%22translate(23.625%20542.625)%22%20fill%3D%22%234e87f7%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
 }
@@ -37,54 +17,6 @@
 	height: 25px;
 }
 
-.hidden { display: none; }
-
-/* END MARKS BOX */
-
-
-/*START NAVBAR*/
-
-/*
- *
- Text related
- *
- */
-
-
-.navbar-links {
-	text-align: left;
-	letter-spacing: 0px;
-	padding: 0 0 0 30px;
-}
-
-.navbar-links-left {
-	font: normal normal  12px/17px 'Open Sans';
-    color: #666666;
-}
-
-.navbar-links-right {
-	color: #4E87F7;
-	font: normal normal 12px/17px 'Open Sans';
-}
-
-.link-selected {
-	color: #333333;
-    font-weight: 600;
-}
-
-
-
-/*
- *
- Icon and Image related
- *
- */
-
-.navbar-icons{
-	width: 24px;
-	height: 24px;
-}
-
 .navbar-page-nav-expand{
 	mix-blend-mode: normal;
     background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4319%22%20data-name%3D%22Group%204319%22%20transform%3D%22translate(-1280%20-113)%22%20style%3D%22mix-blend-mode%3A%20normal%3Bisolation%3A%20isolate%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_953%22%20data-name%3D%22Rectangle%20953%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(1280%20113)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_ionic-ios-arrow-forward%22%20data-name%3D%22Icon%20ionic-ios-arrow-forward%22%20d%3D%22M16.039%2C12.194%2C11.5%2C7.657a.854.854%2C0%2C0%2C1%2C0-1.211.865.865%2C0%2C0%2C1%2C1.215%2C0l5.145%2C5.141a.856.856%2C0%2C0%2C1%2C.025%2C1.183l-5.166%2C5.177A.858.858%2C0%2C0%2C1%2C11.5%2C16.735Z%22%20transform%3D%22translate(1304.196%20110.753)%20rotate(90)%22%20fill%3D%22%23666%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
@@ -97,28 +29,6 @@
 
 .navbar-icon-fullscreen {
     background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4327%22%20data-name%3D%22Group%204327%22%20transform%3D%22translate(-1310%20-130)%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_1510%22%20data-name%3D%22Rectangle%201510%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(1310%20130)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_map-fullscreen%22%20data-name%3D%22Icon%20map-fullscreen%22%20d%3D%22M1.44%2C6.225V1.44H6.414l1.83%2C1.391H5.194L8.4%2C6.225%2C6.414%2C8.049%2C3.179%2C5.006v3.05ZM12.484%2C1.44H17.44v4.8l-1.391%2C1.83V5.023l-3.479%2C3.2L10.7%2C6.328l3-3.149h-3.05ZM17.44%2C12.484V17.44H12.466l-1.83-1.391h3.05l-3.2-3.479L12.466%2C10.7l3.234%2C3v-3.05ZM6.4%2C17.44H1.44V12.466l1.391-1.83v3.05l3.479-3.2%2C1.866%2C1.983-3%2C3.234h3.05Z%22%20transform%3D%22translate(1312.56%20132.56)%22%20fill%3D%22%235a5a5a%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
-}
-
-/* END NAVBAR
-
-
-
-
-/* STARRT PAGE-NAV-WIDGET */
-.page-nav-widget-main {
-	z-index: 2000;
-	float: left;
-	position: fixed;
-	top: 100px;
-	left : 120px;
-
-	overflow: auto;
-
-	display: flex;
-	flex-direction: column;
-    background-color:#ffffff;
-	box-shadow: 0px 3px 6px #00000029;
-	border-radius: 8px;
 }
 
 .page-nav-round-button {
@@ -142,9 +52,6 @@
 	display: none;
 }
 
-/*END PAGE-NAV-WIDGET*/
-
-
 .skip-eval-buttons{
 	border-radius: 5px;
 	margin-left: 10px;
@@ -162,78 +69,6 @@
 	background: transparent linear-gradient(98deg, #4ECDFC 0%, #3963B5 100%) 0% 0% no-repeat padding-box;
 	color: #ffffff;
 }
-
-
-/*START TITLE BAR */
-.titlebar-main {
-    width:100%;
-    position:fixed;
-    z-index:1030;
-    top:0;
-    background-color:#ffffff;
-}
-
-.titlebar-col {
-    display:flex;
-    align-items: center;
-    height: 60px;
-    padding: 0;
-}
-
-.titlebar-col-right {
-    display:flex;
-    margin-left: auto;
-}
-
-
-
-
-/*
- *
- Text related
- *
- */
-
-.text-company-name {
-    margin-left: 7px;
-    text-align: left;
-    font: normal normal bold 23px/29px 'Quicksand';
-    letter-spacing: 0px;
-    color: #263039;
-}
-
-
-.text-username {
-    text-align: left;
-    font: normal normal normal 14px/19px 'Open Sans';
-    letter-spacing: 0px;
-    color: #333333;
-}
-
-
-
-/*
- *
- Icon and Image related
- *
- */
-
-.uniapps-logo {
-    width: 37px;
-    height: 37px;
-    margin-left: 30px;
-}
-
-.titlebar-img-arrow {
-    width: 24px;
-    height: 24px;
-    mix-blend-mode: normal;
-    margin-right: 30px;
-    background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_3682%22%20data-name%3D%22Group%203682%22%20transform%3D%22translate(-1280%20-113)%22%20style%3D%22mix-blend-mode%3A%20normal%3Bisolation%3A%20isolate%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_953%22%20data-name%3D%22Rectangle%20953%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(1280%20113)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_ionic-ios-arrow-forward%22%20data-name%3D%22Icon%20ionic-ios-arrow-forward%22%20d%3D%22M16.039%2C12.194%2C11.5%2C7.657a.854.854%2C0%2C0%2C1%2C0-1.211.865.865%2C0%2C0%2C1%2C1.215%2C0l5.145%2C5.141a.856.856%2C0%2C0%2C1%2C.025%2C1.183l-5.166%2C5.177A.858.858%2C0%2C0%2C1%2C11.5%2C16.735Z%22%20transform%3D%22translate(1304.196%20110.753)%20rotate(90)%22%20fill%3D%22%234e87f7%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
-
-}
-
-/*END TITLE BAR */
 
 .toolbar-icon-eraseall {
 	background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4326%22%20data-name%3D%22Group%204326%22%20transform%3D%22translate(-10098%20-3340)%22%3E%0A%20%20%20%20%3Cg%20id%3D%22Rectangle_1513%22%20data-name%3D%22Rectangle%201513%22%20transform%3D%22translate(10098%203340)%22%20fill%3D%22%23fff%22%20stroke%3D%22%23707070%22%20stroke-width%3D%221%22%20opacity%3D%220%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20stroke%3D%22none%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20fill%3D%22none%22%2F%3E%0A%20%20%20%20%3C%2Fg%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_awesome-eraser%22%20data-name%3D%22Icon%20awesome-eraser%22%20d%3D%22M17.784%2C10.891a1.714%2C1.714%2C0%2C0%2C0%2C0-2.424L12.069%2C2.752a1.714%2C1.714%2C0%2C0%2C0-2.424%2C0L.5%2C11.895a1.714%2C1.714%2C0%2C0%2C0%2C0%2C2.424l3.429%2C3.429a1.714%2C1.714%2C0%2C0%2C0%2C1.212.5H17.857a.429.429%2C0%2C0%2C0%2C.429-.429V16.393a.429.429%2C0%2C0%2C0-.429-.429H12.71l5.073-5.074ZM6.975%2C8.654l4.906%2C4.906-2.4%2C2.4H5.38L2.522%2C13.107%2C6.975%2C8.654Z%22%20transform%3D%22translate(10101%203341.75)%22%20fill%3D%22%23666%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');

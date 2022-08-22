@@ -17,17 +17,13 @@ create_page_navigation_widget(Filenames) ->
 	Rows = layout_page_nos_rows(CanvasDataVal, Filenames, ?NUMBER_OF_COLUMNS),
 
 	TableContainer = #panel {
-		class="dropdown-menu",
-		style="z-index:2000;border: 1px solid #CFD1D7;border-radius: 12px;box-shadow: 0px 3px 6px #00000029;",
-		body=#panel{
-			class="table-responsive-sm page-nav-widget-main hidden",
+			class="table-responsive-sm",
 			body = [
 				#table {
 					class="table table-sm table-borderless m-0",
 					rows=Rows
 				}
 			]
-		}
 	},
 
 	wf:update("navbar-page-nav-widget", TableContainer).

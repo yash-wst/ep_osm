@@ -86,7 +86,7 @@ layout() ->
     	marks_box(TFs, Fs),
     	toolbar(),
 		#panel {
-			class="review-area",
+			class="d-block text-center m-auto",
 			body=layout:grow([
 				layout_review_area(TFs, Fs)
 			])
@@ -141,7 +141,7 @@ layout_review_area(TFs, Fs) ->
 			body=ep_osm_pdf:layout(TFs, modelanswers)
 		},
 		#panel {
-			class="anppanel remarks-section",
+			class="anppanel m-auto",
 			style="display:none;",
 			id=anpcandidate_comments,
 			body=anpcandidate:layout_comments(Fs)
