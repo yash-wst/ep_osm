@@ -34,48 +34,6 @@
 	overflow: auto;
 }
 
-.marks-box-header {
-	display: flex;
-}
-
-
-
-/*
- *
- Text related
- *
- */
-
-.marks_box_text_bold {
-	font: normal normal 12px/17px Open Sans;
-	letter-spacing: 0px;
-	color: #333333;
-	margin: 0 10px 0 5px;
-}
-
-.marks-box-progress-text {
-	font: normal normal 10px/14px 'Open Sans';
-	letter-spacing: 0px;
-	text-align: center;
-	color: #666666;
-	padding: 5px;
-}
-
-
-
-
-/*
- *
- Icon and Image related
- *
- */
-
-
-.marks-box-icons {
-	display: inline-block;
-	width: 24px;
-	height: 24px;
-}
 
 .marks-box-tick {
     background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4333%22%20data-name%3D%22Group%204333%22%20transform%3D%22translate(-23%20-542)%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_1528%22%20data-name%3D%22Rectangle%201528%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(23%20542)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_ionic-md-checkmark-circle-outline%22%20data-name%3D%22Icon%20ionic-md-checkmark-circle-outline%22%20d%3D%22M8.095%2C9.855l-1.12%2C1.12%2C3.6%2C3.6%2C8-8-1.12-1.12-6.88%2C6.84Zm9.68%2C1.52a6.373%2C6.373%2C0%2C1%2C1-4.64-6.16l1.24-1.24a7.441%2C7.441%2C0%2C0%2C0-3-.6%2C8%2C8%2C0%2C1%2C0%2C8%2C8Z%22%20transform%3D%22translate(23.625%20542.625)%22%20fill%3D%22%234e87f7%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
@@ -113,7 +71,6 @@
 	border: none;
 	width: 100%;
 	height: 25px;
-	font: normal normal 10px/14px 'Open Sans';
 }
 
 .hidden { display: none; }
@@ -224,75 +181,8 @@
 /*END PAGE-NAV-WIDGET*/
 
 
-
-
-/* START SKIP EVAL BOX */
-.skip-eval-container-main {
-	width: 621px;
-
-	display: flex;
-	flex-direction: column;
-
-	z-index: 2000;
-	position: relative;
-	margin: 200px auto  ;
-	border: 1px solid #cfd1d7;
-
-	box-shadow: 0px 3px 6px #00000029;
-	border: 1px solid #CFD1D7;
-	border-radius: 8px;
-	padding: 30px;
-
-	text-align: left;
-}
-
-.skip-eval-container-buttons {
-	display: flex;
-	flex-direction: row-reverse;
-}
-
-
-/*
- *
- Text related
- *
- */
-
-.skip-eval-text-title {
-	font: normal normal bold 20px/27px 'Open Sans';
-	/*letter-spacing: 0px;*/
-	color: #111111;
-}
-
-.skip-eval-text-description {
-	font: normal normal 15px/20px 'Open Sans';
-	letter-spacing: 0px;
-	color: #666666;
-}
-
-
-
-/*
- *
- Icon and Image related
- *
- */
-
-
-.skip-eval-close {
-	width: 24px;
-	height: 24px;
-
-	position: absolute;
-	right: 20px;
-	top: 20px;
-
-    background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_3795%22%20data-name%3D%22Group%203795%22%20transform%3D%22translate(-1056%20-129)%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_1020%22%20data-name%3D%22Rectangle%201020%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(1056%20129)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cg%20id%3D%22Group_3762%22%20data-name%3D%22Group%203762%22%20transform%3D%22translate(788%20-261)%22%3E%0A%20%20%20%20%20%20%3Cg%20id%3D%22Rectangle_1002%22%20data-name%3D%22Rectangle%201002%22%20transform%3D%22translate(268%20390)%22%20fill%3D%22%23fff%22%20stroke%3D%22%23707070%22%20stroke-width%3D%221%22%20opacity%3D%220%22%3E%0A%20%20%20%20%20%20%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20stroke%3D%22none%22%2F%3E%0A%20%20%20%20%20%20%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20fill%3D%22none%22%2F%3E%0A%20%20%20%20%20%20%3C%2Fg%3E%0A%20%20%20%20%20%20%3Cpath%20id%3D%22Union_9%22%20data-name%3D%22Union%209%22%20d%3D%22M12.009%2C13.658%2C7%2C8.65%2C1.992%2C13.658a1.166%2C1.166%2C0%2C0%2C1-1.649-1.65L5.351%2C7%2C.342%2C1.992A1.166%2C1.166%2C0%2C0%2C1%2C1.992.342L7%2C5.351%2C12.009.342a1.166%2C1.166%2C0%2C1%2C1%2C1.649%2C1.65L8.65%2C7l5.009%2C5.008a1.166%2C1.166%2C0%2C1%2C1-1.649%2C1.65Z%22%20transform%3D%22translate(273.2%20395)%22%20fill%3D%22%23424f8d%22%2F%3E%0A%20%20%20%20%3C%2Fg%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
-}
-
 .skip-eval-buttons{
 	border-radius: 5px;
-	opacity: 1;
 	margin-left: 10px;
 	padding: 5px 20px;
 }
@@ -309,7 +199,6 @@
 	color: #ffffff;
 }
 
-/* END SKIP EVAL BOX */
 
 /*START TITLE BAR */
 .titlebar-main {

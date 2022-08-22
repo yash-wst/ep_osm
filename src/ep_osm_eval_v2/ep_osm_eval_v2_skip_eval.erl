@@ -3,34 +3,30 @@
 -include("records.hrl").
 
 get_dialog_box() ->
-	[
-		#span {
-			class="skip-eval-container-main",
-			body=[
-				#link {
-					body=[#panel{class="skip-eval-close"}],
-					postback={reject_answerpaper, no}
-				},
+	Es = [
+			#span{
+				text="Are you sure you want to skip evaluating this answer booklet?"
+			},
 
-				#span{text="Skip Evaluation", class="skip-eval-text-title"},
+			#br{},
+			#br{},
 
-				#br{},
+			#span{
+				class="d-flex flex-row-reverse",
+				body=[
+					#button{
+						text="Yes, Skip",
+					 	class="skip-eval-buttons skip-eval-confirm",
+					 	postback={reject_answerpaper, reject}
+					 },
 
-				#span{
-					text="Are you sure you want to skip evaluating this answer booklet?",
-					class="skip-eval-text-description"
-				},
+					#button{
+						text="Cancel",
+						class="skip-eval-buttons skip-eval-cancel",
+						postback={close_skip_eval_modal}
+					}
+				]
+			}
+		],
 
-				#br{},
-				#br{},
-
-				#span{
-					class="skip-eval-container-buttons",
-					body=[
-						#button{text="Yes, Skip", class="skip-eval-buttons skip-eval-confirm", postback={reject_answerpaper, reject}},
-						#button{text="Cancel", class="skip-eval-buttons skip-eval-cancel", postback={reject_answerpaper, no}}
-					]
-				}
-			]
-		}
-	].
+	itl:modal_fs(Es, medium, "Skip Evaluation").

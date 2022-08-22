@@ -2,29 +2,44 @@
 -compile(export_all).
 -include("records.hrl").
 
-get_page_navigation_widget(Filenames) ->
+-define(NUMBER_OF_COLUMNS, 5).
+
+
+%----------------------------------------------------------------------
+%
+% gets the page navigation widget
+%
+%----------------------------------------------------------------------
+
+create_page_navigation_widget(Filenames) ->
 	Fs = anpcandidate:get_fs(),
 	CanvasDataVal = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ myauth:role())),
-	Rows = layout_page_nos_rows(CanvasDataVal, Filenames),
-	Elements =
-	 [
-		#panel{
+	Rows = layout_page_nos_rows(CanvasDataVal, Filenames, ?NUMBER_OF_COLUMNS),
+
+	TableContainer = #panel {
+		% class="dropdown-menu",
+		class="",
+		style="z-index:2000;",
+		body=#panel{
 			class="table-responsive-sm page-nav-widget-main hidden",
 			body = [
 				#table {
-					html_id ="page_nav_widget1",
 					class="table table-sm table-borderless m-0",
 					rows=Rows
 				}
 			]
 		}
-	],
+	},
 
-	wf:update("navbar-page-nav-widget", Elements).
+	wf:update("navbar-page-nav-widget-1", TableContainer),
+	wf:update("navbar-page-nav-widget", TableContainer).
 
-layout_page_nos_rows(CanvasDataVal, List) ->
-	layout_page_nos_rows(CanvasDataVal, List, 5).
 
+%----------------------------------------------------------------------
+%
+% layout table rows
+%
+%----------------------------------------------------------------------
 layout_page_nos_rows(CanvasDataVal, List, COLUMNS) ->
 
 	{_, CellElements} = lists:foldl(fun(AName, {I, Cells}) ->
@@ -40,6 +55,13 @@ layout_page_nos_rows(CanvasDataVal, List, COLUMNS) ->
 		#tablerow {cells=Cs1}
 	end, ListOfCells).
 
+
+%----------------------------------------------------------------------
+%
+% layout table cells
+%
+%----------------------------------------------------------------------
+
 layout_page_nos_cells(CanvasDataVal, {Index, AName}) ->
 	Class = case lists:keyfind(AName, 1, CanvasDataVal) of
 		false ->
@@ -49,15 +71,20 @@ layout_page_nos_cells(CanvasDataVal, {Index, AName}) ->
 		_ ->
 			"btn-success page-nav-done-pages"
 	end,
-	#tablecell {body=[
+
+	#tablecell {body=get_page_no_button(Class, AName, Index)}.
+
+
+filler_cells(N) ->
+	lists:map(fun(_) -> #tablecell {body=""} end, lists:seq(1, N)).
+
+
+get_page_no_button(Class, AName, Index) ->
+	[
 		#link {
 			class="align-bottom text-center page-nav-round-button btn btn-sm " ++ Class,
 			url="#" ++ AName,
 			text=Index,
 			postback={page_nos, Index, AName}
 		}
-	]}.
-
-
-filler_cells(N) ->
-	lists:map(fun(_) -> #tablecell {body=""} end, lists:seq(1, N)).
+	].

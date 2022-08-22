@@ -5,7 +5,7 @@
 get_toolbar_card(Text, Bg_image_css_name, _Id) ->
 	[
 		#span {
-			class="card p-2",
+			class="card p-2 mb-0",
 			body=[
 				#link {
 					body=#panel {
@@ -23,7 +23,7 @@ toolbar_on_right() ->
 	[
 		#span {
 			style="z-index:2000;",
-			class="float-end d-flex position-fixed end-0 bottom-0",
+			class="float-end d-flex flex-column text-center position-fixed end-0 bottom-0 mb-1",
 			body=[
 				get_toolbar_card("Rotate", "toolbar-icon-rotate", "toolbar_rotate"),
 				get_toolbar_card("Flip", "toolbar-icon-flip", "toolbar_flip"),

@@ -36,6 +36,15 @@ access(_, _) -> false.
 %------------------------------------------------------------------------------
 % event
 %------------------------------------------------------------------------------
+event(noevent) ->
+	[];
+
+event({skip_eval_event}) ->
+	ep_osm_eval_v2_skip_eval:get_dialog_box();
+
+event({close_skip_eval_modal}) ->
+	itl:modal_close(),
+	event({reject_answerpaper, no});
 
 event(E) ->
 	anpcandidate:event(E).
@@ -72,7 +81,7 @@ layout() ->
 		%
 		% layout nav bar
 		%
-		layout_navbar(),
+		ep_osm_eval_v2_navbar:layout_navbar(),
 
     	marks_box(TFs, Fs),
     	toolbar(),
@@ -90,6 +99,7 @@ layout() ->
 	Elements.
 
 
+
 %..............................................................................
 %
 % layout - init page
@@ -101,23 +111,6 @@ layout_init_page() ->
 	% hide sidebar
 	%
 	akit_sidebar:collapse().
-
-
-
-%..............................................................................
-%
-% layout - navbar
-%
-%..............................................................................
-
-layout_navbar() ->
-	#panel{
-		class="bg-white sticky-top row g-0 p-2 border-top border-bottom border-secondary ",
-		body=[
-			layout:g(6, ep_osm_eval_v2_navbar:get_navbar_left_section()),
-			layout:g(6, ep_osm_eval_v2_navbar:get_navbar_right_section())
-		]
-	}.
 
 
 
@@ -157,7 +150,7 @@ layout_review_area(TFs, Fs) ->
 			class="anppanel",
 			style="display:none;",
 			id=anpcandidate_reject,
-			body=ep_osm_eval_v2_skip_eval:get_dialog_box()
+			body=[]
 		},
 		#panel {
 			class="anppanel",
@@ -240,7 +233,7 @@ layout_answerpaper(TFs, Fs) ->
 	%
 	% page numbers div
 	%
-	ep_osm_eval_v2_page_nav_widget:get_page_navigation_widget(ANames),
+	ep_osm_eval_v2_page_nav_widget:create_page_navigation_widget(ANames),
 
 	helper:state(filenames, ANames),
 

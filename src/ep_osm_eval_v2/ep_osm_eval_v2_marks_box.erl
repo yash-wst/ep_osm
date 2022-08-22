@@ -23,52 +23,50 @@ marks_box_header(TFs, Fs) ->
 
 	Elememt = [
 
-		#panel{
-			class="marks-box-header",
+		#span{
+			class="d-flex flex-row justify-content-evenly align-items-end bd-highlight mb-2",
 			body=[
-				#panel {
-					class="marks-box-icons marks-box-tick"
+				#span {
+					style="width:24px;height:24px;",
+					class="d-inline-block marks-box-tick"
 				},
 
 				#span {
 					id="anpcandidate_totalmarks",
-					class="marks_box_text_bold",
+					style="color: #333333;",
+					class="align-baseline mx-2",
 					text = helper:f2s_v1( anpcandidate:get_total_marks(Fs)) ++ "/" ++ helper:state(testtotalmarks)
 				},
 
-				#panel {
-					class="marks-box-icons marks-box-clock"
+				#span {
+					style="width:24px;height:24px;",
+					class="d-inline-block marks-box-clock"
 				},
 
 				#span {
 					html_id="time_spent",
 					text="...",
-					class="marks_box_text_bold"
+					class="align-middle mx-2"
 				}
 			]
 		}
 	],
 	Elememt.
 
-get_evaluated_percentage() ->
-	[].
+get_progress_bar() ->
+	[
+	"<div class='progress my-2'>
+		<div class='progress-bar' role='progressbar' style='width: 25%;' aria-valuenow='25' aria-valuemin='0' aria-valuemax='100'>25%</div>
+	</div>"
+	].
 
 marks_box_eval_progress() ->
 	[
-		#panel {
-			class="progress-container round-xlarge",
-			body=[
-				#panel {
-					class="progressbar round-xlarge",
-					style="width:25%",
-					id="progress_percent_id"
-				}
-			]
-		},
+		get_progress_bar(),
 
 		#panel {
 			text="40 % Evaluated",
-			class="marks-box-text marks-box-progress-text",
+			class="text-center mb-2",
 			id="marks_box_progress_id"
 		}
 	].
@@ -91,7 +89,8 @@ get_marks_box(TFs, Fs) ->
 	[
 		#panel {
 			html_id="marks_box",
-			class="marks-box-container",
+			style="z-index:4000;border-radius: 12px;box-shadow: 0px 3px 6px #00000029;",
+			class="float-left position-fixed start-1 bottom-0 mb-2 bg-white p-3",
 			body=[
 				marks_box_header(TFs, Fs),
 
