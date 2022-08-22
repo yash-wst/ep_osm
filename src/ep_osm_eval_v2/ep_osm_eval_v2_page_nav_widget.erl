@@ -17,9 +17,8 @@ create_page_navigation_widget(Filenames) ->
 	Rows = layout_page_nos_rows(CanvasDataVal, Filenames, ?NUMBER_OF_COLUMNS),
 
 	TableContainer = #panel {
-		% class="dropdown-menu",
-		class="",
-		style="z-index:2000;",
+		class="dropdown-menu",
+		style="z-index:2000;border: 1px solid #CFD1D7;border-radius: 12px;box-shadow: 0px 3px 6px #00000029;",
 		body=#panel{
 			class="table-responsive-sm page-nav-widget-main hidden",
 			body = [
@@ -31,7 +30,6 @@ create_page_navigation_widget(Filenames) ->
 		}
 	},
 
-	wf:update("navbar-page-nav-widget-1", TableContainer),
 	wf:update("navbar-page-nav-widget", TableContainer).
 
 

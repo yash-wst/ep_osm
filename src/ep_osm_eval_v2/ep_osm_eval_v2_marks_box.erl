@@ -56,7 +56,7 @@ marks_box_header(TFs, Fs) ->
 get_progress_bar() ->
 	[
 	"<div class='progress my-2'>
-		<div class='progress-bar' role='progressbar' style='width: 25%;' aria-valuenow='25' aria-valuemin='0' aria-valuemax='100'>25%</div>
+		<div class='progress-bar' role='progressbar' style='width: 0%;' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100'>25%</div>
 	</div>"
 	].
 
@@ -65,9 +65,8 @@ marks_box_eval_progress() ->
 		get_progress_bar(),
 
 		#panel {
-			text="40 % Evaluated",
-			class="text-center mb-2",
-			id="marks_box_progress_id"
+			text="0 % Evaluated",
+			class="text-center marks_box_progress_id"
 		}
 	].
 
@@ -89,7 +88,7 @@ get_marks_box(TFs, Fs) ->
 	[
 		#panel {
 			html_id="marks_box",
-			style="z-index:4000;border-radius: 12px;box-shadow: 0px 3px 6px #00000029;",
+			style="z-index:4000;border: 1px solid #CFD1D7;border-radius: 12px;box-shadow: 0px 3px 6px #00000029;",
 			class="float-left position-fixed start-1 bottom-0 mb-2 bg-white p-3",
 			body=[
 				marks_box_header(TFs, Fs),
@@ -101,7 +100,7 @@ get_marks_box(TFs, Fs) ->
 				#button {
 					html_id="btn_submit_marks",
 					text="Submit",
-					class="marks-button-submit hidden",
+					class="marks-button-submit hidden mt-2",
 					postback={show, anpcandidate_submit}
 				}
 			]

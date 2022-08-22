@@ -11,23 +11,6 @@
 
 /* START MARKS BOX */
 
-.marks-box-container {
-	float: left;
-
-	position: fixed;
-	left: 33px;
-	bottom: 22px;
-
-	z-index: 2000;
-
-	background: #FFFFFF 0% 0% no-repeat padding-box;
-	border: 1px solid #CFD1D7;
-	border-radius: 12px;
-	box-shadow: 0px 3px 6px #00000029;
-
-	padding: 10px;
-}
-
 .marks-box-mscheme {
 	height: 450px;
 	width: 195px;
@@ -42,25 +25,6 @@
 .marks-box-clock{
     background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4332%22%20data-name%3D%22Group%204332%22%20transform%3D%22translate(-89%20-544)%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_1529%22%20data-name%3D%22Rectangle%201529%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(89%20544)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_material-access-time%22%20data-name%3D%22Icon%20material-access-time%22%20d%3D%22M10.992%2C3A8%2C8%2C0%2C1%2C0%2C19%2C11%2C8%2C8%2C0%2C0%2C0%2C10.992%2C3ZM11%2C17.4A6.4%2C6.4%2C0%2C1%2C1%2C17.4%2C11%2C6.4%2C6.4%2C0%2C0%2C1%2C11%2C17.4ZM11.4%2C7H10.2v4.8l4.2%2C2.52.6-.984L11.4%2C11.2Z%22%20transform%3D%22translate(90%20545)%22%20fill%3D%22%234e87f7%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
 
-}
-
-.progress-container {
-	left: 5px;
-	margin: 5px 15px 0 0;
-	height: 5px;
-	position:relative;
-	background-color:#F1F1F1
-}
-
-.progressbar {
-	background-color:#3E86FF ;
-	height:100%;
-	position:absolute;
-	line-height:inherit;
-}
-
-.round-xlarge {
-	border-radius: 3px;
 }
 
 .marks-button-submit {

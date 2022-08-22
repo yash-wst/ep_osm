@@ -301,7 +301,7 @@ ANP.get_active_canvasID = function () {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.update_page_no_display = function() {
-	var page_display = document.getElementById("page_no_display");
+	var page_display = document.getElementById("navbar_page_no");
 	if(page_display){
 		page_display.textContent = " ".concat(ANP.get_page_no(), "/", ANP.get_total_no_pages());
 	}
@@ -336,14 +336,20 @@ ANP.fixForStickyNavbar = function() {
 
 ANP.raiseDropDownOverStickyNavbar = function() {
 	let dropdown = document.querySelector('.navbar-collapse');
- console.log( dropdown);
- console.log( $('.navbar-collapse'));
-
 	if (dropdown) {
 	    dropdown.style.zIndex = "1021";
 	}
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
+ANP.update_evaluation_progress_level = function() {
+	let newprogress = 46;
+	var progress_str = " ".concat(newprogress, "% Evaluated");
+	$('.marks_box_progress_id ').text(progress_str);
+	$('.progress-bar').text(newprogress+'%');
+	$('.progress-bar').attr('aria-valuenow', newprogress).css('width', newprogress+'%');
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -395,6 +401,7 @@ $(document).ready(function() {
 	ANP.fixForStickyNavbar();
 	ANP.raiseDropDownOverStickyNavbar();
 	ANP.update_page_no_display();
+	ANP.update_evaluation_progress_level();
 
 	// remove padding from main container
 	$("main").removeClass("px-3 py-4");

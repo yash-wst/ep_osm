@@ -18,63 +18,30 @@ get_navbar_link(Text, Action, Url, Postback) ->
 		postback=Postback
 	}.
 
-get_page_number() ->
+get_page_number_table_dropdown() ->
 	[
-		%
-		% dropdown for page navigation widget
-		%
-		#panel {
-			html_id="navbar-dropdown-page-no",
-			class="dropdown",
-			body=[
-
-				#panel{
-					body=[
-						#span {
-							html_id="page_no_display",
-							text="",
-							class="dropdown-toggle",
-							data_fields=[
-								{"bs-toggle", "dropdown"}
-							]
-						}
-					]
-				},
-
-				%
-				% down arrow image - uses js for page nav widget
-				%
-				#panel {
-					id="navbar-page-nav-widget-1"
-				}
-			]
-
+		#span {
+			html_id="navbar_page_no",
+			text="",
+			class="link-secondary" % only to match color with links
 		},
-		#link {
-			body=#panel{
-				style="height:24px;width:24px;",
-				class="d-block my-0 mx-auto navbar-page-nav-expand"
-				}
+
+		#span {
+				class="dropdown",
+				body=[
+					#panel {
+						id="navbar-page-no-dropdown-toggle-btn",
+						class="dropdown-toggle dropdown-toggle-split",
+						data_fields=[
+							{"bs-toggle", "dropdown"}
+						]
+					},
+					#panel{
+						id='navbar-page-nav-widget'
+					}
+				]
 		}
 	].
-
-
-get_test_dropdown() ->
-"<div class='dropdown'>
-  <a class='btn btn-secondary dropdown-toggle' href='#' role='button' id='dropdownMenuLink' data-bs-toggle='dropdown' aria-expanded='false'>
-    Dropdown link
-  </a>"
-  ++
- 	"<div class='dropdown-menu' aria-labelledby='dropdownMenuLink' >
- 	<div id='navbar-page-nav-widget'> </div>
-
-  <ul>
-    <li><a class='dropdown-item' href='#'>Action</a></li>
-    <li><a class='dropdown-item' href='#'>Another action</a></li>
-    <li><a class='dropdown-item' href='#'>Something else here</a></li>
-  </ul>
-  </div>".
-
 
 get_navbar_left_section() ->
 	[
@@ -83,11 +50,11 @@ get_navbar_left_section() ->
 			body=[
 				get_navbar_link("Home", "", "/"),
 				get_navbar_link("Answer Booklet", anpcandidate:actions(anpcandidate_answerpaper)),
-				get_page_number(),
+
+				get_page_number_table_dropdown(),
 
 				get_navbar_link("Remarks", anpcandidate:actions(anpcandidate_comments)),
 
-				% get_test_dropdown(),
 				get_navbar_link("Skip Evaluation", "", [], {skip_eval_event})
 			]
 		}
