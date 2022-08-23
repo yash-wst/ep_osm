@@ -32,14 +32,15 @@ get_page_number_table_dropdown() ->
 					]
 				},
 				#panel{
-					class="dropdown-menu p-2",
-					style="z-index:2000;border: 1px solid #CFD1D7;border-radius: 8px;box-shadow: 0px 3px 6px #00000029;overflow: auto;",
-					% id='navbar-page-nav-widget-1',
+					class="dropdown-menu dropdown-menu-end p-2",
+					style="z-index:2000;border: 1px solid #CFD1D7;
+					border-radius: 8px;box-shadow: 0px 3px 6px #00000029;
+					overflow: auto;",
 					body =
 					[
 						#panel{
 							id='navbar-page-nav-widget',
-							body=[ "Hello"]
+							body=[]
 						}
 					]
 				}

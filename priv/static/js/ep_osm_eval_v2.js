@@ -299,14 +299,22 @@ ANP.get_active_canvasID = function () {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
+//
+// update page number on navbar
+//
+///////////////////////////////////////////////////////////////////////////////
 ANP.update_page_no_display = function() {
 	$('#navbar_page_no').text("".concat(ANP.get_page_no(), "/", ANP.get_total_no_pages(), "  " ));
 	//color active page button as blue
 }
 
-///////////////////////////////////////////////////////////////////////////////
 
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// expand marking scheme on left side hover
+//
+///////////////////////////////////////////////////////////////////////////////
 ANP.expand_marking_scheme_layout = function(event) {
 	if(ANP.showing_marking_scheme == false && event.pageX < 20) {
 		ANP.showing_marking_scheme = true;
@@ -337,12 +345,12 @@ ANP.fixForStickyNavbar = function() {
 	}
 };
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// Make DropDown Z-index over sticky
-//
-///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// Make DropDown Z-index above sticky navbar
+//
+////////////////////////////////////////////////////////////////////////////////
 ANP.raiseDropDownOverStickyNavbar = function() {
 	let dropdown = document.querySelector('.navbar-collapse');
 	if (dropdown) {
@@ -350,70 +358,26 @@ ANP.raiseDropDownOverStickyNavbar = function() {
 	}
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// dynamic progress bar
+//
+////////////////////////////////////////////////////////////////////////////////
 ANP.update_evaluation_progress_level = function() {
 	let newprogress = 46;
+	//
+	//
 	$('.progress-bar').attr('aria-valuenow', newprogress).css('width', newprogress+'%');
 };
 
-///////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
 //
-// TIMER for elapsed time since started evaluation
+// navbar full screen button
 //
-///////////////////////////////////////////////////////////////////////////////
-
-WstTimer = {};
-WstTimer.secondselapsed = 0;
-
-WstTimer.start = function (seconds) {
-	WstTimer.TimerId = window.setInterval(WstTimer.onTimeOut, 1000);
-	WstTimer.secondselapsed = seconds;
-};
-
-WstTimer.onTimeOut = function () {
-	var SecondsToAdd = 1;
-	WstTimer.secondselapsed = WstTimer.secondselapsed + SecondsToAdd;
-
-	if ((WstTimer.secondselapsed % 60 ==0)) {
-		page.timer_event(WstTimer.secondselapsed);
-	};
-
-	WstTimer.updateElement();
-};
-
-WstTimer.updateElement = function () {
-	var mins = Math.floor(WstTimer.secondselapsed / 60);
-	var secs = WstTimer.secondselapsed % 60;
-
-	var html = "<span id='time_spent'>" + mins + "m " + secs + "s" + "</span>";
-
-	$("#time_spent").html(html);
-};
-
-WstTimer.unload = function () {
-	window.clearInterval(WstTimer.TimerId);
-	page.unload(WstTimer.secondselapsed);
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-$(document).ready(function() {
-
-	//
-	// One time necessary init functions
-	//
-	ANP.fixForStickyNavbar();
-	ANP.raiseDropDownOverStickyNavbar();
-	ANP.update_page_no_display();
-	ANP.update_evaluation_progress_level();
-
-	// remove padding from main container
-	$("main").removeClass("px-3 py-4");
-	$(".container-fluid").css('margin', '0');
-	$(".container-fluid").css('padding', '0');
-
+////////////////////////////////////////////////////////////////////////////////
+ANP.enable_navbar_fullscreen_button = function() {
 	var viewFullScreen = document.getElementById("view-fullscreen");
 
 	if (viewFullScreen) {
@@ -451,6 +415,84 @@ $(document).ready(function() {
 
 	  });
 	}
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// TIMER for elapsed time since started evaluation
+//
+///////////////////////////////////////////////////////////////////////////////
+WstTimer = {};
+WstTimer.secondselapsed = 0;
+
+//
+// start timer based on value saved on server
+//
+WstTimer.start = function (seconds) {
+	WstTimer.TimerId = window.setInterval(WstTimer.onTimeOut, 1000);
+	WstTimer.secondselapsed = seconds;
+};
+
+//
+// update UI timer every second
+//
+WstTimer.onTimeOut = function () {
+	var SecondsToAdd = 1;
+	WstTimer.secondselapsed = WstTimer.secondselapsed + SecondsToAdd;
+
+	//
+	// store time elapsed on server, every half minute
+	//
+	if ((WstTimer.secondselapsed % 30 ==0)) {
+		page.timer_event(WstTimer.secondselapsed);
+	};
+
+	WstTimer.updateElement();
+};
+
+//
+// update UI timer
+//
+WstTimer.updateElement = function () {
+	var mins = Math.floor(WstTimer.secondselapsed / 60);
+	var secs = WstTimer.secondselapsed % 60;
+
+	var html = "<span id='time_spent'>" + mins + "m " + secs + "s" + "</span>";
+
+	$("#time_spent").html(html);
+};
+
+WstTimer.unload = function () {
+	window.clearInterval(WstTimer.TimerId);
+	page.unload(WstTimer.secondselapsed);
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// One time necessary init functions
+//
+///////////////////////////////////////////////////////////////////////////////
+$(document).ready(function() {
+	ANP.fixForStickyNavbar();
+	ANP.raiseDropDownOverStickyNavbar();
+	ANP.update_page_no_display();
+	ANP.update_evaluation_progress_level();
+	ANP.enable_navbar_fullscreen_button();
+
+	//
+	// remove unnecessary padding from review area
+	//
+	$("main").removeClass("px-3 py-4");
+	$(".container-fluid").css('margin', '0');
+	$(".container-fluid").css('padding', '0');
+
+	$('.wfid_btn_submit_marks').click(function() {
+		console.log("hua");
+			collapse_marks_box();
+		});
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -458,7 +500,6 @@ $(document).ready(function() {
 // FLOATING TOOLBAR BUTTONS LISTENERS
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 	var flipButton = document.getElementById("toolbar_flip");
 	if (flipButton) {
 		flipButton.addEventListener("click", function() {
@@ -496,7 +537,6 @@ $(document).ready(function() {
 // ON SCREEN WIDGETS
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 var marks_box = document.getElementById("marks_box");
 	if(marks_box) {
 		marks_box.onmousedown = expand_marks_box;
@@ -522,12 +562,13 @@ function collapse_marks_box() {
 	marks_box_mscheme.classList.add("hidden");
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // MOUSE RELATED FUNCTIONS
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 $(document).mousemove(function(event) {
 	ANP.set_cursor_tooltip(event);
 	ANP.expand_marking_scheme_layout(event);
@@ -562,7 +603,6 @@ function RightMouseDown() {
 // keyboard shortcuts
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 document.addEventListener('keydown', function(event) {
   if (event.ctrlKey && event.key === 'z') {
     ANP.clicked_undo(ANP.get_active_canvasID());
@@ -570,4 +610,3 @@ document.addEventListener('keydown', function(event) {
 });
 
 ///////////////////////////////////////////////////////////////////////////////
-

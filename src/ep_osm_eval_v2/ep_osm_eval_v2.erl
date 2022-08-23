@@ -33,6 +33,7 @@ access(_, ?APPOSM_REVALUATOR) -> true;
 access(_, ?APPOSM_MODERATOR_REVAL) -> true;
 access(_, _) -> false.
 
+
 %------------------------------------------------------------------------------
 % event
 %------------------------------------------------------------------------------
@@ -40,11 +41,18 @@ event(noevent) ->
 	[];
 
 event({skip_eval_event}) ->
-	ep_osm_eval_v2_skip_eval:get_dialog_box();
+	ep_osm_eval_v2_modals:modal_skip_evaluation();
 
 event({close_skip_eval_modal}) ->
 	itl:modal_close(),
 	event({reject_answerpaper, no});
+
+event({btn_submit_marks_box}) ->
+	ep_osm_eval_v2_modals:modal_submit_paper();
+
+event({btn_show_remaining}) ->
+	itl:modal_close(),
+	event({submit, show_remaining});
 
 event(E) ->
 	anpcandidate:event(E).
@@ -140,6 +148,11 @@ layout_review_area(TFs, Fs) ->
 			#panel {
 				class="anppanel",
 				style="display:none;",
+				id=anpcandidate_pages, body=[]
+			},
+			#panel {
+				class="anppanel",
+				style="display:none;",
 				id=anpcandidate_reject,
 				body=[]
 			},
@@ -223,10 +236,14 @@ layout_answerpaper(TFs, Fs) ->
 
 
 	%
-	% page numbers div
+	% populate page navigation widget
 	%
 	ep_osm_eval_v2_page_nav_widget:create_page_navigation_widget(ANames),
 
+	%
+	% populate page that shows remaining pages when submit
+	%
+	anpcandidate:layout_page_nos(ANames),
 	helper:state(filenames, ANames),
 
 

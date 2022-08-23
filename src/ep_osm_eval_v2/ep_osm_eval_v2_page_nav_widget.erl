@@ -10,7 +10,6 @@
 % gets the page navigation widget
 %
 %----------------------------------------------------------------------
-
 create_page_navigation_widget(Filenames) ->
 	Fs = anpcandidate:get_fs(),
 	CanvasDataVal = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ myauth:role())),
@@ -55,28 +54,31 @@ layout_page_nos_rows(CanvasDataVal, List, COLUMNS) ->
 % layout table cells
 %
 %----------------------------------------------------------------------
-
 layout_page_nos_cells(CanvasDataVal, {Index, AName}) ->
+	%
+	% color button based on evaluator marking on that page
+	%
 	Class = case lists:keyfind(AName, 1, CanvasDataVal) of
 		false ->
-			"btn-primary-outline";
+			"btn-outline-secondary"; % no canvas data yet
 		{AName, "{\"objects\":[]," ++ _} ->
-			"btn-primary-outline";
+			"btn-outline-secondary"; % no canvas data yet
 		_ ->
-			"btn-success page-nav-done-pages"
+			"btn-success bg-success" % canvas data exists
 	end,
 
-	#tablecell {body=get_page_no_button(Class, AName, Index)}.
+	#tablecell {body=layout_page_no_button(Class, AName, Index)}.
 
 
 filler_cells(N) ->
 	lists:map(fun(_) -> #tablecell {body=""} end, lists:seq(1, N)).
 
 
-get_page_no_button(Class, AName, Index) ->
+layout_page_no_button(Class, AName, Index) ->
 	[
 		#link {
-			class="align-bottom text-center page-nav-round-button btn btn-sm " ++ Class,
+			style="height:30px;width:30px;",
+			class="align-bottom text-center rounded-circle btn btn-sm " ++ Class,
 			url="#" ++ AName,
 			text=Index,
 			postback={page_nos, Index, AName}
