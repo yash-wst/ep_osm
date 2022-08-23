@@ -21,34 +21,29 @@ get_navbar_link(Text, Action, Url, Postback) ->
 get_page_number_table_dropdown() ->
 	[
 		#span {
-			html_id="navbar_page_no",
-			text="",
-			class="link-secondary" % only to match color with links
-		},
-
-		#span {
-
-				class="dropdown",
-				body=[
-					#panel {
-						class="dropdown-toggle dropdown-toggle-split",
-						data_fields=[
-							{"bs-toggle", "dropdown"}
-						]
-					},
-					#panel{
-						class="dropdown-menu p-1",
-						style="z-index:2000;border: 1px solid #CFD1D7;border-radius: 8px;box-shadow: 0px 3px 6px #00000029;overflow: auto;",
-						% id='navbar-page-nav-widget-1',
-						body =
-						[
-							#panel{
-								id='navbar-page-nav-widget',
-								body=[ "Hello"]
-							}
-						]
-					}
-				]
+			class="dropdown",
+			body=[
+				#panel {
+					html_id="navbar_page_no",
+					text="",
+					class="link-secondary dropdown-toggle",
+					data_fields=[
+						{"bs-toggle", "dropdown"}
+					]
+				},
+				#panel{
+					class="dropdown-menu p-2",
+					style="z-index:2000;border: 1px solid #CFD1D7;border-radius: 8px;box-shadow: 0px 3px 6px #00000029;overflow: auto;",
+					% id='navbar-page-nav-widget-1',
+					body =
+					[
+						#panel{
+							id='navbar-page-nav-widget',
+							body=[ "Hello"]
+						}
+					]
+				}
+			]
 		}
 	].
 

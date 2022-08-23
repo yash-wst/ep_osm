@@ -64,8 +64,6 @@ layout() ->
 	TFs = anptests:get(TId),
 	Fs = anpcandidates:get(anpcandidate:db(), wf:q(anpcandidate:id())),
 
-
-
 	%
 	% init layout
 	%
@@ -77,21 +75,13 @@ layout() ->
 	% layout elements
 	%
 	Elements = [
+		layout_navbar(),
 
-		%
-		% layout nav bar
-		%
-		ep_osm_eval_v2_navbar:layout_navbar(),
+    	layout_marks_box(TFs, Fs),
 
-    	marks_box(TFs, Fs),
-    	toolbar(),
-		#panel {
-			class="d-block text-center m-auto",
-			body=layout:grow([
-				layout_review_area(TFs, Fs)
-			])
-		}
+    	layout_toolbar(),
 
+    	layout_review_area(TFs, Fs)
 	],
 
 	wf:wire(#api {name=canvas_save, tag=canvas_save}),
@@ -122,55 +112,57 @@ layout_init_page() ->
 
 layout_review_area(TFs, Fs) ->
 	#panel {
-	body=[
-		#panel {
-			class="anppanel visiblepanel",
-			id=anpcandidate_answerpaper,
-			body=layout_answerpaper(TFs, Fs)
-		},
-		#panel {
-			class="anppanel",
-			style="display:none;",
-			id=anpcandidate_questionpaper,
-			body=ep_osm_pdf:layout(TFs, questionpaper)
-		},
-		#panel {
-			class="anppanel",
-			style="display:none;",
-			id=anpcandidate_modelanswers,
-			body=ep_osm_pdf:layout(TFs, modelanswers)
-		},
-		#panel {
-			class="anppanel m-auto",
-			style="display:none;",
-			id=anpcandidate_comments,
-			body=anpcandidate:layout_comments(Fs)
-		},
-		#panel {
-			class="anppanel",
-			style="display:none;",
-			id=anpcandidate_reject,
-			body=[]
-		},
-		#panel {
-			class="anppanel",
-			style="display:none;",
-			id=anpcandidate_submit,
-			body=[]
-		},
-		#panel {
-			class="anppanel",
-			style="display:none;",
-			id=anpcandidate_evaluator_marking,
-			body=anpcandidate:layout_evaluator_marking(TFs, Fs)
-		},
-		#panel {
-			class="anppanel",
-			style="display:none;",
-			id=help,
-			body=anpcandidate:layout_help(TFs, Fs)
-		}
-	]}.
+		class="d-flex justify-content-lg-center text-center",
+		body=[
+			#panel {
+				class="anppanel visiblepanel",
+				id=anpcandidate_answerpaper,
+				body=layout_answerpaper(TFs, Fs)
+			},
+			#panel {
+				class="anppanel",
+				style="display:none;",
+				id=anpcandidate_questionpaper,
+				body=ep_osm_pdf:layout(TFs, questionpaper)
+			},
+			#panel {
+				class="anppanel",
+				style="display:none;",
+				id=anpcandidate_modelanswers,
+				body=ep_osm_pdf:layout(TFs, modelanswers)
+			},
+			#panel {
+				class="anppanel m-auto",
+				style="display:none;",
+				id=anpcandidate_comments,
+				body=anpcandidate:layout_comments(Fs)
+			},
+			#panel {
+				class="anppanel",
+				style="display:none;",
+				id=anpcandidate_reject,
+				body=[]
+			},
+			#panel {
+				class="anppanel",
+				style="display:none;",
+				id=anpcandidate_submit,
+				body=[]
+			},
+			#panel {
+				class="anppanel",
+				style="display:none;",
+				id=anpcandidate_evaluator_marking,
+				body=anpcandidate:layout_evaluator_marking(TFs, Fs)
+			},
+			#panel {
+				class="anppanel",
+				style="display:none;",
+				id=help,
+				body=anpcandidate:layout_help(TFs, Fs)
+			}
+		]
+	}.
 
 
 %..............................................................................
@@ -307,16 +299,14 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 %------------------------------------------------------------------------------
 % misc UI elements
 %------------------------------------------------------------------------------
+layout_navbar() ->
+	ep_osm_eval_v2_navbar:layout_navbar().
 
+layout_marks_box(TFs, Fs) ->
+	ep_osm_eval_v2_marks_box:layout_marks_box(TFs, Fs).
 
-marks_box(TFs, Fs) ->
-	ep_osm_eval_v2_marks_box:get_marks_box(TFs, Fs).
-
-skip_eval() ->
-	ep_osm_eval_v2_skip_eval:get_dialog_box().
-
-toolbar() ->
-	ep_osm_eval_v2_toolbar:toolbar_on_right().
+layout_toolbar() ->
+	ep_osm_eval_v2_toolbar:layout_toolbar().
 
 
 %------------------------------------------------------------------------------

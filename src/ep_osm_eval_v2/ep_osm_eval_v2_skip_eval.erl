@@ -14,17 +14,18 @@ get_dialog_box() ->
 			#span{
 				class="d-flex flex-row-reverse",
 				body=[
-					#button{
-						text="Yes, Skip",
-					 	class="skip-eval-buttons skip-eval-confirm",
-					 	postback={reject_answerpaper, reject}
-					 },
-
-					#button{
-						text="Cancel",
-						class="skip-eval-buttons skip-eval-cancel",
-						postback={close_skip_eval_modal}
-					}
+					ite:button(
+						skip_button,
+						"Yes, Skip",
+						{reject_answerpaper, reject},
+						"btn btn-primary"
+					),
+					ite:button(
+						cancel_button,
+						"Cancel",
+						{close_skip_eval_modal},
+						"btn btn-outline-primary"
+					)
 				]
 			}
 		],

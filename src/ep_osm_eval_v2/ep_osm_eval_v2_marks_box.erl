@@ -4,7 +4,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 
-marks_box_header(TFs, Fs) ->
+layout_marks_box_header(TFs, Fs) ->
 
 	MarkingLayout = anpcandidate:layout_marking(TFs, Fs),
 
@@ -53,22 +53,11 @@ marks_box_header(TFs, Fs) ->
 	],
 	Elememt.
 
-get_progress_bar() ->
+layout_progress_bar() ->
 	[
 	"<div class='progress my-2'>
-		<div class='progress-bar' role='progressbar' style='width: 0%;' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100'>25%</div>
+		<div class='progress-bar' role='progressbar' style='width: 0%;' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100'></div>
 	</div>"
-	].
-
-marks_box_eval_progress() ->
-	[
-		get_progress_bar(),
-
-		#panel {
-			text="0 % Evaluated",
-			html_id=marks_box_progress_text_id,
-			class="text-center"
-		}
 	].
 
 layout_marking_scheme(TFs, Fs) ->
@@ -85,27 +74,24 @@ layout_marking_scheme(TFs, Fs) ->
 		}
 	].
 
-get_marks_box(TFs, Fs) ->
+layout_marks_box(TFs, Fs) ->
 	[
 		#panel {
 			html_id="marks_box",
 			style="z-index:4000;border: 1px solid #CFD1D7;border-radius: 12px;box-shadow: 0px 3px 6px #00000029;",
-			class="float-left position-fixed start-1 bottom-0 mb-2 bg-white p-3",
+			class="d-flex flex-column float-left position-fixed start-1 bottom-0 mb-4 ms-4 bg-white p-3 justify-content-center",
 			body=[
-				marks_box_header(TFs, Fs),
+				layout_marks_box_header(TFs, Fs),
 
 				layout_marking_scheme(TFs, Fs),
 
-				marks_box_eval_progress(),
+				layout_progress_bar(),
 
-				#button {
-					html_id="btn_submit_marks",
-					text="Submit",
-					class="marks-button-submit hidden mt-2",
-					postback={show, anpcandidate_submit}
-				}
+				ite:button(
+					btn_submit_marks,
+					"Submit",
+					{show, anpcandidate_submit},
+					"btn btn-primary hidden mt-2")
 			]
 		}
-
 	].
-

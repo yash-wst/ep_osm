@@ -301,10 +301,22 @@ ANP.get_active_canvasID = function () {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.update_page_no_display = function() {
-	$('#navbar_page_no').text(" ".concat(ANP.get_page_no(), "/", ANP.get_total_no_pages()));
+	$('#navbar_page_no').text("".concat(ANP.get_page_no(), "/", ANP.get_total_no_pages(), "  " ));
 	//color active page button as blue
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+ANP.expand_marking_scheme_layout = function(event) {
+	if(ANP.showing_marking_scheme == false && event.pageX < 20) {
+		ANP.showing_marking_scheme = true;
+		expand_marks_box();
+	} else if(ANP.showing_marking_scheme == true && event.pageX > 250) {
+		ANP.showing_marking_scheme = false;
+		collapse_marks_box();
+	}
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -342,9 +354,6 @@ ANP.raiseDropDownOverStickyNavbar = function() {
 
 ANP.update_evaluation_progress_level = function() {
 	let newprogress = 46;
-	var progress_str = " ".concat(newprogress, "% Evaluated");
-	$('#marks_box_progress_text_id ').text(progress_str);
-	$('.progress-bar').text(newprogress+'%');
 	$('.progress-bar').attr('aria-valuenow', newprogress).css('width', newprogress+'%');
 };
 
@@ -402,6 +411,8 @@ $(document).ready(function() {
 
 	// remove padding from main container
 	$("main").removeClass("px-3 py-4");
+	$(".container-fluid").css('margin', '0');
+	$(".container-fluid").css('padding', '0');
 
 	var viewFullScreen = document.getElementById("view-fullscreen");
 
@@ -486,14 +497,7 @@ $(document).ready(function() {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-	var expand_page_nav = document.querySelector(".navbar-page-nav-expand");
-	if (expand_page_nav) {
-		expand_page_nav.addEventListener("click", function() {
-			toggle_page_navigation_widget();
-		});
-	}
-
-	var marks_box = document.getElementById("marks_box");
+var marks_box = document.getElementById("marks_box");
 	if(marks_box) {
 		marks_box.onmousedown = expand_marks_box;
 		marks_box.onmouseout = collapse_marks_box;
@@ -503,29 +507,20 @@ $(document).ready(function() {
 
 function expand_marks_box() {
 	var marks_box = document.getElementById("marks_box");
-	var btn_submit = document.getElementById("btn_submit_marks");
 	var marks_box_mscheme = document.getElementById("marks_box_mscheme");
 
 	marks_box_mscheme.classList.remove("hidden");
 	marks_box_mscheme.classList.add("marks-box-container-large");
-	btn_submit.classList.remove("hidden");
+	$('.wfid_btn_submit_marks').removeClass('hidden');
 }
 
 function collapse_marks_box() {
 	var marks_box = document.getElementById("marks_box");
-	var btn_submit = document.getElementById("btn_submit_marks");
 	var marks_box_mscheme = document.getElementById("marks_box_mscheme");
 
-	btn_submit.classList.add("hidden");
+	$('.wfid_btn_submit_marks').addClass('hidden');
 	marks_box_mscheme.classList.add("hidden");
 }
-
-function toggle_page_navigation_widget() {
-	var pg_nav_widget = document.querySelector(".page-nav-widget-main");
-	if(pg_nav_widget)
-		pg_nav_widget.classList.toggle("hidden");
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -533,18 +528,9 @@ function toggle_page_navigation_widget() {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-$(document).mousemove(function(e) {
-	ANP.set_cursor_tooltip(e);
-});
-
 $(document).mousemove(function(event) {
-	if(ANP.showing_marking_scheme == false && event.pageX < 20) {
-		ANP.showing_marking_scheme = true;
-		$("#sidebar-wrapper").css("left", "20%");
-	} else if(ANP.showing_marking_scheme == true && event.pageX > 250) {
-		ANP.showing_marking_scheme = false;
-		$("#sidebar-wrapper").css("left", "0%");
-	}
+	ANP.set_cursor_tooltip(event);
+	ANP.expand_marking_scheme_layout(event);
 });
 
 document.addEventListener("scroll", function(event) {
