@@ -34,8 +34,9 @@ ANP.showpanel = function (panelid, switched, aname) {
 	$(".wfid_" + panelid).show();
 	$(".wfid_" + panelid).addClass("visiblepanel");
 
-	// if shown panel is ap-panel, then scroll to its previous position
+	// if shown panel is anp-panel, then scroll to its previous position
 	if (panelid == "anpcandidate_answerpaper") {
+		ANP.show_on_screen_widgets();
 		if(switched) {
 			var aTag = $("a[id='"+ aname +"']");
 			(document.querySelector(".page-nav-widget-main")).classList.add("hidden");
@@ -43,6 +44,7 @@ ANP.showpanel = function (panelid, switched, aname) {
 			$('html,body').animate({scrollTop: aTag.offset().top - ANP.OFFSET_TOP}, 'fast');
 		}
 	} else {
+		ANP.hide_on_screen_widgets();
 		$(document).scrollTop(0);
 	}
 
@@ -374,6 +376,21 @@ ANP.update_evaluation_progress_level = function() {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// Hide widgets on comments panel
+//
+////////////////////////////////////////////////////////////////////////////////
+ANP.show_on_screen_widgets = function() {
+	$('#marks_box').css('visibility', 'visible');
+	$('#toolbar_floating').css('visibility', 'visible');
+};
+
+ANP.hide_on_screen_widgets = function() {
+	$('#marks_box').css('visibility', 'hidden');
+	$('#toolbar_floating').css('visibility', 'hidden');
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // navbar full screen button
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -487,13 +504,6 @@ $(document).ready(function() {
 	$("main").removeClass("px-3 py-4");
 	$(".container-fluid").css('margin', '0');
 	$(".container-fluid").css('padding', '0');
-
-	$('.wfid_btn_submit_marks').click(function() {
-		console.log("hua");
-			collapse_marks_box();
-		});
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //

@@ -34,3 +34,7 @@
 .hidden {
 	display: none;
 }
+
+.input-group-addon {
+    text-align: center;
+}

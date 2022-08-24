@@ -54,11 +54,22 @@ event({btn_show_remaining}) ->
 	itl:modal_close(),
 	event({submit, show_remaining});
 
+event({add_remark}) ->
+	Res = anpcandidate:addcomment(
+			wf:q(anptest:id()),
+			wf:q(anpcandidate:id()),
+			anpcandidate:get_comment_key(),
+			wf:q(txtarea_remarks_id)
+		),
+	layout_comments_update(helper_api:doc2fields(Res));
+
 event(E) ->
 	anpcandidate:event(E).
 
 api_event(X, Y, Z) ->
 	anpcandidate:api_event(X, Y, Z).
+
+
 
 %------------------------------------------------------------------------------
 % layout
@@ -110,7 +121,12 @@ layout_init_page() ->
 	%
 	akit_sidebar:collapse().
 
-
+layout_panel(PanelID, Body, Class) ->
+	#panel {
+		id=PanelID,
+		body=Body,
+		class=Class
+	}.
 
 %..............................................................................
 %
@@ -119,63 +135,61 @@ layout_init_page() ->
 %..............................................................................
 
 layout_review_area(TFs, Fs) ->
-	#panel {
-		class="d-flex justify-content-lg-center text-center",
-		body=[
-			#panel {
-				class="anppanel visiblepanel",
-				id=anpcandidate_answerpaper,
-				body=layout_answerpaper(TFs, Fs)
-			},
-			#panel {
-				class="anppanel",
-				style="display:none;",
-				id=anpcandidate_questionpaper,
-				body=ep_osm_pdf:layout(TFs, questionpaper)
-			},
-			#panel {
-				class="anppanel",
-				style="display:none;",
-				id=anpcandidate_modelanswers,
-				body=ep_osm_pdf:layout(TFs, modelanswers)
-			},
-			#panel {
-				class="anppanel m-auto",
-				style="display:none;",
-				id=anpcandidate_comments,
-				body=anpcandidate:layout_comments(Fs)
-			},
-			#panel {
-				class="anppanel",
-				style="display:none;",
-				id=anpcandidate_pages, body=[]
-			},
-			#panel {
-				class="anppanel",
-				style="display:none;",
-				id=anpcandidate_reject,
-				body=[]
-			},
-			#panel {
-				class="anppanel",
-				style="display:none;",
-				id=anpcandidate_submit,
-				body=[]
-			},
-			#panel {
-				class="anppanel",
-				style="display:none;",
-				id=anpcandidate_evaluator_marking,
-				body=anpcandidate:layout_evaluator_marking(TFs, Fs)
-			},
-			#panel {
-				class="anppanel",
-				style="display:none;",
-				id=help,
-				body=anpcandidate:layout_help(TFs, Fs)
-			}
-		]
-	}.
+	% #panel {
+	% 	class="d-flex flex-column align-items-center bg-black justify-content-lg-center text-center",
+	% 	body=
+	layout:grow(
+		[
+			layout_panel(
+				anpcandidate_answerpaper,
+				layout_answerpaper(TFs, Fs),
+				"anppanel visiblepanel col-sm-12"
+				),
+
+			layout_panel(
+				anpcandidate_questionpaper,
+				ep_osm_pdf:layout(TFs, questionpaper),
+				"anppanel hidden col-sm-12 text-center"
+				),
+
+			layout_panel(
+				anpcandidate_modelanswers,
+				ep_osm_pdf:layout(TFs, modelanswers),
+				"anppanel hidden col-sm-12 text-center"
+				),
+
+			layout_panel(
+				anpcandidate_comments,
+				layout_comments_panel(Fs),
+				"anppanel hidden col-sm-12"
+				),
+
+			layout_panel(
+				anpcandidate_pages,
+				[],
+				"anppanel hidden col-sm-12"
+				),
+
+			layout_panel(
+				anpcandidate_reject,
+				[],
+				"anppanel hidden col-sm-12"
+				),
+
+			layout_panel(
+				anpcandidate_submit,
+				[],
+				"anppanel hidden col-sm-12"
+				),
+
+			layout_panel(
+				help,
+				anpcandidate:layout_help(TFs, Fs),
+				"anppanel hidden col-sm-12"
+				)
+		]).
+
+
 
 
 %..............................................................................
@@ -259,12 +273,13 @@ layout_answerpaper(TFs, Fs) ->
 	].
 
 
+
+
 %..............................................................................
 %
 % layout - answer paper page
 %
 %..............................................................................
-
 layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 	%
 	%  create html tags
@@ -311,6 +326,86 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 
 	Element.
 
+
+
+%-----------------------------------------------------------------------------------------------
+%
+% PANEL - COMMENTS
+%
+%-----------------------------------------------------------------------------------------------
+layout_comments_panel(Fs) ->
+	#panel{
+		class="d- text-start p-5",
+		body=[
+
+		#textarea {
+			id=txtarea_remarks_id,
+			style="border:none;",
+			class="form-control",
+			placeholder="Write your remarks here...",
+			text=""
+		},
+
+		#hr{
+			 style="height:1px;border:none;margin:0;color:#333;background-color:#333;",
+			 class="my-3"
+		},
+
+		ite:button(
+			btn_add_remarks,
+			"Add Remark",
+			{add_remark},
+			"btn btn-primary"
+		),
+
+		#hr{},
+
+		#table {
+			class="table table-bordered table-hover table-sm",
+			%
+			% layout all comment rows
+			%
+			rows= lists:map(fun({K, V}) ->
+				[Date, Time, IP, User] = case string:tokens(K, " ") of
+					[D,T,I,U] -> [D,T,I,U];
+					[D,T,I,U,U1] -> [D,T,I,U++" "++U1] % patch - space in username
+				end,
+				#tablerow {cells=[layout_comment(Date, Time, IP, User, V)]}
+			end, lists:reverse(fields:getuivalue(Fs, comments)))
+		}
+		]
+	}.
+
+
+
+
+%------------------------------------------------------------------------------
+%
+% layout comment
+%
+%------------------------------------------------------------------------------
+layout_comment(Date, Time, IP, Username, Message) ->
+	#panel{
+		body=[
+			#hr{
+			 style="height:1px;border:none;margin:0;color:#333;background-color:#333;",
+			 class="mt-3"
+			},
+
+			#panel{
+				style="font-size:12px",
+				class="text-secondary fw-light mt-3",
+				text=itx:format("~ts   ~ts   ~ts   ~ts", [Date, Time, IP, Username])
+			},
+			#panel{
+				class="text-dark mt-1",
+				body=Message
+			}
+		]
+	}.
+
+layout_comments_update(Fs) ->
+	wf:update(anpcandidate_comments, layout_comments_panel(Fs)).
 
 
 %------------------------------------------------------------------------------

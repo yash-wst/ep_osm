@@ -105,7 +105,7 @@ layout_marks_box(TFs, Fs) ->
 	[
 		#panel {
 			html_id="marks_box",
-			style="z-index:4000;border: 1px solid #CFD1D7;border-radius: 12px;
+			style="z-index:1001;border: 1px solid #CFD1D7;border-radius: 12px;
 			box-shadow: 0px 3px 6px #00000029;",
 			class="d-flex flex-column float-left position-fixed start-1 bottom-0
 			 mb-4 ms-4 bg-white p-3 justify-content-center",

@@ -88,7 +88,8 @@ layout_bottom_semicircle() ->
 %-------------------------------------------------------------------------------
 layout_toolbar() ->
 	#span {
-		style="z-index:2000;",
+		html_id="toolbar_floating",
+		style="z-index:1001;",
 		class="bg-transparent float-end d-flex flex-column text-center
 			position-fixed end-0 bottom-0 mb-4 me-4 p-0",
 		body=[
