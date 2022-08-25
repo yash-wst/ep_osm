@@ -11,39 +11,50 @@ ANP.BG_HEIGHT = 900;
 ANP.canvasobjs = {};
 ANP.cursorText = undefined;
 
-ANP.OFFSET_TOP = 40;
-
+ANP.OFFSET_TOP = 30;
 ANP.showing_marking_scheme = true;
 
 ANP.IMGURL_CORRECT = 'https://lib.weshinetech.in/images/correct.png';
 ANP.IMGURL_WRONG = 'https://lib.weshinetech.in/images/wrong.png';
 
+ANP.pages_done = 0;
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.scrollposap = 0;
 ANP.showpanel = function (panelid, switched, aname) {
 
 	// record ap-panel scroll position
-	if ($(".VISIBLEPANEL").hasClass("wfid_anpcandidate_answerpaper")) {
+	if ($(".visiblepanel").hasClass("wfid_anpcandidate_answerpaper")) {
 		ANP.scrollposap = $(document).scrollTop();
+		// d-flex was used to center anp horizontally in review area
+		$(".visiblepanel").removeClass('d-flex');
 	}
 
 	// hide current panel and show requested panel
-	$(".visiblepanel").hide();
-	$(".visiblepanel").removeClass("visiblepanel");
-	$(".wfid_" + panelid).show();
-	$(".wfid_" + panelid).addClass("visiblepanel");
+	$(".visiblepanel").removeClass("visiblepanel").addClass('hidden');
+	$(".wfid_" + panelid).addClass("visiblepanel").removeClass('hidden');
 
 	// if shown panel is anp-panel, then scroll to its previous position
 	if (panelid == "anpcandidate_answerpaper") {
+		$(".visiblepanel").addClass('d-flex');
 		ANP.show_on_screen_widgets();
 		if(switched) {
+			//
+			// switched page number from page nav dropdown in navbar
+			//
 			var aTag = $("a[id='"+ aname +"']");
-			(document.querySelector(".page-nav-widget-main")).classList.add("hidden");
-			// TODO fix this calculation.
 			$('html,body').animate({scrollTop: aTag.offset().top - ANP.OFFSET_TOP}, 'fast');
 		}
+		else{
+			//
+			// coming back from remarks, question or model papers page
+			//
+			$(document).scrollTop(ANP.scrollposap);
+		}
 	} else {
+		//
+		// going to other pages than answer paper
+		//
 		ANP.hide_on_screen_widgets();
 		$(document).scrollTop(0);
 	}
@@ -140,8 +151,11 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 
 ANP.save_answerpaper_page = function (canvasid) {
 	var canvas = ANP.canvasobjs[canvasid];
-	if (page && page.canvas_save)
+	if (page && page.canvas_save) {
 		page.canvas_save(canvasid, JSON.stringify(canvas));
+		ANP.update_evaluation_progress_level();
+	}
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -307,7 +321,6 @@ ANP.get_active_canvasID = function () {
 ///////////////////////////////////////////////////////////////////////////////
 ANP.update_page_no_display = function() {
 	$('#navbar_page_no').text("".concat(ANP.get_page_no(), "/", ANP.get_total_no_pages(), "  " ));
-	//color active page button as blue
 }
 
 
@@ -367,9 +380,12 @@ ANP.raiseDropDownOverStickyNavbar = function() {
 //
 ////////////////////////////////////////////////////////////////////////////////
 ANP.update_evaluation_progress_level = function() {
-	let newprogress = 46;
-	//
-	//
+	let newprogress = 0;
+	page.calculate_pages_done();
+
+	if(ANP.pages_done != 0){
+		newprogress =  Math.floor(ANP.pages_done / ANP.get_total_no_pages() * 100 );
+	}
 	$('.progress-bar').attr('aria-valuenow', newprogress).css('width', newprogress+'%');
 };
 
@@ -530,7 +546,6 @@ $(document).ready(function() {
 	if (eraseButton) {
 		eraseButton.addEventListener("click", function() {
 			ANP.clicked_clear(ANP.get_active_canvasID());
-
 		})
 	}
 
@@ -538,6 +553,7 @@ $(document).ready(function() {
 	if (undoButton) {
 		undoButton.addEventListener("click", function() {
 			ANP.clicked_undo(ANP.get_active_canvasID());
+			ANP.update_evaluation_progress_level();
 
 		})
 	}

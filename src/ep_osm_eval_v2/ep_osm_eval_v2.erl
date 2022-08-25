@@ -66,6 +66,14 @@ event({add_remark}) ->
 event(E) ->
 	anpcandidate:event(E).
 
+
+
+%---------------------------------------------------------------------------------------------------
+% API EVENTS
+%---------------------------------------------------------------------------------------------------
+api_event(calculate_pages_done, calculate_pages_done, _) ->
+	ep_osm_eval_v2_modals:count_canvas_marking_data();
+
 api_event(X, Y, Z) ->
 	anpcandidate:api_event(X, Y, Z).
 
@@ -104,6 +112,7 @@ layout() ->
 	],
 
 	wf:wire(#api {name=canvas_save, tag=canvas_save}),
+	wf:wire(#api {name=calculate_pages_done, tag=calculate_pages_done}),
 
 	Elements.
 
@@ -135,15 +144,13 @@ layout_panel(PanelID, Body, Class) ->
 %..............................................................................
 
 layout_review_area(TFs, Fs) ->
-	% #panel {
-	% 	class="d-flex flex-column align-items-center bg-black justify-content-lg-center text-center",
-	% 	body=
 	layout:grow(
 		[
 			layout_panel(
 				anpcandidate_answerpaper,
 				layout_answerpaper(TFs, Fs),
-				"anppanel visiblepanel col-sm-12"
+				"anppanel visiblepanel col-sm-12 d-flex
+				align-items-center justify-content-lg-center"
 				),
 
 			layout_panel(

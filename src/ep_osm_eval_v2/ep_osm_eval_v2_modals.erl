@@ -80,10 +80,7 @@ layout_submit_pages_remaining() ->
 %
 %-------------------------------------------------------------------------------
 layout_submit() ->
-	Fs = anpcandidate:get_fs(),
-	LofTodo = length(helper:state(filenames)),
-	CanvasData = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ anpcandidate:role())),
-	LofDone = anpcandidate:get_marked_pages_count(CanvasData),
+	{LofDone, LofTodo} = count_canvas_marking_data(),
 
 	case LofDone >= LofTodo of
 		true ->
@@ -114,3 +111,19 @@ modal_skip_evaluation() ->
 modal_submit_paper() ->
 	{modal, Es} = layout_submit(),
 	itl:modal_fs(Es,medium, "").
+
+
+
+
+%-------------------------------------------------------------------------------
+%
+% Misc
+%
+%-------------------------------------------------------------------------------
+count_canvas_marking_data() ->
+    Fs = anpcandidate:get_fs(),
+	LofTodo = length(helper:state(filenames)),
+	CanvasData = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ anpcandidate:role())),
+	LofDone = anpcandidate:get_marked_pages_count(CanvasData),
+	wf:wire( itx:format("ANP.pages_done = ~p", [LofDone])),
+	{LofDone, LofTodo}.

@@ -3,13 +3,12 @@
 -include("records.hrl").
 
 
-get_navbar_link(Text, Action) ->
-	get_navbar_link(Text, Action, "", noevent).
-
-get_navbar_link(Text, Action, Url) ->
-	get_navbar_link(Text, Action, Url, noevent).
-
-get_navbar_link(Text, Action, Url, Postback) ->
+%..............................................................................
+%
+% layout navbar links
+%
+%..............................................................................
+layout_navbar_link_left(Text, Action, Url, Postback) ->
 	#link {
 		class="link-secondary text-center mx-2 px-2",
 		text=Text,
@@ -18,7 +17,22 @@ get_navbar_link(Text, Action, Url, Postback) ->
 		postback=Postback
 	}.
 
-get_page_number_table_dropdown() ->
+layout_navbar_link_right(Text, Action, Url, Postback) ->
+	#link {
+		class="link-primary text-center mx-2 px-2",
+		text=Text,
+		actions=Action,
+		url=Url,
+		postback=Postback
+	}.
+
+
+%..............................................................................
+%
+% layout - dropdown for page navigation widget
+%
+%..............................................................................
+layout_page_number_table_dropdown() ->
 	[
 		#span {
 			class="dropdown",
@@ -48,32 +62,48 @@ get_page_number_table_dropdown() ->
 		}
 	].
 
-get_navbar_left_section() ->
+
+%..............................................................................
+%
+% layout - left side of navbar
+%
+%..............................................................................
+layout_navbar_left_section() ->
 	[
 		#panel{
 			class="d-flex align-items-center p-0",
 			body=[
-				get_navbar_link("Home", "", "/"),
-				get_navbar_link("Answer Booklet", anpcandidate:actions(anpcandidate_answerpaper)),
+				layout_navbar_link_left("Home", "", "/", noevent),
+				layout_navbar_link_left("Answer Booklet",
+					anpcandidate:actions(anpcandidate_answerpaper), "", noevent),
 
-				get_page_number_table_dropdown(),
+				layout_page_number_table_dropdown(),
 
-				get_navbar_link("Remarks", anpcandidate:actions(anpcandidate_comments)),
+				layout_navbar_link_left("Remarks",
+					anpcandidate:actions(anpcandidate_comments), "", noevent),
 
-				get_navbar_link("Skip Evaluation", "", [], {skip_eval_event})
+				layout_navbar_link_left("Skip Evaluation", "", [], {skip_eval_event})
 			]
 		}
 	].
 
 
 
-get_navbar_right_section() ->
+%..............................................................................
+%
+% layout - right side of navbar
+%
+%..............................................................................
+layout_navbar_right_section() ->
 	[
 		#panel{
 				class="d-flex justify-content-end align-items-center",
 				body=[
-					get_navbar_link("Question Paper",anpcandidate:actions(anpcandidate_questionpaper)),
-					get_navbar_link("Model Answers", anpcandidate:actions(anpcandidate_modelanswers)),
+					layout_navbar_link_right("Question Paper",
+						anpcandidate:actions(anpcandidate_questionpaper), "", noevent),
+
+					layout_navbar_link_right("Model Answers",
+						anpcandidate:actions(anpcandidate_modelanswers), "", noevent),
 
 					#span {
 						style="height:24px;width:24px;",
@@ -96,14 +126,12 @@ get_navbar_right_section() ->
 % layout - navbar
 %
 %..............................................................................
-
-
 layout_navbar() ->
 	[
 		#panel{
 		class="sticky-top row g-0 p-2 border-top border-bottom border-secondary bg-white",
 		body=[
-			layout:g(6, get_navbar_left_section()),
-			layout:g(6, get_navbar_right_section())
+			layout:g(6, layout_navbar_left_section()),
+			layout:g(6, layout_navbar_right_section())
 		]
 	}].

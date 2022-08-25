@@ -35,6 +35,7 @@
 	display: none;
 }
 
+/* centers total marks displayed inside marks box */
 .input-group-addon {
     text-align: center;
 }
