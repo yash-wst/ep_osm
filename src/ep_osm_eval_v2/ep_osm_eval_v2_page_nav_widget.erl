@@ -19,7 +19,7 @@ create_page_navigation_widget(Filenames) ->
 			class="table-responsive-sm",
 			body = [
 				#table {
-					class="table table-sm table-borderless m-0",
+					class="table table-borderless m-0",
 					rows=Rows
 				}
 			]

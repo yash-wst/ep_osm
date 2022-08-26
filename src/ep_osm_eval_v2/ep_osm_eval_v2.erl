@@ -168,7 +168,7 @@ layout_review_area(TFs, Fs) ->
 			layout_panel(
 				anpcandidate_comments,
 				layout_comments_panel(Fs),
-				"anppanel hidden col-sm-12"
+				"anppanel hidden col-sm-10 offset-sm-1 card"
 				),
 
 			layout_panel(

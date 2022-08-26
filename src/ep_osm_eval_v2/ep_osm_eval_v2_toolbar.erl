@@ -11,8 +11,8 @@
 layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 	[
 		#span {
-			style="box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);",
-			class="bg-white py-1",
+			style="box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.3);",
+			class="bg-white p-2",
 			body=[
 
 				%
@@ -21,9 +21,10 @@ layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 				#link {
 					html_id =_Id,
 					body=#panel {
-						style="width:24px;height:24px;",
-						class = io_lib:format("card-img-top my-0 mx-auto ~s ",
-						 [Bg_image_css_name])
+						style="width:24px; height:24px;",
+						class = io_lib:format("card-img-top my-0 mx-auto ~s ", [
+							Bg_image_css_name
+						])
 					}
 				},
 
@@ -32,7 +33,7 @@ layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 				%
 				#panel {
 					text=Text,
-					style="font-size:8px;"
+					style="font-size: 12px;"
 				}
 			]
 		}
