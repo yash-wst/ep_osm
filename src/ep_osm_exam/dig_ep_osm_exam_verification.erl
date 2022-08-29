@@ -213,7 +213,7 @@ fetch(D, _From, _Size, [
 			total=length(CentreIdsUnique),
 			description=#link {
 				url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
-				text=io_lib:format("~s / ~s / ~s", [
+				text=io_lib:format("~ts / ~ts / ~ts", [
 					itf:val(TFs, anptestcourseid),
 					itf:val(TFs, testname),
 					?LN(?L2A(itf:val(TFs, teststatus)))
@@ -302,7 +302,7 @@ fetch(D, From, Size, [
 	%
 	{D#dig {
 		total=?INFINITY,
-		description=io_lib:format("~s / ~s", [
+		description=io_lib:format("~ts / ~ts", [
 			itf:val(ExamDoc, testname),
 			?LN(?L2A(itf:val(ExamDoc, teststatus)))
 		])
