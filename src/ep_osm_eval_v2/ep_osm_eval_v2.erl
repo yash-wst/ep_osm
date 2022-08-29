@@ -71,8 +71,10 @@ event(E) ->
 %---------------------------------------------------------------------------------------------------
 % API EVENTS
 %---------------------------------------------------------------------------------------------------
-api_event(calculate_pages_done, calculate_pages_done, _) ->
-	ep_osm_eval_v2_modals:count_canvas_marking_data();
+api_event(canvas_save, canvas_save, [CanvasId, CanvasData]) ->
+	Res = anpcandidate:api_event(canvas_save, canvas_save, [CanvasId, CanvasData]),
+	ep_osm_eval_v2_marks_box:update_progress_bar(),
+	Res;
 
 api_event(X, Y, Z) ->
 	anpcandidate:api_event(X, Y, Z).
@@ -113,6 +115,11 @@ layout() ->
 
 	wf:wire(#api {name=canvas_save, tag=canvas_save}),
 	wf:wire(#api {name=calculate_pages_done, tag=calculate_pages_done}),
+
+	%
+	% update progress bar on initial page load
+	%
+	ep_osm_eval_v2_marks_box:update_progress_bar(),
 
 	Elements.
 
