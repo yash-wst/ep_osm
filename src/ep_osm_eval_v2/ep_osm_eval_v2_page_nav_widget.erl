@@ -13,6 +13,9 @@
 create_page_navigation_widget(Filenames) ->
 	Fs = anpcandidate:get_fs(),
 	CanvasDataVal = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ myauth:role())),
+	%
+	% create a table with 5 columns
+	%
 	Rows = layout_page_nos_rows(CanvasDataVal, Filenames, ?NUMBER_OF_COLUMNS),
 
 	TableContainer = #panel {
@@ -39,7 +42,10 @@ layout_page_nos_rows(CanvasDataVal, List, COLUMNS) ->
 		{I+1, Cells ++ [layout_page_nos_cells(CanvasDataVal, {I, AName})]}
 	end, {1, []}, List),
 
-	ListOfCells = [lists:sublist(CellElements, X, COLUMNS) || X <- lists:seq(1, length(CellElements), COLUMNS)],
+	ListOfCells = [ lists:sublist(CellElements, X, COLUMNS)
+		|| X <- lists:seq(1, length(CellElements), COLUMNS)
+	],
+
 	lists:map(fun(Cs) ->
 		Cs1 = case length(Cs) < COLUMNS of
 			true -> Cs ++ filler_cells(COLUMNS - length(Cs));
@@ -76,10 +82,9 @@ filler_cells(N) ->
 
 layout_page_no_button(Class, AName, Index) ->
 	[
-		#link {
-			style="height:30px;width:30px;",
-			class="align-bottom text-center rounded-circle btn btn-sm " ++ Class,
-			url="#" ++ AName,
+		#button{
+			style="height:33px;width:100%;",
+			class="rounded-circle btn btn-sm " ++ Class,
 			text=Index,
 			postback={page_nos, Index, AName}
 		}

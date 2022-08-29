@@ -63,6 +63,11 @@ event({add_remark}) ->
 		),
 	layout_comments_update(helper_api:doc2fields(Res));
 
+event({page_nos, Index, AName})->
+	wf:redirect("#" ++ AName),
+	wf:wire("$('#navbar_page_no').dropdown('toggle')"),
+	anpcandidate:event({page_nos, Index, AName});
+
 event(E) ->
 	anpcandidate:event(E).
 
