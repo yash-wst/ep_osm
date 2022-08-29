@@ -105,22 +105,35 @@ layout_marks_box(TFs, Fs) ->
 	[
 		#panel {
 			html_id="marks_box",
-			style="z-index:1001;border: 1px solid #CFD1D7;border-radius: 12px;
-			box-shadow: 0px 3px 6px #00000029;",
+			style="width:250px;z-index:1001;border-radius: 12px;",
 			class="d-flex flex-column float-left position-fixed start-1 bottom-0
-			 mb-4 ms-4 bg-white p-3 justify-content-center",
+			 mb-4 ms-4 bg-white p-3 justify-content-center border
+			 border-light shadow-lg",
 			body=[
-				layout_marks_box_header(TFs, Fs),
-
 				layout_marking_scheme(TFs, Fs),
 
-				layout_progress_bar(),
+				layout_marks_box_header(TFs, Fs),
 
-				ite:button(
-					btn_submit_marks,
-					"Submit",
-					{btn_submit_marks_box},
-					"btn btn-primary hidden mt-2")
+				layout_progress_bar()
 			]
 		}
 	].
+
+
+%-------------------------------------------------------------------------------
+%
+% Misc
+%
+%-------------------------------------------------------------------------------
+update_progress_bar() ->
+	%
+	% get number of pages which have markings
+	%
+	{PagesMarked, TotalPages} = ep_osm_eval_v2_modals:count_canvas_marking_data(),
+	Newprogress = PagesMarked * 100 div TotalPages,
+
+	%
+	% call js to update progress bar on UI
+	%
+	Script = itx:format("$('.progress-bar').attr('aria-valuenow', ~p).css('width', ~p+'%');", [Newprogress, Newprogress]),
+	wf:wire(Script).

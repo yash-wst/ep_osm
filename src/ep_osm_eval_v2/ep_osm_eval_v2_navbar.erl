@@ -82,7 +82,8 @@ layout_navbar_left_section() ->
 				layout_navbar_link_left("Remarks",
 					anpcandidate:actions(anpcandidate_comments), "", noevent),
 
-				layout_navbar_link_left("Skip Evaluation", "", [], {skip_eval_event})
+				layout_navbar_link_left("Skip Evaluation", "", [], {skip_eval_event}),
+				layout_navbar_link_left("Submit", "", [], {btn_submit_marks_box})
 			]
 		}
 	].

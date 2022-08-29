@@ -149,8 +149,7 @@ layout_review_area(TFs, Fs) ->
 			layout_panel(
 				anpcandidate_answerpaper,
 				layout_answerpaper(TFs, Fs),
-				"anppanel visiblepanel col-sm-12 d-flex
-				align-items-center justify-content-lg-center"
+				"anppanel visiblepanel offset-sm-1 col-sm-10  offset-sm-1"
 				),
 
 			layout_panel(
@@ -174,7 +173,7 @@ layout_review_area(TFs, Fs) ->
 			layout_panel(
 				anpcandidate_pages,
 				[],
-				"anppanel hidden col-sm-12"
+				"anppanel hidden offset-sm-2 col-sm-8 offset-sm-2 text-center"
 				),
 
 			layout_panel(
@@ -272,10 +271,16 @@ layout_answerpaper(TFs, Fs) ->
 	% layout
 	%
 	[
-		anpcandidate:layout_answerpaper_grievance(fields:getuivalue(Fs, anp_redressal_grievance)),
 		#panel {
-			class="all_pages", % To count no of pages in js
-			body=Pages
+			class="d-inline-flex flex-column justify-content-center align-items-center",
+			body=[
+				anpcandidate:layout_answerpaper_grievance(
+					fields:getuivalue(Fs, anp_redressal_grievance)),
+
+				#panel {
+					body=Pages
+				}
+			]
 		}
 	].
 
@@ -309,9 +314,14 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 	%
 	Element = #panel {
 				style="width: 100%; overflow-x: scroll;",
+				class="text-center layout-answer-paper-page",
 				body=[
 					#panel {
-						body=[AnchorTag]
+						%
+						% answer paper image name and anchor tag for scrolling
+						%
+						class="bg-light text-muted mb-1",
+						body=[AName, AnchorTag]
 					},
 					CanvasTag
 				]
@@ -342,7 +352,7 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 %-----------------------------------------------------------------------------------------------
 layout_comments_panel(Fs) ->
 	#panel{
-		class="d- text-start p-5",
+		class="text-start p-5",
 		body=[
 
 		#textarea {
@@ -354,8 +364,8 @@ layout_comments_panel(Fs) ->
 		},
 
 		#hr{
-			 style="height:1px;border:none;margin:0;color:#333;background-color:#333;",
-			 class="my-3"
+			 style="height:1px;",
+			 class="mx-0 my-3"
 		},
 
 		ite:button(
@@ -395,7 +405,7 @@ layout_comment(Date, Time, IP, Username, Message) ->
 	#panel{
 		body=[
 			#hr{
-			 style="height:1px;border:none;margin:0;color:#333;background-color:#333;",
+			 style="height:1px;border:none;margin:0;",
 			 class="mt-3"
 			},
 

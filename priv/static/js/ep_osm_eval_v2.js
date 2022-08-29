@@ -11,13 +11,12 @@ ANP.BG_HEIGHT = 900;
 ANP.canvasobjs = {};
 ANP.cursorText = undefined;
 
-ANP.OFFSET_TOP = 30;
+ANP.OFFSET_TOP = 45; // height of (navbar +  gap where anp img name is shown)
 ANP.showing_marking_scheme = true;
 
 ANP.IMGURL_CORRECT = 'https://lib.weshinetech.in/images/correct.png';
 ANP.IMGURL_WRONG = 'https://lib.weshinetech.in/images/wrong.png';
 
-ANP.pages_done = 0;
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.scrollposap = 0;
@@ -40,7 +39,7 @@ ANP.showpanel = function (panelid, switched, aname) {
 		ANP.show_on_screen_widgets();
 		if(switched) {
 			//
-			// switched page number from page nav dropdown in navbar
+			// switched page number from page nav dropdown in navbar or switched page
 			//
 			var aTag = $("a[id='"+ aname +"']");
 			$('html,body').animate({scrollTop: aTag.offset().top - ANP.OFFSET_TOP}, 'fast');
@@ -50,6 +49,7 @@ ANP.showpanel = function (panelid, switched, aname) {
 			// coming back from remarks, question or model papers page
 			//
 			$(document).scrollTop(ANP.scrollposap);
+
 		}
 	} else {
 		//
@@ -150,10 +150,11 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.save_answerpaper_page = function (canvasid) {
+	ANP.mark_active_page_in_page_nav_dropdown();
+
 	var canvas = ANP.canvasobjs[canvasid];
 	if (page && page.canvas_save) {
 		page.canvas_save(canvasid, JSON.stringify(canvas));
-		ANP.update_evaluation_progress_level();
 	}
 
 };
@@ -237,6 +238,12 @@ ANP.clicked_clear = function (canvasid) {
 	canvas.clear().renderAll();
 	ANP.setBackgroundImage(canvas, canvasid);
 	ANP.save_answerpaper_page(canvasid);
+
+	//
+	// remove green button color
+	//
+	$('a:contains(' + ANP.get_page_no() + ')').removeClass('bg-success btn-success btn-outline-success')
+	.addClass('btn-outline-secondary');
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -289,22 +296,25 @@ ANP.download_pdf = function (sno) {
 	pdf.save(sno + ".pdf");
 };
 
+
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.get_page_no = function(){
-	var scrolled = $(document).scrollTop() + ANP.OFFSET_TOP;
-	var pageHeight = ANP.BG_HEIGHT ;
-
-	pageNo = 1 + Math.floor(scrolled/pageHeight);
-
-	return pageNo;
+ANP.mark_active_page_in_page_nav_dropdown = function() {
+	$('.wfid_navbar-page-nav-widget a:contains(' + ANP.get_page_no() + ')')
+		.addClass('btn-success btn-outline-success');
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.get_total_no_pages = function() {
-  review_area = document.querySelector('.all_pages');
-	return review_area.getElementsByTagName('a').length;
+ANP.get_page_no = function(){
+	var scrolled = $(document).scrollTop() + ANP.OFFSET_TOP;
+	var pageHeight = $('.layout-answer-paper-page').outerHeight();
+
+	pageNo = 1 + Math.floor(scrolled/pageHeight);
+
+
+
+	return pageNo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -320,7 +330,9 @@ ANP.get_active_canvasID = function () {
 //
 ///////////////////////////////////////////////////////////////////////////////
 ANP.update_page_no_display = function() {
-	$('#navbar_page_no').text("".concat(ANP.get_page_no(), "/", ANP.get_total_no_pages(), "  " ));
+	if (true == $('.visiblepanel').hasClass("wfid_anpcandidate_answerpaper")) {
+		$('#navbar_page_no').text("".concat(ANP.get_page_no(), "/", ANP.PageCount, "  " ));
+	}
 }
 
 
@@ -371,22 +383,6 @@ ANP.raiseDropDownOverStickyNavbar = function() {
 	if (dropdown) {
 	    dropdown.style.zIndex = "1021";
 	}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// dynamic progress bar
-//
-////////////////////////////////////////////////////////////////////////////////
-ANP.update_evaluation_progress_level = function() {
-	let newprogress = 0;
-	page.calculate_pages_done();
-
-	if(ANP.pages_done != 0){
-		newprogress =  Math.floor(ANP.pages_done / ANP.get_total_no_pages() * 100 );
-	}
-	$('.progress-bar').attr('aria-valuenow', newprogress).css('width', newprogress+'%');
 };
 
 
@@ -511,7 +507,6 @@ $(document).ready(function() {
 	ANP.fixForStickyNavbar();
 	ANP.raiseDropDownOverStickyNavbar();
 	ANP.update_page_no_display();
-	ANP.update_evaluation_progress_level();
 	ANP.enable_navbar_fullscreen_button();
 
 	//
@@ -553,8 +548,6 @@ $(document).ready(function() {
 	if (undoButton) {
 		undoButton.addEventListener("click", function() {
 			ANP.clicked_undo(ANP.get_active_canvasID());
-			ANP.update_evaluation_progress_level();
-
 		})
 	}
 
@@ -602,7 +595,8 @@ $(document).mousemove(function(event) {
 
 document.addEventListener("scroll", function(event) {
 		ANP.update_page_no_display();
-});
+} );
+
 
 
 ///////////////////////////////////////////////////////////////////////////////

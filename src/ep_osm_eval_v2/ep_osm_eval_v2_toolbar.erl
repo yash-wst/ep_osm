@@ -11,8 +11,7 @@
 layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 	[
 		#span {
-			style="box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.3);",
-			class="bg-white p-2",
+			class="bg-white p-2 shadow-lg",
 			body=[
 
 				%
@@ -20,20 +19,21 @@ layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 				%
 				#link {
 					html_id =_Id,
-					body=#panel {
-						style="width:24px; height:24px;",
-						class = io_lib:format("card-img-top my-0 mx-auto ~s ", [
-							Bg_image_css_name
-						])
-					}
-				},
+					body=[
+						#panel {
+							style="width:24px;height:24px;transform:scale(1.2);",
+							class = io_lib:format("card-img-top my-0 mx-auto ~s ",
+							 [Bg_image_css_name])
+						},
 
-				%
-				% text under icon
-				%
-				#panel {
-					text=Text,
-					style="font-size: 12px;"
+						%
+						% clickable text under icon
+						%
+						#panel {
+							text=Text,
+							style="font-size:12px;"
+						}
+					]
 				}
 			]
 		}
@@ -63,9 +63,8 @@ layout_toolbar_buttons() ->
 %-------------------------------------------------------------------------------
 layout_top_semicircle() ->
 	#panel{
-		style="height:15px;border-radius:150px 150px 0 0;background-color: white;
-		box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-		border-top: 1px solid #CFD1D7;"
+		style="height:15px;border-radius:150px 150px 0 0;",
+		class="shadow-lg bg-white"
 	}.
 
 
@@ -76,8 +75,8 @@ layout_top_semicircle() ->
 %-------------------------------------------------------------------------------
 layout_bottom_semicircle() ->
 	#panel{
-		style="height:15px;border-radius:0 0 150px 150px;background-color: white;
-		box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);"
+		style="height:15px;border-radius:0 0 150px 150px;",
+		class="shadow-lg bg-white"
 	}.
 
 

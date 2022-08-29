@@ -19,19 +19,19 @@ layout_skip_evaluation() ->
 		#br{},
 
 		#span{
-			class="d-flex flex-row-reverse",
+			class="d-flex",
 			body=[
-				ite:button(
-					skip_button,
-					"Yes, Skip",
-					{reject_answerpaper, reject},
-					"btn btn-primary"
-				),
 				ite:button(
 					cancel_button,
 					"Cancel",
 					{close_skip_eval_modal},
 					"btn btn-outline-primary"
+				),
+				ite:button(
+					skip_button,
+					"Yes, Skip",
+					{reject_answerpaper, reject},
+					"btn btn-primary"
 				)
 			]
 		}
@@ -110,7 +110,7 @@ modal_skip_evaluation() ->
 %-------------------------------------------------------------------------------
 modal_submit_paper() ->
 	{modal, Es} = layout_submit(),
-	itl:modal_fs(Es,medium, "").
+	itl:modal_fs(Es,large, "").
 
 
 
@@ -125,5 +125,6 @@ count_canvas_marking_data() ->
 	LofTodo = length(helper:state(filenames)),
 	CanvasData = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ anpcandidate:role())),
 	LofDone = anpcandidate:get_marked_pages_count(CanvasData),
-	wf:wire( itx:format("ANP.pages_done = ~p", [LofDone])),
+
 	{LofDone, LofTodo}.
+
