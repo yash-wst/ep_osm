@@ -39,3 +39,7 @@
 .input-group-addon {
     text-align: center;
 }
+
+.navbar-dropdown-offset{
+	top: 20px!important;
+}
