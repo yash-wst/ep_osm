@@ -86,6 +86,6 @@ layout_page_no_button(Class, AName, Index) ->
 			style="height:33px;width:100%;",
 			class="rounded-circle btn btn-sm " ++ Class,
 			text=Index,
-			postback={page_nos, Index, AName}
+			postback={page_nav_dropdown,{page_nos, Index, AName}}
 		}
 	].
