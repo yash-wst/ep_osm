@@ -312,9 +312,6 @@ ANP.get_page_no = function(){
 	var pageHeight = $('.layout-answer-paper-page').outerHeight();
 
 	pageNo = 1 + Math.floor(scrolled/pageHeight);
-
-
-
 	return pageNo;
 }
 
@@ -369,7 +366,6 @@ ANP.expand_marking_scheme_layout = function(event) {
 		ANP.showing_marking_scheme = false;
 		collapse_marks_box();
 	}
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////

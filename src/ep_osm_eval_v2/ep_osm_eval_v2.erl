@@ -161,7 +161,7 @@ layout_review_area(TFs, Fs) ->
 			layout_panel(
 				anpcandidate_answerpaper,
 				layout_answerpaper(TFs, Fs),
-				"anppanel visiblepanel offset-sm-1 col-sm-10  offset-sm-1"
+				"anppanel visiblepanel col-sm-12"
 				),
 
 			layout_panel(
@@ -284,7 +284,7 @@ layout_answerpaper(TFs, Fs) ->
 	%
 	[
 		#panel {
-			class="d-inline-flex flex-column justify-content-center align-items-center",
+			class="d-flex flex-column justify-content-center align-items-center",
 			body=[
 				anpcandidate:layout_answerpaper_grievance(
 					fields:getuivalue(Fs, anp_redressal_grievance)),
