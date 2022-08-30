@@ -372,7 +372,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	dig:log(info, io_lib:format("RPS: SeasonId:~p SubjectId:~p", [FrpSeasonId, FrpSubjectId])), % Season and subject in RPS.
 	dig:log(info, io_lib:format("From RPS: ~p", [length(FrpStudentList)-1])), % Header in rps list
 	dig:log(info, io_lib:format("Missing found: ~p", [length(FrpStudentListMissing)])),
-	dig:log(info, io_lib:format("Already exit: ~p", [length(OsmCandidateDocs)])),
+	dig:log(info, io_lib:format("Already exist: ~p", [length(OsmCandidateDocs)])),
 
 
 	%
