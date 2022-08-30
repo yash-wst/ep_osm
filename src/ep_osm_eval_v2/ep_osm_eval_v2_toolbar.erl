@@ -21,7 +21,7 @@ layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 					html_id =_Id,
 					body=[
 						#panel {
-							style="width:24px;height:24px;transform:scale(1.2);",
+							style="width:25px;height:25px;transform:scale(1.4);",
 							class = io_lib:format("card-img-top my-0 mx-auto ~s ",
 							 [Bg_image_css_name])
 						},
