@@ -242,7 +242,8 @@ ANP.clicked_clear = function (canvasid) {
 	//
 	// remove green button color
 	//
-	$('a:contains(' + ANP.get_page_no() + ')').removeClass('bg-success btn-success btn-outline-success')
+	$('.page-nav-dropdown input[type="button"][value=' + ANP.get_page_no() + ']')
+	.removeClass('bg-success btn-success btn-outline-success')
 	.addClass('btn-outline-secondary');
 };
 
@@ -300,7 +301,7 @@ ANP.download_pdf = function (sno) {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.mark_active_page_in_page_nav_dropdown = function() {
-	$('.wfid_navbar-page-nav-widget a:contains(' + ANP.get_page_no() + ')')
+	$('.page-nav-dropdown input[type="button"][value=' + ANP.get_page_no() + ']')
 		.addClass('btn-success btn-outline-success');
 }
 
@@ -329,13 +330,31 @@ ANP.get_active_canvasID = function () {
 // update page number on navbar
 //
 ///////////////////////////////////////////////////////////////////////////////
-ANP.update_page_no_display = function() {
+ANP.update_page_number_on_navbar = function() {
+	ActivePage = ANP.get_page_no();
 	if (true == $('.visiblepanel').hasClass("wfid_anpcandidate_answerpaper")) {
-		$('#navbar_page_no').text("".concat(ANP.get_page_no(), "/", ANP.PageCount, "  " ));
+		$('#navbar_page_no').text("".concat(ActivePage, "/", ANP.PageCount, "  " ));
 	}
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// mark current number as blue in page navigation dropdown
+//
+///////////////////////////////////////////////////////////////////////////////
+ANP.mark_current_page_in_page_navigation_dropdown = function(){
+	//
+	// remove blue color from previous button
+	//
+	$('.page-nav-dropdown input[type="button"].bg-primary').removeClass(
+		'bg-primary btn-primary border-primary');
+	//
+	// add blue color to current button
+	//
+	$('.page-nav-dropdown input[type="button"][value=' + ActivePage + ']')
+	.addClass('bg-primary btn-primary border-primary');
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -506,7 +525,7 @@ WstTimer.unload = function () {
 $(document).ready(function() {
 	ANP.fixForStickyNavbar();
 	ANP.raiseDropDownOverStickyNavbar();
-	ANP.update_page_no_display();
+	ANP.update_page_number_on_navbar();
 	ANP.enable_navbar_fullscreen_button();
 
 	//
@@ -594,7 +613,9 @@ $(document).mousemove(function(event) {
 });
 
 document.addEventListener("scroll", function(event) {
-		ANP.update_page_no_display();
+		ANP.update_page_number_on_navbar();
+		ANP.mark_current_page_in_page_navigation_dropdown();
+
 } );
 
 

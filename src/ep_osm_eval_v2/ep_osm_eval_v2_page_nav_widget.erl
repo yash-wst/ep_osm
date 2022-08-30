@@ -70,7 +70,7 @@ layout_page_nos_cells(CanvasDataVal, {Index, AName}) ->
 		{AName, "{\"objects\":[]," ++ _} ->
 			"btn-outline-secondary"; % no canvas data yet
 		_ ->
-			"btn-success bg-success" % canvas data exists
+			"btn-success" % canvas data exists
 	end,
 
 	#tablecell {body=layout_page_no_button(Class, AName, Index)}.
