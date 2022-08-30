@@ -10,7 +10,7 @@
 %-------------------------------------------------------------------------------
 layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 	[
-		#span {
+		#panel {
 			class="bg-white p-2 shadow-lg",
 			body=[
 

@@ -25,8 +25,6 @@ ANP.showpanel = function (panelid, switched, aname) {
 	// record ap-panel scroll position
 	if ($(".visiblepanel").hasClass("wfid_anpcandidate_answerpaper")) {
 		ANP.scrollposap = $(document).scrollTop();
-		// d-flex was used to center anp horizontally in review area
-		$(".visiblepanel").removeClass('d-flex');
 	}
 
 	// hide current panel and show requested panel
@@ -35,7 +33,6 @@ ANP.showpanel = function (panelid, switched, aname) {
 
 	// if shown panel is anp-panel, then scroll to its previous position
 	if (panelid == "anpcandidate_answerpaper") {
-		$(".visiblepanel").addClass('d-flex');
 		ANP.show_on_screen_widgets();
 		if(switched) {
 			//
@@ -85,7 +82,6 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 			var pointer = canvas.getPointer(options.e);
 			var posX = pointer.x;
 			var posY = pointer.y;
-
 
 			var img = new Image();
 			img.crossOrigin = "anonymous";
@@ -150,7 +146,7 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.save_answerpaper_page = function (canvasid) {
-	ANP.mark_active_page_in_page_nav_dropdown();
+	ANP.mark_page_in_page_nav_dropdown();
 
 	var canvas = ANP.canvasobjs[canvasid];
 	if (page && page.canvas_save) {
@@ -195,7 +191,6 @@ ANP.clicked_flip = function (canvasid) {
 
 ANP.clicked_rotate = function (canvasid) {
 	var canvas = ANP.canvasobjs[canvasid];
-
 
 	var curAngle = canvas.backgroundImage.getAngle();
 	if (curAngle == 360)
@@ -300,7 +295,7 @@ ANP.download_pdf = function (sno) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.mark_active_page_in_page_nav_dropdown = function() {
+ANP.mark_page_in_page_nav_dropdown = function() {
 	$('.page-nav-dropdown input[type="button"][value=' + ANP.get_page_no() + ']')
 		.addClass('btn-success btn-outline-success');
 }
@@ -394,10 +389,7 @@ ANP.fixForStickyNavbar = function() {
 //
 ////////////////////////////////////////////////////////////////////////////////
 ANP.raiseDropDownOverStickyNavbar = function() {
-	let dropdown = document.querySelector('.navbar-collapse');
-	if (dropdown) {
-	    dropdown.style.zIndex = "1021";
-	}
+	$('.navbar-collapse').css("zIndex",1021);
 };
 
 
@@ -531,40 +523,28 @@ $(document).ready(function() {
 	$(".container-fluid").css('margin', '0');
 	$(".container-fluid").css('padding', '0');
 
+
 ///////////////////////////////////////////////////////////////////////////////
 //
-// FLOATING TOOLBAR BUTTONS LISTENERS
+// FLOATING TOOLBAR BUTTONS CLICK EVENT LISTENERS
 //
 ///////////////////////////////////////////////////////////////////////////////
-	var flipButton = document.getElementById("toolbar_flip");
-	if (flipButton) {
-		flipButton.addEventListener("click", function() {
-			ANP.clicked_flip(ANP.get_active_canvasID());
+	$('#toolbar_flip').click(function() {
+		ANP.clicked_flip(ANP.get_active_canvasID());
+	});
 
-		})
-	}
+	$('#toolbar_rotate').click(function() {
+		ANP.clicked_rotate(ANP.get_active_canvasID());
+	});
 
-	var rotateButton = document.getElementById("toolbar_rotate");
-	if (rotateButton) {
-		rotateButton.addEventListener("click", function() {
-			ANP.clicked_rotate(ANP.get_active_canvasID());
+	$('#toolbar_eraseall').click(function() {
+		ANP.clicked_clear(ANP.get_active_canvasID());
+	});
 
-		})
-	}
+	$('#toolbar_undo').click(function() {
+		ANP.clicked_undo(ANP.get_active_canvasID());
+	});
 
-	var eraseButton = document.getElementById("toolbar_eraseall");
-	if (eraseButton) {
-		eraseButton.addEventListener("click", function() {
-			ANP.clicked_clear(ANP.get_active_canvasID());
-		})
-	}
-
-	var undoButton = document.getElementById("toolbar_undo");
-	if (undoButton) {
-		undoButton.addEventListener("click", function() {
-			ANP.clicked_undo(ANP.get_active_canvasID());
-		})
-	}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -580,20 +560,11 @@ var marks_box = document.getElementById("marks_box");
 });
 
 function expand_marks_box() {
-	var marks_box = document.getElementById("marks_box");
-	var marks_box_mscheme = document.getElementById("marks_box_mscheme");
-
-	marks_box_mscheme.classList.remove("hidden");
-	marks_box_mscheme.classList.add("marks-box-container-large");
-	$('.wfid_btn_submit_marks').removeClass('hidden');
+	$('#marks_box_mscheme').removeClass('hidden');
 }
 
 function collapse_marks_box() {
-	var marks_box = document.getElementById("marks_box");
-	var marks_box_mscheme = document.getElementById("marks_box_mscheme");
-
-	$('.wfid_btn_submit_marks').addClass('hidden');
-	marks_box_mscheme.classList.add("hidden");
+	$('#marks_box_mscheme').addClass('hidden');
 }
 
 
