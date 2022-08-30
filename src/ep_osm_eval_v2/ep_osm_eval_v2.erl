@@ -284,6 +284,7 @@ layout_answerpaper(TFs, Fs) ->
 	%
 	[
 		#panel {
+			style="overflow:auto;",
 			class="d-flex flex-column justify-content-center align-items-center",
 			body=[
 				anpcandidate:layout_answerpaper_grievance(
