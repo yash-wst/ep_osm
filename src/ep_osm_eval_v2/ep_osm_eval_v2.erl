@@ -52,7 +52,7 @@ event({btn_submit_marks_box}) ->
 
 event({btn_show_remaining}) ->
 	itl:modal_close(),
-	event({submit, show_remaining});
+	event({show, anpcandidate_remaining_pages});
 
 event({add_remark}) ->
 	Res = anpcandidate:addcomment(
@@ -186,7 +186,7 @@ layout_review_area(TFs, Fs) ->
 				anpcandidate_remaining_pages,
 				[],
 				"anppanel hidden col-sm-12 text-center
-				bg-white d-flex flex-column"
+				bg-white"
 				),
 
 			layout_panel(
