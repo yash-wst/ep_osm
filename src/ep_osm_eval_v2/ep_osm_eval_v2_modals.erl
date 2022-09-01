@@ -48,11 +48,12 @@ layout_skip_evaluation() ->
 layout_submit_pages_remaining() ->
 	[
 		#panel {
-			class="d-flex flex-column align-items-center text-center",
+			class="d-flex flex-column justify-content-center align-items-center
+			text-center",
 			body=[
 				#span {
 					style="width:fit-content;",
-					class="bg-warning p-2 text-center rounded",
+					class="bg-warning text-white fw-bold p-2 text-center rounded",
 					text=locale:get(anpcandidate_submit_pages_remaining)
 				},
 				#hr{},
