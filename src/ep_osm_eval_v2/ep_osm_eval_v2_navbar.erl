@@ -79,7 +79,7 @@ layout_navbar_left_section() ->
 				layout_page_number_table_dropdown(),
 
 				layout_navbar_link_left("Remarks",
-					anpcandidate:actions(anpcandidate_comments), "", noevent),
+					anpcandidate:actions(anpcandidate_remarks), "", noevent),
 
 				layout_navbar_link_left("Skip Evaluation", "", [], {skip_eval_event}),
 				layout_navbar_link_left("Submit", "", [], {btn_submit_marks_box})

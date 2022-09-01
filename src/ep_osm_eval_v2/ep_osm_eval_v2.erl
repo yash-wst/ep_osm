@@ -61,7 +61,7 @@ event({add_remark}) ->
 			anpcandidate:get_comment_key(),
 			wf:q(txtarea_remarks_id)
 		),
-	layout_comments_update(helper_api:doc2fields(Res));
+	ep_osm_eval_v2_remarks:layout_remarks_update(helper_api:doc2fields(Res));
 
 event({page_nav_dropdown, {page_nos, Index, AName}})->
 	wf:wire("$('#navbar_page_no').dropdown('toggle')"),
@@ -177,15 +177,16 @@ layout_review_area(TFs, Fs) ->
 				),
 
 			layout_panel(
-				anpcandidate_comments,
-				layout_comments_panel(Fs),
+				anpcandidate_remarks,
+				ep_osm_eval_v2_remarks:layout_remarks_panel(Fs),
 				"anppanel hidden col-sm-10 offset-sm-1 card"
 				),
 
 			layout_panel(
 				anpcandidate_pages,
 				[],
-				"anppanel hidden offset-sm-2 col-sm-8 offset-sm-2 text-center"
+				"anppanel hidden offset-sm-2 col-sm-8 offset-sm-2 text-center
+				bg-white d-flex flex-column"
 				),
 
 			layout_panel(
@@ -275,7 +276,7 @@ layout_answerpaper(TFs, Fs) ->
 	%
 	% populate page that shows remaining pages when submit
 	%
-	anpcandidate:layout_page_nos(ANames),
+	ep_osm_eval_v2_page_nav_widget:layout_remaining_pages(ANames),
 	helper:state(filenames, ANames),
 
 
@@ -357,85 +358,6 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 	Element.
 
 
-
-%-----------------------------------------------------------------------------------------------
-%
-% PANEL - COMMENTS
-%
-%-----------------------------------------------------------------------------------------------
-layout_comments_panel(Fs) ->
-	#panel{
-		class="text-start p-5",
-		body=[
-
-		#textarea {
-			id=txtarea_remarks_id,
-			style="border:none;",
-			class="form-control",
-			placeholder="Write your remarks here...",
-			text=""
-		},
-
-		#hr{
-			 style="height:1px;",
-			 class="mx-0 my-3"
-		},
-
-		ite:button(
-			btn_add_remarks,
-			"Add Remark",
-			{add_remark},
-			"btn btn-primary"
-		),
-
-		#hr{},
-
-		#table {
-			class="table table-bordered table-hover table-sm",
-			%
-			% layout all comment rows
-			%
-			rows= lists:map(fun({K, V}) ->
-				[Date, Time, IP, User] = case string:tokens(K, " ") of
-					[D,T,I,U] -> [D,T,I,U];
-					[D,T,I,U,U1] -> [D,T,I,U++" "++U1] % patch - space in username
-				end,
-				#tablerow {cells=[layout_comment(Date, Time, IP, User, V)]}
-			end, lists:reverse(fields:getuivalue(Fs, comments)))
-		}
-		]
-	}.
-
-
-
-
-%------------------------------------------------------------------------------
-%
-% layout comment
-%
-%------------------------------------------------------------------------------
-layout_comment(Date, Time, IP, Username, Message) ->
-	#panel{
-		body=[
-			#hr{
-			 style="height:1px;border:none;margin:0;",
-			 class="mt-3"
-			},
-
-			#panel{
-				style="font-size:12px",
-				class="text-secondary fw-light mt-3",
-				text=itx:format("~ts   ~ts   ~ts   ~ts", [Date, Time, IP, Username])
-			},
-			#panel{
-				class="text-dark mt-1",
-				body=Message
-			}
-		]
-	}.
-
-layout_comments_update(Fs) ->
-	wf:update(anpcandidate_comments, layout_comments_panel(Fs)).
 
 
 %------------------------------------------------------------------------------
