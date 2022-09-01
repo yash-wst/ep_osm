@@ -183,9 +183,9 @@ layout_review_area(TFs, Fs) ->
 				),
 
 			layout_panel(
-				anpcandidate_pages,
+				anpcandidate_remaining_pages,
 				[],
-				"anppanel hidden offset-sm-2 col-sm-8 offset-sm-2 text-center
+				"anppanel hidden col-sm-12 text-center
 				bg-white d-flex flex-column"
 				),
 

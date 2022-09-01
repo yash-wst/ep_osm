@@ -523,6 +523,9 @@ $(document).ready(function() {
 	$(".container-fluid").css('margin', '0');
 	$(".container-fluid").css('padding', '0');
 
+	// fix for nagging vertical scrollbar on remaining pages panel
+	$('body').css('overflow', 'scroll');
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
