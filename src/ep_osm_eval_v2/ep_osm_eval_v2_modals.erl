@@ -48,20 +48,12 @@ layout_skip_evaluation() ->
 layout_submit_pages_remaining() ->
 	[
 		#panel {
-			class="d-flex flex-column justify-content-center align-items-center
-			text-center",
+			class="d-flex flex-column",
 			body=[
-				#span {
-					style="width:fit-content;",
-					class="bg-warning text-white fw-bold p-2 text-center rounded",
-					text=locale:get(anpcandidate_submit_pages_remaining)
-				},
-				#hr{},
-				#p {text=locale:get(anpcandidate_submit_pages_remaining_cannot)},
-				#p {text=locale:get(anpcandidate_submit_pages_remaining_message)},
+				#p{text=locale:get(anpcandidate_submit_pages_remaining_cannot) ++
+					" " ++locale:get(anpcandidate_submit_pages_remaining_message)},
 				#hr{},
 				#span{
-					class="d-flex flex-row justify-content-center",
 					body=ite:button(
 						btn_show_rem_pages,
 						locale:get(anpcandidate_submit_pages_remaining_ok),
@@ -111,7 +103,7 @@ modal_skip_evaluation() ->
 %-------------------------------------------------------------------------------
 modal_submit_paper() ->
 	{modal, Es} = layout_submit(),
-	itl:modal_fs(Es,large, "").
+	itl:modal_fs(Es,large, "Submit Confirmation").
 
 
 

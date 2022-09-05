@@ -34,8 +34,8 @@ layout_navbar_link_right(Text, Action, Url, Postback) ->
 %..............................................................................
 layout_page_number_table_dropdown() ->
 	[
-		#span {
-			class="dropdown",
+		#link {
+			class="dropdown text-decoration-none",
 			body=[
 				#panel {
 					html_id="navbar_page_no",
@@ -105,13 +105,13 @@ layout_navbar_right_section() ->
 					layout_navbar_link_right("Model Answers",
 						anpcandidate:actions(anpcandidate_modelanswers), "", noevent),
 
-					#span {
+					#link {
 						style="height:24px;width:24px;",
 						class="d-inline-block mx-2 navbar-icon-help",
 						actions=anpcandidate:actions(help)
 					},
 
-					#span {
+					#link {
 						style="height:24px;width:24px;",
 						class="d-inline-block mx-2 navbar-icon-fullscreen",
 						html_id="view-fullscreen"

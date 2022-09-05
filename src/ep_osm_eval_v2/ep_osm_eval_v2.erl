@@ -52,7 +52,8 @@ event({btn_submit_marks_box}) ->
 
 event({btn_show_remaining}) ->
 	itl:modal_close(),
-	event({show, anpcandidate_remaining_pages});
+	wf:wire("$('#navbar_page_no').dropdown('toggle')"),
+	event({show, anpcandidate_answerpaper});
 
 event({add_remark}) ->
 	Res = anpcandidate:addcomment(
@@ -273,10 +274,6 @@ layout_answerpaper(TFs, Fs) ->
 	%
 	ep_osm_eval_v2_page_nav_widget:create_page_navigation_widget(ANames),
 
-	%
-	% populate page that shows remaining pages when submit
-	%
-	ep_osm_eval_v2_page_nav_widget:layout_remaining_pages(ANames),
 	helper:state(filenames, ANames),
 
 
