@@ -263,8 +263,8 @@ fetch(D, _From, _Size, [
 	%
 	% get stats
 	%
-	Stats = ep_osm_exam_api:getstats_evaldate(ExamId),
-	Stats1 = lists:filter(fun({[_Date, ProfileId], _Count}) ->
+	Stats = ep_osm_exam_api:get_capcentre_stats_test(ExamId, all, 4),
+	Stats1 = lists:filter(fun({[_IP, _State, _Date, ProfileId], _Count}) ->
 		EvaluatorId == ProfileId
 	end, Stats),
 	Stats2 = lists:sort(fun(A, B) ->
@@ -272,17 +272,42 @@ fetch(D, _From, _Size, [
 	end, Stats1),
 
 
+	%
+	% get unique ips
+	%
+	IPs = lists:map(fun({[IP, _State, _Date, _ProfileId], _Count}) ->
+		IP
+	end, Stats2),
+	IPs1 = helper:sort(helper:unique(IPs)),
+
+
+	%
+	% get cap centre dict
+	%
+	CapCentreDocsDict = ep_osm_cap_api:getdocs_dict_by_ip(IPs1),
+
 
 	%
 	% layout results
 	%
 	{Results, TotalCount} = lists:foldl(fun(
-			{[Date, _EvaluatorId], Count}, {Acc, AccCount}
+			{[IP, _State, Date, _EvaluatorId], Count}, {Acc, AccCount}
 	) ->
-		{Acc ++ [[
-			#dcell {val=Date},
-			#dcell {val=Count}
-		]], AccCount + Count}
+		CapCentreName = case dict:find(IP, CapCentreDocsDict) of
+			{ok, CapDoc} ->
+				itf:val(CapDoc, name);
+			_ ->
+				""
+		end,
+		{
+			Acc ++ [[
+				#dcell {val=Date},
+				#dcell {val=CapCentreName},
+				#dcell {val=IP},
+				#dcell {val=Count}
+			]],
+			AccCount + Count
+		}
 	end, {[], 0}, Stats2),
 
 
@@ -292,6 +317,8 @@ fetch(D, _From, _Size, [
 	%
 	Header = [
 		#dcell {width=26, type=header, val="Date"},
+		#dcell {type=header, val="CAP Centre Name"},
+		#dcell {type=header, val="IP"},
 		#dcell {type=header, val="Count"}
 	],
 
@@ -321,6 +348,8 @@ fetch(D, _From, _Size, [
 		},
 		Results ++ [[
 			#dcell {val=#p {class="font-weight-bold", text="Total"}},
+			#dcell {val=#p {class="font-weight-bold", text=""}},
+			#dcell {val=#p {class="font-weight-bold", text=""}},
 			#dcell {val=#p {class="font-weight-bold", text=TotalCount}}
 		]]
 	};
