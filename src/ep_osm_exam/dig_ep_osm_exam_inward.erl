@@ -625,9 +625,12 @@ layout_dtp_by(?APPOSM_SCANUPLOADER, scannedby, BundleDoc, ProfileDocsDict, User,
 		ScanningState /= ?COMPLETED, User /= [] ->
 	[
 		layout_user_info(dict:find(User, ProfileDocsDict)),
-		ite:button(
-			scanning_completed, "Mark Scanning Completed", {scanning_completed, BundleDoc}
-		)
+		case itf:val(BundleDoc, scannedby) =:= itxauth:user() of
+			true ->
+				ite:button(
+					scanning_completed, "Mark Scanning Completed", {scanning_completed, BundleDoc});
+			_ -> []
+		end
 	];
 
 layout_dtp_by(?APPOSM_SCANUPLOADER, scannedby = Type, BundleDoc, _ProfileDocsDict, [],
