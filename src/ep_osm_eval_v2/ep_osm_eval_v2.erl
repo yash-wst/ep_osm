@@ -41,11 +41,14 @@ event(noevent) ->
 	[];
 
 event({skip_eval_event}) ->
-	ep_osm_eval_v2_modals:modal_skip_evaluation();
+	ep_osm_eval_v2_modals:modal_skip_evaluation_confirmation();
 
 event({close_skip_eval_modal}) ->
 	itl:modal_close(),
 	event({reject_answerpaper, no});
+
+event({reject_answerpaper, reject}) ->
+	ep_osm_eval_v2_modals:modal_skip_evaluation_final();
 
 event({btn_submit_marks_box}) ->
 	ep_osm_eval_v2_modals:modal_submit_paper();

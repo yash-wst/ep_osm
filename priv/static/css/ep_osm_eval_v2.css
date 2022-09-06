@@ -40,6 +40,39 @@
     text-align: center;
 }
 
+/* important to add proper offset to dropdown in navbar */
 .navbar-dropdown-offset{
 	top: 20px!important;
 }
+
+
+/* Custom scroll-bar */
+
+/* For Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 20px;
+  height: 20px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: white;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: lightgrey;
+  border-radius: 20px;
+  border: 5px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a8bbbf;
+}
+
+/* For Firefox */
+html{
+  scrollbar-width: thin;
+  scrollbar-color: lightgrey white;
+}
+
+

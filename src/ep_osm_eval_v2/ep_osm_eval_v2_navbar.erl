@@ -48,7 +48,8 @@ layout_page_number_table_dropdown() ->
 				#panel{
 					class="dropdown-menu p-2 page-nav-dropdown shadow-lg border
 					navbar-dropdown-offset",
-					style="z-index:2000;border-radius:8px;overflow: auto;",
+					style="z-index:2000;border-radius:8px;overflow: auto;
+					max-height:300px;",
 					body =
 					[
 						#panel{
