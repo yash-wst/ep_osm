@@ -29,39 +29,6 @@ create_page_navigation_widget(Filenames) ->
 
 
 
-%----------------------------------------------------------------------
-%
-% layout remaining pages panel
-%
-%----------------------------------------------------------------------
-layout_remaining_pages(Filenames) ->
-	Fs = anpcandidate:get_fs(),
-	CanvasDataVal = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ myauth:role())),
-	%
-	% create a table with 12 columns
-	%
-	Rows = layout_page_nos_rows(pages_panel, CanvasDataVal, Filenames, 12),
-
-	TableContainer = #panel {
-			class="table-responsive-lg w-50 m-auto",
-			body = [
-				#table {
-					class="table",
-					rows=Rows
-				}
-			]
-	},
-
-	Page = #panel{
-		body=[
-			#h1{ class="py-3",text="Pages"},
-			TableContainer
-			]
-	},
-
-	wf:update("anpcandidate_remaining_pages", Page).
-
-
 %-------------------------------------------------------------------------------
 %
 % layout table rows
@@ -108,7 +75,7 @@ layout_page_nos_cells(dropdown, CanvasDataVal, {Index, AName}) ->
 
 	#tablecell {
 		body=#button{
-			style="height:33px;width:100%;",
+			style="height:33px;width:33px;",
 			class="rounded-circle btn btn-sm " ++ Class,
 			text=Index,
 			postback={page_nav_dropdown,{page_nos, Index, AName}}

@@ -350,6 +350,23 @@ ANP.mark_current_page_in_page_navigation_dropdown = function(){
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// mark current number as blue in page navigation dropdown
+//
+///////////////////////////////////////////////////////////////////////////////
+
+ANP.highlight_active_page = function() {
+
+	// remove blue border from previous page
+	$('.border-4.rounded-3').removeClass('border border-4 rounded-3 border-primary');
+
+	// add blue border to active page
+	$('#PageNum_'+ ActivePage).addClass('border border-4 rounded-3 border-primary');
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // expand marking scheme on left side hover
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -585,6 +602,7 @@ $(document).mousemove(function(event) {
 document.addEventListener("scroll", function(event) {
 		ANP.update_page_number_on_navbar();
 		ANP.mark_current_page_in_page_navigation_dropdown();
+		ANP.highlight_active_page();
 
 } );
 

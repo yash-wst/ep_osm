@@ -234,7 +234,6 @@ layout_answerpaper(TFs, Fs) ->
 	ImgUrls1 = anpcandidate:get_image_urls_after_masking(ImgUrls, myauth:role()),
 
 
-
 	%
 	% get canvas data based on role
 	%
@@ -244,7 +243,7 @@ layout_answerpaper(TFs, Fs) ->
 	%
 	% get image elements and their file names
 	%
-	{Pages, ANames} = lists:foldl(fun(ImgUrl, {AccPages, AccANames}) ->
+	{Pages, ANames, _TotalPages} = lists:foldl(fun(ImgUrl, {AccPages, AccANames, AccPageNo}) ->
 		%
 		% get attachment name from url
 		%
@@ -256,17 +255,21 @@ layout_answerpaper(TFs, Fs) ->
 		CanvasData = lists:keyfind(AName, 1, CanvasVal),
 
 		%
+		% Make Page Numbers
+		%
+		PageNo = AccPageNo+1,
+
+		%
 		% layout canvas page for this url
 		%
-		Page = layout_answerpaper_page(ImgUrl, AName, CanvasData),
-
+		Page = layout_answerpaper_page(ImgUrl, AName, CanvasData, PageNo),
 
 		%
 		% accumulate pages and attachment name
 		%
-		{AccPages ++ [Page], AccANames ++ [AName]}
+		{AccPages ++ [Page], AccANames ++ [AName], PageNo}
 
-	end, {[], []}, ImgUrls1),
+	end, {[], [], 0}, ImgUrls1),
 
 
 	%
@@ -303,20 +306,19 @@ layout_answerpaper(TFs, Fs) ->
 % layout - answer paper page
 %
 %..............................................................................
-layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
+layout_answerpaper_page(ImgUrl, AName, CanvasData, PageNo) ->
 	%
 	%  create html tags
 	%
 	CanvasId = ImgUrl,
-	CanvasTag = lists:flatten(io_lib:format("<canvas id='~s'></canvas>", [CanvasId])),
+	CanvasTag = itx:format("<canvas id='~s'></canvas>", [CanvasId]),
+
 
 	%
 	% create page anchor
 	%
 	AnchorTag = [
-		lists:flatten(io_lib:format("
-			<a id='~s' href='#'></a>", [AName]
-		))
+		itx:format("<a id='~s' href='#'></a>", [AName])
 	],
 
 
@@ -326,6 +328,7 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 	Element = #panel {
 				style="width: 100%; overflow-x: scroll;",
 				class="text-center layout-answer-paper-page",
+				html_id=itx:format("PageNum_~p", [PageNo]),
 				body=[
 					#panel {
 						%
@@ -349,7 +352,7 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData) ->
 	%
 	% call js function to init the canvas
 	%
-	JsFn = lists:flatten(io_lib:format("ANP.layout_answerpaper_page(\"~s\", ~p);", [CanvasId, CanvasDataVal])),
+	JsFn = itx:format("ANP.layout_answerpaper_page(\"~s\", ~p);", [CanvasId, CanvasDataVal]),
 	wf:wire(JsFn),
 
 	Element.
