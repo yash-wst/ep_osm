@@ -356,10 +356,16 @@ ANP.mark_current_page_in_page_navigation_dropdown = function(){
 
 ANP.highlight_active_page = function() {
 
-	// remove blue border from previous page
+	// remove blue border from previous page div
 	$('.border-4.rounded-3').removeClass('border border-4 rounded-3 border-primary');
 
-	// add blue border to active page
+	// make all canvases dimmed
+	$('canvas.upper-canvas').css("backdrop-filter", "brightness(0.85)");
+
+	// make active canvas bright
+	$('canvas.upper-canvas.CanvasNum_'+ ActivePage).css("backdrop-filter", "brightness(1)");
+
+	// add blue border to active page div
 	$('#PageNum_'+ ActivePage).addClass('border border-4 rounded-3 border-primary');
 }
 

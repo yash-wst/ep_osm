@@ -311,7 +311,8 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData, PageNo) ->
 	%  create html tags
 	%
 	CanvasId = ImgUrl,
-	CanvasTag = itx:format("<canvas id='~s'></canvas>", [CanvasId]),
+	CanvasTag = itx:format("<canvas id='~s' class='CanvasNum_~p'></canvas>",
+		[CanvasId, PageNo]),
 
 
 	%
