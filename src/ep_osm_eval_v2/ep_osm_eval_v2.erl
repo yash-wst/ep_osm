@@ -50,6 +50,15 @@ event({close_skip_eval_modal}) ->
 event({reject_answerpaper, reject}) ->
 	ep_osm_eval_v2_modals:modal_skip_evaluation_final();
 
+event(confirm_reject) ->
+	TId = wf:q(anptest:id()),
+	CId = wf:q(anpcandidate:id()),
+	?ASSERT(
+		wf:q(rejected_comment) /= [],
+		"Please specify a reason for skipping this paper."),
+	anpcandidate:handle_reject_answerpaper(TId, CId);
+
+
 event({btn_submit_marks_box}) ->
 	ep_osm_eval_v2_modals:modal_submit_paper();
 
@@ -57,6 +66,9 @@ event({btn_show_remaining}) ->
 	itl:modal_close(),
 	wf:wire("$('#navbar_page_no').dropdown('toggle')"),
 	event({show, anpcandidate_answerpaper});
+
+event({show_grievance_modal})->
+	ep_osm_eval_v2_modals:modal_student_grievance();
 
 event({add_remark}) ->
 	Res = anpcandidate:addcomment(
@@ -289,16 +301,9 @@ layout_answerpaper(TFs, Fs) ->
 	[
 		#panel {
 			style="overflow:auto;",
-			class="d-flex flex-column justify-content-center align-items-center",
-			body=[
-				anpcandidate:layout_answerpaper_grievance(
-					fields:getuivalue(Fs, anp_redressal_grievance)),
-
-				#panel {
-					class="all_pages",
-					body=Pages
-				}
-			]
+			class="d-flex flex-column justify-content-center align-items-center
+				all_pages",
+			body=Pages
 		}
 	].
 

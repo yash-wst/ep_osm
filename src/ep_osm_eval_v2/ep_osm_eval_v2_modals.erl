@@ -48,8 +48,7 @@ layout_skip_evaluation_final() ->
 	Ev = ite:build(confirm_reject, ?EDIT, helper:titlecase(helper:a2l(reject)), nobinding),
 	Es = [
 		#p {
-			text="Please specify reasons for skipping evaluation of this paper",
-			class="text-primary"
+			text="Please specify reasons for skipping evaluation of this paper"
 		}
 	],
 	Es1 = itl:instructions([
@@ -108,6 +107,48 @@ layout_submit() ->
 
 
 
+
+
+%-------------------------------------------------------------------------------
+%
+% layout student grievance
+%
+%-------------------------------------------------------------------------------
+layout_student_grievance() ->
+anpcandidate:layout_answerpaper_grievance(
+	fields:getuivalue(anpcandidate:get_fs(), anp_redressal_grievance)).
+
+
+
+%-------------------------------------------------------------------------------
+%
+% layout evaluator markings
+%
+%-------------------------------------------------------------------------------
+layout_evaluator_markings() ->
+	[
+		#panel {
+			class="d-flex flex-column",
+			body=[
+				#p{text=locale:get(anpcandidate_submit_pages_remaining_cannot) ++
+					" " ++locale:get(anpcandidate_submit_pages_remaining_message)},
+				#hr{},
+				#span{
+					body=ite:button(
+						btn_show_rem_pages,
+						locale:get(anpcandidate_submit_pages_remaining_ok),
+						{btn_show_remaining},
+						"mylabel btn btn-primary"
+					)
+				}
+			]
+		}
+	].
+
+
+
+%%%%%%%%%%%% MODALS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %-------------------------------------------------------------------------------
 %
 % modal skip evaluation
@@ -119,7 +160,6 @@ modal_skip_evaluation_confirmation() ->
 
 modal_skip_evaluation_final() ->
 	Es = layout_skip_evaluation_final(),
-	?D("here"),
 	itl:modal_fs(Es, large, "Skip Evaluation").
 
 
@@ -133,6 +173,37 @@ modal_skip_evaluation_final() ->
 modal_submit_paper() ->
 	{modal, Es} = layout_submit(),
 	itl:modal_fs(Es,large, "Submit Confirmation").
+
+
+
+
+
+%-------------------------------------------------------------------------------
+%
+% modal grievance
+%
+%-------------------------------------------------------------------------------
+modal_student_grievance() ->
+	Es = layout_student_grievance(),
+	case Es == [] of
+		true ->
+			Es1 = "No Grievance Found.";
+		_ ->
+			Es1 = Es
+	end,
+	itl:modal_fs(Es1, large, "Student Grievance").
+
+
+
+
+%-------------------------------------------------------------------------------
+%
+% modal evaluator markings
+%
+%-------------------------------------------------------------------------------
+modal_evaluator_markings() ->
+	Es = layout_evaluator_markings(),
+	itl:modal_fs(Es, large, "Evaluator Markings").
 
 
 

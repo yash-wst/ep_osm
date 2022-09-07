@@ -10,20 +10,18 @@
 %..............................................................................
 layout_navbar_link_left(Text, Action, Url, Postback) ->
 	#link {
-		class="link-secondary text-center mx-2 px-2",
+		class="link-primary text-center mx-2 px-2",
 		text=Text,
 		actions=Action,
 		url=Url,
 		postback=Postback
 	}.
 
-layout_navbar_link_right(Text, Action, Url, Postback) ->
+layout_navbar_link_right(Text, Action) ->
 	#link {
 		class="link-primary text-center mx-2 px-2",
 		text=Text,
-		actions=Action,
-		url=Url,
-		postback=Postback
+		actions=Action
 	}.
 
 
@@ -40,7 +38,7 @@ layout_page_number_table_dropdown() ->
 				#panel {
 					html_id="navbar_page_no",
 					text="",
-					class="link-secondary dropdown-toggle",
+					class="link-primary dropdown-toggle",
 					data_fields=[
 						{"bs-toggle", "dropdown"}
 					]
@@ -61,6 +59,24 @@ layout_page_number_table_dropdown() ->
 			]
 		}
 	].
+
+
+%..............................................................................
+%
+% button to show evaluator markings
+%
+%..............................................................................
+layout_link_evaluator_markings() ->
+	case itxconfigs_cache:get2(show_evaluator_marking_to_moderator, true) of
+		true ->
+			case itxauth:role() of
+				"anpmoderator" ->
+					layout_navbar_link_right("Evaluator Marks",
+						anpcandidate:actions(anpcandidate_evaluator_marking));
+				_ -> []
+			end;
+		_ -> []
+	end.
 
 
 %..............................................................................
@@ -100,11 +116,19 @@ layout_navbar_right_section() ->
 		#panel{
 				class="d-flex justify-content-end align-items-center",
 				body=[
+					#link{
+						text="Show Grievance",
+						class="link-primary text-center mx-2 px-2",
+						postback= {show_grievance_modal}
+					},
+
+					layout_link_evaluator_markings(),
+
 					layout_navbar_link_right("Question Paper",
-						anpcandidate:actions(anpcandidate_questionpaper), "", noevent),
+						anpcandidate:actions(anpcandidate_questionpaper)),
 
 					layout_navbar_link_right("Model Answers",
-						anpcandidate:actions(anpcandidate_modelanswers), "", noevent),
+						anpcandidate:actions(anpcandidate_modelanswers)),
 
 					#link {
 						style="height:24px;width:24px;",
