@@ -11,7 +11,8 @@ ANP.BG_HEIGHT = 900;
 ANP.canvasobjs = {};
 ANP.cursorText = undefined;
 
-ANP.OFFSET_TOP = 45; // height of (navbar +  gap where anp img name is shown)
+ANP.OFFSET_TOP = $('.navbar.navbar-expand').outerHeight()
+			   + $('.sticky-top').outerHeight();
 ANP.showing_marking_scheme = true;
 
 ANP.IMGURL_CORRECT = 'https://lib.weshinetech.in/images/correct.png';
@@ -304,7 +305,7 @@ ANP.mark_page_in_page_nav_dropdown = function() {
 
 ANP.get_page_no = function(){
 	var scrolled = $(document).scrollTop() + ANP.OFFSET_TOP;
-	var pageHeight = $('.layout-answer-paper-page').outerHeight();
+	var pageHeight = $('.AnpPage').parent().parent().outerHeight();
 
 	pageNo = 1 + Math.floor(scrolled/pageHeight);
 	return pageNo;

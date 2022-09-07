@@ -295,6 +295,7 @@ layout_answerpaper(TFs, Fs) ->
 					fields:getuivalue(Fs, anp_redressal_grievance)),
 
 				#panel {
+					class="all_pages",
 					body=Pages
 				}
 			]
@@ -309,41 +310,23 @@ layout_answerpaper(TFs, Fs) ->
 % layout - answer paper page
 %
 %..............................................................................
-layout_answerpaper_page(ImgUrl, AName, CanvasData, PageNo) ->
+layout_answerpaper_page(ImgUrl=CanvasId, AName, CanvasData, PageNo) ->
 	%
 	%  create html tags
 	%
-	CanvasId = ImgUrl,
+	PageTitle = #panel{class="text-center", text=AName},
+
 	CanvasTag = itx:format("<canvas id='~s' class='CanvasNum_~p'></canvas>",
 		[CanvasId, PageNo]),
 
+	% anchor tag for scrolling
+	AnchorTagWitPageImage = #link{
+		html_id=AName,
+		style="width: 100%;overflow-x:auto;",
+		class=itx:format("AnpPage PageNum_~p", [PageNo]), % used to border active page
+		body= CanvasTag
+		},
 
-	%
-	% create page anchor
-	%
-	AnchorTag = [
-		itx:format("<a id='~s' href='#'></a>", [AName])
-	],
-
-
-	%
-	% embed canvas and other html tags
-	%
-	Element = #panel {
-				style="width: 100%; overflow-x: scroll;",
-				class="text-center layout-answer-paper-page",
-				html_id=itx:format("PageNum_~p", [PageNo]),
-				body=[
-					#panel {
-						%
-						% answer paper image name and anchor tag for scrolling
-						%
-						class="bg-light text-muted mb-1",
-						body=[AName, AnchorTag]
-					},
-					CanvasTag
-				]
-			},
 
 	%
 	% extract canvas json
@@ -359,7 +342,7 @@ layout_answerpaper_page(ImgUrl, AName, CanvasData, PageNo) ->
 	JsFn = itx:format("ANP.layout_answerpaper_page(\"~s\", ~p);", [CanvasId, CanvasDataVal]),
 	wf:wire(JsFn),
 
-	Element.
+   	akit_card:layout(PageTitle, AnchorTagWitPageImage).
 
 
 
