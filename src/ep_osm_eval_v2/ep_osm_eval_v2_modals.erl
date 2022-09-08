@@ -120,30 +120,32 @@ anpcandidate:layout_answerpaper_grievance(
 
 
 
+
 %-------------------------------------------------------------------------------
 %
-% layout evaluator markings
+% layout evaluator marks
 %
 %-------------------------------------------------------------------------------
-layout_evaluator_markings() ->
+layout_evaluator_marks() ->
+	Fs = anpcandidate:get_fs(),
+	TFs = anpcandidate:get_tfs(),
+
+	%
+	% trick to add border and change width of the layout
+	%
+	A = anpcandidate:layout_evaluator_marking_0(TFs, Fs, anpevaluator),
+	MarkingScheme = A#panel.body,
+
 	[
 		#panel {
-			class="d-flex flex-column",
-			body=[
-				#p{text=locale:get(anpcandidate_submit_pages_remaining_cannot) ++
-					" " ++locale:get(anpcandidate_submit_pages_remaining_message)},
-				#hr{},
-				#span{
-					body=ite:button(
-						btn_show_rem_pages,
-						locale:get(anpcandidate_submit_pages_remaining_ok),
-						{btn_show_remaining},
-						"mylabel btn btn-primary"
-					)
+			class="d-flex justify-content-center",
+			body=#panel{
+					class="w-50 border",
+					body=MarkingScheme
 				}
-			]
 		}
 	].
+
 
 
 
@@ -202,8 +204,9 @@ modal_student_grievance() ->
 %
 %-------------------------------------------------------------------------------
 modal_evaluator_markings() ->
-	Es = layout_evaluator_markings(),
-	itl:modal_fs(Es, large, "Evaluator Markings").
+	Es = layout_evaluator_marks(),
+
+	itl:modal_fs(Es, small, "Evaluator Markings").
 
 
 

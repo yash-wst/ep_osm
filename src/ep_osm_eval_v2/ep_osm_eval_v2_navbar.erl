@@ -71,10 +71,30 @@ layout_link_evaluator_markings() ->
 		true ->
 			case itxauth:role() of
 				"anpmoderator" ->
-					layout_navbar_link_right("Evaluator Marks",
-						anpcandidate:actions(anpcandidate_evaluator_marking));
+					#link{
+						text="Evaluator Marks",
+						class="link-primary text-center mx-2 px-2",
+						postback={show_evaluator_markings}
+					};
 				_ -> []
 			end;
+		_ -> []
+	end.
+
+
+%..............................................................................
+%
+% button to show student grievance
+%
+%..............................................................................
+layout_link_student_grievance() ->
+	case itxauth:role() of
+		"anprevaluator" ->
+			#link{
+				text="Student Grievance",
+				class="link-primary text-center mx-2 px-2",
+				postback={show_grievance_modal}
+			};
 		_ -> []
 	end.
 
@@ -116,11 +136,8 @@ layout_navbar_right_section() ->
 		#panel{
 				class="d-flex justify-content-end align-items-center",
 				body=[
-					#link{
-						text="Show Grievance",
-						class="link-primary text-center mx-2 px-2",
-						postback= {show_grievance_modal}
-					},
+
+					layout_link_student_grievance(),
 
 					layout_link_evaluator_markings(),
 

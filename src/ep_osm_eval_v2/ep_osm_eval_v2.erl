@@ -70,6 +70,9 @@ event({btn_show_remaining}) ->
 event({show_grievance_modal})->
 	ep_osm_eval_v2_modals:modal_student_grievance();
 
+event({show_evaluator_markings})->
+	ep_osm_eval_v2_modals:modal_evaluator_markings();
+
 event({add_remark}) ->
 	Res = anpcandidate:addcomment(
 			wf:q(anptest:id()),

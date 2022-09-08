@@ -11,7 +11,8 @@
 layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 	[
 		#panel {
-			class="bg-white p-2 shadow-lg border border-top-0 border-bottom-0",
+			class="bg-white p-2 shadow-lg
+			border border-dark border-top-0 border-bottom-0",
 			body=[
 
 				%
@@ -64,7 +65,7 @@ layout_toolbar_buttons() ->
 layout_top_semicircle() ->
 	#panel{
 		style="height:15px;border-radius:150px 150px 0 0;",
-		class="shadow-lg bg-white border border-bottom-0"
+		class="shadow-lg bg-white border border-dark border-bottom-0"
 	}.
 
 
@@ -76,7 +77,7 @@ layout_top_semicircle() ->
 layout_bottom_semicircle() ->
 	#panel{
 		style="height:15px;border-radius:0 0 150px 150px;",
-		class="shadow-lg bg-white border border-top-0"
+		class="shadow-lg bg-white border border-dark border-top-0"
 	}.
 
 

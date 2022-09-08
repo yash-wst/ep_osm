@@ -108,7 +108,7 @@ layout_marks_box(TFs, Fs) ->
 			html_id="marks_box",
 			style="width:250px;z-index:1001;border-radius: 12px;",
 			class="d-flex flex-column float-left position-fixed start-1 bottom-0
-			 mb-2 ms-2 bg-white p-3 justify-content-center border shadow-lg",
+			 mb-2 ms-2 bg-white p-3 justify-content-center border border-dark shadow-lg",
 			body=[
 				layout_marking_scheme(TFs, Fs),
 
