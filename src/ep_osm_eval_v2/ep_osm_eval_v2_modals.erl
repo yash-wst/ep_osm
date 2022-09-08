@@ -140,7 +140,7 @@ layout_evaluator_marks() ->
 		#panel {
 			class="d-flex justify-content-center",
 			body=#panel{
-					class="w-100 border",
+					class="w-100 border card",
 					body=MarkingScheme
 				}
 		}
