@@ -32,6 +32,7 @@ heading() ->
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_CAPADMIN) -> true;
+access(_, ?EPC_BLU) -> true;
 access(_, _) -> false.
 
 
@@ -560,6 +561,8 @@ states() -> [
 
 
 get_user_ips(_ProfileId, ?APPOSM_ADMIN) ->
+	all;
+get_user_ips(_ProfileId, ?EPC_BLU) ->
 	all;
 get_user_ips(ProfileId, ?APPOSM_CAPADMIN) ->
 

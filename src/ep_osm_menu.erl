@@ -18,7 +18,8 @@ menu(?APPOSM_ADMIN) ->
 			{dig_mm_ep_osm_scanuploader, ?VIEW, ?LN("Scanner & Uploader")},
 			{dig_mm_ep_osm_qc, ?VIEW, ?LN("QC")},
 			{dig_mm_ep_osm_cap, ?VIEW, ?LN("CAPS Centre")},
-			{dig_mm_ep_osm_cap_admin, ?VIEW, ?LN("CAP Centre Admin")}
+			{dig_mm_ep_osm_cap_admin, ?VIEW, ?LN("CAP Centre Admin")},
+			{dig_mm_ep_core_billing_user, ?VIEW, ?LN("Billing User")}
 		]},
 		{?LN("Content"), [
 			{dig_ep_osm_exam, ?VIEW, ?LN("OSM Exams")},
@@ -56,7 +57,8 @@ menu(?APPOSM_ANPADMIN) ->
 			{dig_mm_ep_osm_receiver, ?VIEW, ?LN("Receiver")},
 			{dig_mm_ep_osm_scanuploader, ?VIEW, ?LN("Scanner & Uploader")},
 			{dig_mm_ep_osm_cap, ?VIEW, ?LN("CAPS Centre")},
-			{dig_mm_ep_osm_cap_admin, ?VIEW, ?LN("CAP Centre Admin")}
+			{dig_mm_ep_osm_cap_admin, ?VIEW, ?LN("CAP Centre Admin")},
+			{dig_mm_ep_core_billing_user, ?VIEW, ?LN("Billing User")}
 		]},
 		{?LN("Content"), [
 			{dig_ep_osm_exam, ?VIEW, ?LN("OSM Exams")},
