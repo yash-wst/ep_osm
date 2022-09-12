@@ -263,6 +263,7 @@ ANP.setBackgroundImage = function (canvas, imgurl) {
 
 	var img = new Image();
 	img.crossOrigin = "anonymous";
+	// TODO this sometimes creates a blank canvas image
 	img.onload = function() {
 		canvas.setBackgroundImage(new fabric.Image(img, {
 			originX: 'left',
@@ -326,7 +327,7 @@ ANP.get_active_canvasID = function () {
 ANP.update_page_number_on_navbar = function() {
 	ActivePage = ANP.get_page_no();
 	if (true == $('.visiblepanel').hasClass("wfid_anpcandidate_answerpaper")) {
-		$('#navbar_page_no').text("".concat(ActivePage, "/", ANP.PageCount, "  " ));
+		$('#navbar_page_no').text("".concat(ActivePage, "/", ANP.PageCount -1, "  " ));
 	}
 }
 
@@ -361,7 +362,7 @@ ANP.highlight_active_page = function() {
 	$('.border-4.rounded-3').removeClass('border border-4 rounded-3 border-primary');
 
 	// add blue border to active page div
-	$('#PageNum_'+ ActivePage).addClass('border border-4 rounded-3 border-primary');
+	$('.PageNum_'+ ActivePage).parent().parent().addClass('border border-4 rounded-3 border-primary');
 }
 
 
@@ -521,6 +522,14 @@ WstTimer.unload = function () {
 	window.clearInterval(WstTimer.TimerId);
 	page.unload(WstTimer.secondselapsed);
 };
+
+
+//
+// saves timer seconds on page reload, close
+//
+window.addEventListener('beforeunload', (event) => {
+	page.timer_event(WstTimer.secondselapsed);
+});
 
 
 ///////////////////////////////////////////////////////////////////////////////

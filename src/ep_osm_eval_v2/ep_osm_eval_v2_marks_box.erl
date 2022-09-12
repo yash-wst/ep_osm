@@ -87,7 +87,7 @@ layout_marking_scheme(TFs, Fs) ->
 	[
 		#panel {
 			html_id="marks_box_mscheme",
-			style="overflow:auto;max-height:600px;",
+			style="overflow:auto;max-height:550px;",
 			class="hidden mb-2 me-n3 pe-2",
 			body=[
 				#panel {id=anpcandidate_marks, body=MarkingLayout}
@@ -106,7 +106,7 @@ layout_marks_box(TFs, Fs) ->
 	[
 		#panel {
 			html_id="marks_box",
-			style="width:250px;z-index:1001;border-radius: 12px;",
+			style="width:250px;z-index:2001;border-radius: 12px;",
 			class="d-flex flex-column float-left position-fixed start-1 bottom-0
 			 mb-2 ms-2 bg-white p-3 justify-content-center border border-dark shadow-lg",
 			body=[
