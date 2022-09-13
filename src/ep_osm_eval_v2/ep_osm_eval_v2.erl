@@ -118,13 +118,6 @@ layout() ->
 	Fs = anpcandidates:get(anpcandidate:db(), wf:q(anpcandidate:id())),
 
 	%
-	% init layout
-	%
-	layout_init_page(),
-
-
-
-	%
 	% layout elements
 	%
 	Elements = [
@@ -135,6 +128,7 @@ layout() ->
     	layout_toolbar(),
 
     	layout_review_area(TFs, Fs)
+
 	],
 
 	wf:wire(#api {name=canvas_save, tag=canvas_save}),
@@ -149,18 +143,12 @@ layout() ->
 
 
 
+
 %..............................................................................
 %
-% layout - init page
+% layout - review panel
 %
 %..............................................................................
-
-layout_init_page() ->
-	%
-	% hide sidebar
-	%
-	akit_sidebar:collapse().
-
 layout_panel(PanelID, Body, Class) ->
 	#panel {
 		id=PanelID,
@@ -350,8 +338,28 @@ layout_answerpaper_page(ImgUrl=CanvasId, AName, CanvasData, PageNo) ->
 	JsFn = itx:format("ANP.layout_answerpaper_page(\"~s\", ~p);", [CanvasId, CanvasDataVal]),
 	wf:wire(JsFn),
 
-   	akit_card:layout(PageTitle, AnchorTagWitPageImage).
-
+   	% akit_card:layout(PageTitle, AnchorTagWitPageImage).
+	#panel {
+		class="w-100 bg-light",
+		body=[
+			#panel {
+				class="card",
+				body=[
+					#panel {
+						class="card-header",
+						body=#h5 {
+							class="card-title mb-0",
+							body=PageTitle
+						}
+					},
+					#panel {
+						class="card-body m-auto",
+						body=AnchorTagWitPageImage
+					}
+				]
+			}
+		]
+	}.
 
 
 

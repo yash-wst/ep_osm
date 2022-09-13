@@ -88,8 +88,8 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 			img.crossOrigin = "anonymous";
 			img.onload = function() {
 				canvas.add(new fabric.Image(img, {
-					left: posX,
-					top: posY,
+					left: posX - 25,
+					top: posY -25,
 					width: 50,
 					height: 50,
 				}));
@@ -127,6 +127,7 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 	// load canvas data
 	if (canvasdata != "false") {
 		canvas.loadFromJSON(canvasdata);
+		ANP.setBackgroundImage(canvas, imgurl);
 	} else {
 		ANP.setBackgroundImage(canvas, imgurl);
 	}
@@ -359,10 +360,10 @@ ANP.mark_current_page_in_page_navigation_dropdown = function(){
 ANP.highlight_active_page = function() {
 
 	// remove blue border from previous page div
-	$('.border-4.rounded-3').removeClass('border border-4 rounded-3 border-primary');
+	$('.border-2.rounded-3').removeClass('border border-2 rounded-3 border-primary');
 
 	// add blue border to active page div
-	$('.PageNum_'+ ActivePage).parent().parent().addClass('border border-4 rounded-3 border-primary');
+	$('.PageNum_'+ ActivePage).parent().addClass('border border-2 rounded-3 border-primary');
 }
 
 
@@ -414,7 +415,7 @@ ANP.raiseDropDownOverStickyNavbar = function() {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Hide widgets on comments panel
+// Hide widgets on remarks panel
 //
 ////////////////////////////////////////////////////////////////////////////////
 ANP.show_on_screen_widgets = function() {
@@ -553,6 +554,9 @@ $(document).ready(function() {
 	// fix for nagging vertical scrollbar on remaining pages panel
 	$('body').css('overflow', 'scroll');
 
+	// disable pesky sidebar which causes cursor offset issues on canvas
+	$('#sidebar').toggle();
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -609,7 +613,7 @@ $(document).mousemove(function(event) {
 	ANP.expand_marking_scheme_layout(event);
 });
 
-document.addEventListener("scroll", function(event) {
+$(document).scroll(function(event) {
 		ANP.update_page_number_on_navbar();
 		ANP.mark_current_page_in_page_navigation_dropdown();
 		ANP.highlight_active_page();
@@ -643,9 +647,21 @@ function RightMouseDown() {
 //
 ///////////////////////////////////////////////////////////////////////////////
 document.addEventListener('keydown', function(event) {
+  // undo
   if (event.ctrlKey && event.key === 'z') {
     ANP.clicked_undo(ANP.get_active_canvasID());
   }
+
+  //
+  // in case page doesn't get loaded correctly, then reload background image and canvasdata
+  //
+  if (event.ctrlKey && event.key === 'i') {
+  	var canvasid = ANP.get_active_canvasID();
+    var canvas = ANP.canvasobjs[canvasid];
+    ANP.setBackgroundImage(canvas, canvasid);
+	canvas.renderAll();
+  }
+
 });
 
 ///////////////////////////////////////////////////////////////////////////////
