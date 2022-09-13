@@ -11,8 +11,7 @@ ANP.BG_HEIGHT = 900;
 ANP.canvasobjs = {};
 ANP.cursorText = undefined;
 
-ANP.OFFSET_TOP = $('.navbar.navbar-expand').outerHeight()
-			   + $('.sticky-top').outerHeight();
+ANP.OFFSET_TOP = 0;
 ANP.showing_marking_scheme = true;
 
 ANP.IMGURL_CORRECT = 'https://lib.weshinetech.in/images/correct.png';
@@ -39,7 +38,9 @@ ANP.showpanel = function (panelid, switched, aname) {
 			//
 			// switched page number from page nav dropdown in navbar or switched page
 			//
-			var aTag = $("a[id='"+ aname +"']");
+			ANP.OFFSET_TOP = $('.navbar.navbar-expand').outerHeight()
+			   + $('.sticky-top').outerHeight();
+			var aTag = $("div[id='"+ aname +"']");
 			$('html,body').animate({scrollTop: aTag.offset().top - ANP.OFFSET_TOP}, 'fast');
 		}
 		else{
@@ -306,6 +307,8 @@ ANP.mark_page_in_page_nav_dropdown = function() {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.get_page_no = function(){
+	ANP.OFFSET_TOP = $('.navbar.navbar-expand').outerHeight()
+			   + $('.sticky-top').outerHeight();
 	var scrolled = $(document).scrollTop() + ANP.OFFSET_TOP;
 	var pageHeight = $('.AnpPage').parent().parent().outerHeight();
 

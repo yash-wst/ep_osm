@@ -316,7 +316,7 @@ layout_answerpaper_page(ImgUrl=CanvasId, AName, CanvasData, PageNo) ->
 		[CanvasId, PageNo]),
 
 	% anchor tag for scrolling
-	AnchorTagWitPageImage = #link{
+	AnchorTagWitPageImage = #panel{
 		html_id=AName,
 		style="width: 100%;overflow-x:auto;",
 		class=itx:format("AnpPage PageNum_~p", [PageNo]), % used to border active page
