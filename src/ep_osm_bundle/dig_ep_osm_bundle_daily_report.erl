@@ -129,6 +129,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Exam Name"},
 			#dcell {type=header, val="PRN"},
 			#dcell {type=header, val="Seat Number"},
+			#dcell {type=header, val="Corrected Seat Number"},
 			#dcell {type=header, val="Fullname"},
 			#dcell {type=header, val="Evaluation State"},
 			#dcell {type=header, val="Inward Timestamp"},
@@ -233,6 +234,7 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 	FIds = [
 		anp_paper_uid,
 		anpseatnumber,
+		anpseatnumber_corrected,
 		anpfullname,
 		anpstate,
 		timestamp_inward
