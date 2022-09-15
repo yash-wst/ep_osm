@@ -126,11 +126,10 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 	canvas.freeDrawingBrush.width = 2;
 
 	// load canvas data
+	ANP.setBackgroundImage(canvas, imgurl);
+
 	if (canvasdata != "false") {
 		canvas.loadFromJSON(canvasdata);
-		ANP.setBackgroundImage(canvas, imgurl);
-	} else {
-		ANP.setBackgroundImage(canvas, imgurl);
 	}
 
 	// set canvas width and height

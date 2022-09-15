@@ -8,8 +8,37 @@
 % layout toolbar button
 %
 %-------------------------------------------------------------------------------
-layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
+layout_toolbar_button2(Text, Fa_icon_name, _Id) ->
 	[
+		#panel {
+			class="shadow-lg bg-white mb-0 rounded-0 px-0 py-1
+			border border-dark border-top-0 border-bottom-0",
+			body=[
+
+				#link {
+					html_id =_Id,
+					body=[
+						#panel {
+							style="width:30px;height:30px;
+							transform:scale(1.5);filter:grayscale(1);",
+							class = "card-img-top shadow-0 mx-auto",
+							body=itx:format("<i class='align-middle
+								fas fa-fw fa-~s '></i>",
+								[ Fa_icon_name ])
+						},
+
+						#panel {
+							text=Text,
+							style="font-size:12px;"
+						}
+					]
+				}
+			]
+		}
+	].
+
+
+layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 		#panel {
 			class="bg-white p-2 shadow-lg
 			border border-dark border-top-0 border-bottom-0",
@@ -23,7 +52,7 @@ layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 					body=[
 						#panel {
 							style="width:25px;height:25px;transform:scale(1.4);",
-							class = io_lib:format("card-img-top my-0 mx-auto ~s ",
+							class=itx:format("card-img-top my-0 mx-auto ~s",
 							 [Bg_image_css_name])
 						},
 
@@ -37,8 +66,7 @@ layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 					]
 				}
 			]
-		}
-	].
+		}.
 
 
 
@@ -52,7 +80,9 @@ layout_toolbar_buttons() ->
 		layout_toolbar_button("Rotate", "toolbar-icon-rotate", "toolbar_rotate"),
 		layout_toolbar_button("Flip", "toolbar-icon-flip", "toolbar_flip"),
 		layout_toolbar_button("Erase All", "toolbar-icon-eraseall", "toolbar_eraseall"),
-		layout_toolbar_button("Undo","toolbar-icon-undo", "toolbar_undo")
+		layout_toolbar_button("Undo","toolbar-icon-undo", "toolbar_undo"),
+		layout_toolbar_button2("Draw","pencil-alt", "toolbar_draw"),
+		layout_toolbar_button2("Text","italic", "toolbar_add_text")
 	].
 
 

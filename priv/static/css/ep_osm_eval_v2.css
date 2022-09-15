@@ -1,4 +1,5 @@
 
+/* url encoded SVG Images for icons  */
 .marks-box-tick {
     background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4333%22%20data-name%3D%22Group%204333%22%20transform%3D%22translate(-23%20-542)%22%3E%0A%20%20%20%20%3Crect%20id%3D%22Rectangle_1528%22%20data-name%3D%22Rectangle%201528%22%20width%3D%2224%22%20height%3D%2224%22%20transform%3D%22translate(23%20542)%22%20fill%3D%22%23fff%22%20opacity%3D%220%22%2F%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_ionic-md-checkmark-circle-outline%22%20data-name%3D%22Icon%20ionic-md-checkmark-circle-outline%22%20d%3D%22M8.095%2C9.855l-1.12%2C1.12%2C3.6%2C3.6%2C8-8-1.12-1.12-6.88%2C6.84Zm9.68%2C1.52a6.373%2C6.373%2C0%2C1%2C1-4.64-6.16l1.24-1.24a7.441%2C7.441%2C0%2C0%2C0-3-.6%2C8%2C8%2C0%2C1%2C0%2C8%2C8Z%22%20transform%3D%22translate(23.625%20542.625)%22%20fill%3D%22%234e87f7%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
 }
@@ -31,6 +32,10 @@
 	background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cg%20id%3D%22Group_4323%22%20data-name%3D%22Group%204323%22%20transform%3D%22translate(-10099%20-3340)%22%3E%0A%20%20%20%20%3Cg%20id%3D%22Rectangle_1513%22%20data-name%3D%22Rectangle%201513%22%20transform%3D%22translate(10099%203340)%22%20fill%3D%22%23fff%22%20stroke%3D%22%23707070%22%20stroke-width%3D%221%22%20opacity%3D%220%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20stroke%3D%22none%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20fill%3D%22none%22%2F%3E%0A%20%20%20%20%3C%2Fg%3E%0A%20%20%20%20%3Cpath%20id%3D%22Icon_material-flip%22%20data-name%3D%22Icon%20material-flip%22%20d%3D%22M13.227%2C16.045h1.455V14.591H13.227Zm2.909-8.727h1.455V5.864H16.136ZM4.5%2C4.409V14.591a1.459%2C1.459%2C0%2C0%2C0%2C1.455%2C1.455H8.864V14.591H5.955V4.409H8.864V2.955H5.955A1.459%2C1.459%2C0%2C0%2C0%2C4.5%2C4.409ZM16.136%2C2.955V4.409h1.455A1.459%2C1.459%2C0%2C0%2C0%2C16.136%2C2.955ZM10.318%2C17.5h1.455V1.5H10.318Zm5.818-4.364h1.455V11.682H16.136ZM13.227%2C4.409h1.455V2.955H13.227Zm2.909%2C5.818h1.455V8.773H16.136Zm0%2C5.818a1.459%2C1.459%2C0%2C0%2C0%2C1.455-1.455H16.136Z%22%20transform%3D%22translate(10099.5%203342.5)%22%20fill%3D%22%23666%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A');
 }
 
+
+/*______________________________________________________________________________*/
+
+
 .hidden {
 	display: none;
 }
@@ -44,6 +49,8 @@
 .navbar-dropdown-offset{
 	top: 20px!important;
 }
+
+/*______________________________________________________________________________*/
 
 
 /* Custom scroll-bar */
@@ -75,4 +82,5 @@ html{
   scrollbar-color: lightgrey white;
 }
 
+/*______________________________________________________________________________*/
 
