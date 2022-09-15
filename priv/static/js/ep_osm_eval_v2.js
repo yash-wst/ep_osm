@@ -17,6 +17,8 @@ ANP.showing_marking_scheme = true;
 ANP.IMGURL_CORRECT = 'https://lib.weshinetech.in/images/correct.png';
 ANP.IMGURL_WRONG = 'https://lib.weshinetech.in/images/wrong.png';
 
+var objSelected = null;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.scrollposap = 0;
@@ -72,87 +74,124 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 		isDrawingMode: true
 	});
 
+	// load canvas data
+	ANP.setBackgroundImage(canvas, imgurl);
+	if (canvasdata != "false") {
+		canvas.loadFromJSON(canvasdata);
+	}
+
+	// init canvas properties
+	canvas.freeDrawingBrush.color = "red";
+	canvas.freeDrawingBrush.width = 2;
+
+	// set canvas width and height
+	canvas.setWidth(ANP.BG_WIDTH);
+	canvas.setHeight(ANP.BG_HEIGHT);
+
+	// add canvas object to ANP object
+	ANP.canvasobjs[canvasid] = canvas;
+
+	// map page numbers with answer paper image file name for page navigation by pageNo
+	// this is required for detecting active page no, active canvas via scroll position
+	ANP.mapPageNoWithCanvasID[ANP.PageCount] = canvasid;
+	ANP.PageCount = ANP.PageCount + 1;
 
 	//
 	// if cltr or cltr + alt keys are pressed then
 	// add images correct / incorrect images on the canvas
 	//
 	canvas.on('mouse:down', function(options) {
+		// get mouse pointer location for adding text and tick markings
+		var pointer = canvas.getPointer(options.e);
+		MousePosX = pointer.x;
+		MousePosY = pointer.y;
 
+		//
+		// add text box on canvas in text mode
+		//
+		if(true==canvas.isTextMode)
+		{
+			currentText = new fabric.Textbox('write here...', {
+							    fill: 'red',
+							    cursorColor: 'red',
+							    left: MousePosX,
+							    top: MousePosY,
+								// fontSize: 20,
+								// fontFamily: "",
+								hasBorders:true,
+								borderColor:'red',
+								borderScaleFactor:2,
+								cornerColor:'red',
+								width: 500
+							  });
+			if(currentText){
+				canvas.add(currentText);
+				currentText.selectAll();
+				currentText.enterEditing();
+				canvas.renderAll();
+			}
+			//
+			// return to drawing mode after adding textbox
+			//
+			canvas.isTextMode = false;
+			canvas.isDrawingMode=false;
+		}
+
+		// add custom tick mark images if special keys are pressed
 		if(options.e.ctrlKey) {
-
-			var pointer = canvas.getPointer(options.e);
-			var posX = pointer.x;
-			var posY = pointer.y;
 
 			var img = new Image();
 			img.crossOrigin = "anonymous";
 			img.onload = function() {
 				canvas.add(new fabric.Image(img, {
-					left: posX - 25,
-					top: posY -25,
+					left: MousePosX - 25,
+					top: MousePosY -25,
 					width: 50,
 					height: 50,
 				}));
+				canvas.freeDrawingBrush.color = "red";
 			};
 
 			if(options.e.altKey) {
 				img.src = ANP.IMGURL_WRONG;
 			} else {
+				canvas.freeDrawingBrush.color = "green";
 				img.src = ANP.IMGURL_CORRECT;
 			}
 		}
 
-		if(options.target)
+
+		// click was on some object
+		if(false == canvas.isDrawingMode && options.target)
 		{
-			console.log("a target object was clicked", options.target.type);
+			objSelected = options.target;
 		}
 
 	});
 
 	// handle canvas change events
 	canvas.on("object:added", function() {
-		ANP.save_answerpaper_page(canvasid);
+		ANP.save_answerpaper_page();
 	});
 
 	// handle canvas change events
 	canvas.on("object:removed", function(o) {
-		ANP.save_answerpaper_page(canvasid);
+		ANP.save_answerpaper_page();
 	});
-
-
-	// init canvas properties
-	canvas.freeDrawingBrush.color = "red";
-	canvas.freeDrawingBrush.width = 2;
-
-	// load canvas data
-	ANP.setBackgroundImage(canvas, imgurl);
-
-	if (canvasdata != "false") {
-		canvas.loadFromJSON(canvasdata);
-	}
-
-	// set canvas width and height
-	canvas.setWidth(ANP.BG_WIDTH);
-	canvas.setHeight(ANP.BG_HEIGHT);
-
-	// store canvas objects
-	ANP.canvasobjs[canvasid] = canvas;
-
-	// map page numbers with answer paper image file name for page navigation by pageNo
-	ANP.mapPageNoWithCanvasID[ANP.PageCount] = canvasid;
-	ANP.PageCount = ANP.PageCount + 1;
 
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.save_answerpaper_page = function (canvasid) {
+ANP.save_answerpaper_page = function () {
 	ANP.mark_page_in_page_nav_dropdown();
 
-	var canvas = ANP.canvasobjs[canvasid];
+	var canvas = ANP.get_active_canvas();
 	if (page && page.canvas_save) {
-		page.canvas_save(canvasid, JSON.stringify(canvas));
+		page.canvas_save(
+			ANP.get_active_canvasID(),
+		 	JSON.stringify(canvas)
+		 );
 	}
 
 };
@@ -181,18 +220,18 @@ ANP.set_cursor_tooltip = function (e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.clicked_flip = function (canvasid) {
-	var canvas = ANP.canvasobjs[canvasid];
+ANP.clicked_flip = function () {
+	var canvas = ANP.get_active_canvas();
 	canvas.backgroundImage.flipY = !canvas.backgroundImage.flipY;
 	canvas.backgroundImage.flipX = !canvas.backgroundImage.flipX;
 	canvas.renderAll();
-	ANP.save_answerpaper_page(canvasid);
+	ANP.save_answerpaper_page();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.clicked_rotate = function (canvasid) {
-	var canvas = ANP.canvasobjs[canvasid];
+ANP.clicked_rotate = function () {
+	var canvas = ANP.get_active_canvas();
 
 	var curAngle = canvas.backgroundImage.getAngle();
 	if (curAngle == 360)
@@ -225,16 +264,16 @@ ANP.clicked_rotate = function (canvasid) {
 	}
 
 	canvas.renderAll();
-	ANP.save_answerpaper_page(canvasid);
+	ANP.save_answerpaper_page();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.clicked_clear = function (canvasid) {
-	var canvas = ANP.canvasobjs[canvasid];
+ANP.clicked_clear = function () {
+	var canvas = ANP.get_active_canvas();
 	canvas.clear().renderAll();
-	ANP.setBackgroundImage(canvas, canvasid);
-	ANP.save_answerpaper_page(canvasid);
+	ANP.setBackgroundImage(canvas, ANP.get_active_canvasID());
+	ANP.save_answerpaper_page();
 
 	//
 	// remove green button color
@@ -246,9 +285,9 @@ ANP.clicked_clear = function (canvasid) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.clicked_undo = function (canvasid) {
+ANP.clicked_undo = function () {
 
-	var canvas = ANP.canvasobjs[canvasid];
+	var canvas = ANP.get_active_canvas();
 	var canvas_objects = canvas._objects;
 	if(canvas_objects.length !== 0){
 		var last = canvas_objects[canvas_objects.length -1];
@@ -256,6 +295,22 @@ ANP.clicked_undo = function (canvasid) {
 		canvas.remove(last);
 		canvas.renderAll();
 	}
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+ANP.add_text = function () {
+	var canvas = ANP.get_active_canvas();
+	canvas.isDrawingMode=false;
+	canvas.isTextMode = true;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+ANP.set_draw_mode = function () {
+	var canvas = ANP.get_active_canvas();
+	canvas.isDrawingMode=true;
+	canvas.isTextMode = false;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -320,6 +375,12 @@ ANP.get_page_no = function(){
 ANP.get_active_canvasID = function () {
 
 	return ANP.mapPageNoWithCanvasID[ANP.get_page_no()];
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+ANP.get_active_canvas = function () {
+	return ANP.canvasobjs[ANP.get_active_canvasID()];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -440,7 +501,6 @@ ANP.enable_navbar_fullscreen_button = function() {
 
 	if (viewFullScreen) {
 	  viewFullScreen.addEventListener("click", function() {
-			console.log("fullscreen ");
 
 		var isInFullScreen =
 			(document.fullscreenElement && document.fullscreenElement !== null) ||
@@ -545,6 +605,7 @@ $(document).ready(function() {
 	ANP.raiseDropDownOverStickyNavbar();
 	ANP.update_page_number_on_navbar();
 	ANP.enable_navbar_fullscreen_button();
+	ANP.highlight_active_page();
 
 	//
 	// remove unnecessary padding from review area
@@ -566,21 +627,28 @@ $(document).ready(function() {
 //
 ///////////////////////////////////////////////////////////////////////////////
 	$('#toolbar_flip').click(function() {
-		ANP.clicked_flip(ANP.get_active_canvasID());
+		ANP.clicked_flip();
 	});
 
 	$('#toolbar_rotate').click(function() {
-		ANP.clicked_rotate(ANP.get_active_canvasID());
+		ANP.clicked_rotate();
 	});
 
 	$('#toolbar_eraseall').click(function() {
-		ANP.clicked_clear(ANP.get_active_canvasID());
+		ANP.clicked_clear();
 	});
 
 	$('#toolbar_undo').click(function() {
-		ANP.clicked_undo(ANP.get_active_canvasID());
+		ANP.clicked_undo();
 	});
 
+	$('#toolbar_add_text').click(function() {
+		ANP.add_text();
+	});
+
+	$('#toolbar_draw').click(function() {
+		ANP.set_draw_mode();
+	});
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -649,20 +717,22 @@ function RightMouseDown() {
 //
 ///////////////////////////////////////////////////////////////////////////////
 document.addEventListener('keydown', function(event) {
-  // undo
-  if (event.ctrlKey && event.key === 'z') {
-    ANP.clicked_undo(ANP.get_active_canvasID());
-  }
 
-  //
-  // in case page doesn't get loaded correctly, then reload background image and canvasdata
-  //
-  if (event.ctrlKey && event.key === 'i') {
-  	var canvasid = ANP.get_active_canvasID();
-    var canvas = ANP.canvasobjs[canvasid];
-    ANP.setBackgroundImage(canvas, canvasid);
-	canvas.renderAll();
-  }
+	//
+	// undo
+	//
+	if (event.ctrlKey && event.key === 'z') {
+	ANP.clicked_undo();
+	}
+
+	//
+	// reload background anp image and canvasdata
+	//
+	else if (event.ctrlKey && event.key === 'i') {
+		var canvas = ANP.get_active_canvas();
+		ANP.setBackgroundImage(canvas, ANP.get_active_canvasID());
+		canvas.renderAll();
+	}
 
 });
 

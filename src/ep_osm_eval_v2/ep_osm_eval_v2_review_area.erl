@@ -223,7 +223,7 @@ layout_answerpaper_page(ImgUrl=CanvasId, AName, CanvasData, PageNo) ->
 					]
 				),
 
-				layout_panel("card-body", CanvasBody)
+				layout_panel("card-body m-auto p-2", CanvasBody)
 			]
 		)
 	).
