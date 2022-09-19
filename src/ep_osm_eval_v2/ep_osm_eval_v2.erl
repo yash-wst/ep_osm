@@ -5,7 +5,7 @@
 
 
 pagejs() -> [
-	fabricjs,
+	fabricjs524,
 	"/lib/ep_osm/priv/static/js/ep_osm_eval_v2.js"
 ].
 
