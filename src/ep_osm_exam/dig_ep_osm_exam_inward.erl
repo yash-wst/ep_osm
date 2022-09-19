@@ -185,12 +185,15 @@ fetch(D, _From, _Size, [
 		],
 		description=#link {
 			url=itx:format("/dig_ep_osm_exam_inward?id=~s", [OsmExamId]),
-			text=io_lib:format("~s / ~s / ~s / Bundle: ~s (~s)", [
+			text=io_lib:format("~s / ~s / ~s / Bundle: ~s (~s) / Rack:~s / Packet: ~s / PacketCount: ~s", [
 				itf:val(ExamDoc, anptestcourseid),
 				itf:val(ExamDoc, testname),
 				?LN(?L2A(itf:val(ExamDoc, teststatus))),
 				itf:val(BundleDoc, number),
-				get_bundle_state(BundleDoc)
+				get_bundle_state(BundleDoc),
+				itf:val(BundleDoc, rack_location),
+				itf:val(BundleDoc, packet_number),
+				itf:val(BundleDoc, packet_count)
 			])
 		},
 		actions=dig_ep_osm_exam_inward_actions:layout_actions_bundle(
@@ -270,6 +273,9 @@ fetch(D, From, Size, [
 
 		[
 			#dcell {val=itf:val(BDoc, number)},
+			#dcell {val=itf:val(BDoc, rack_location)},
+			#dcell {val=itf:val(BDoc, packet_number)},
+			#dcell {val=itf:val(BDoc, packet_count)},
 			#dcell {
 				bgcolor=get_bgcolor(inwardstate, BundleStates),
 				val=[
@@ -321,6 +327,9 @@ fetch(D, From, Size, [
 	%
 	Header = [
 		#dcell {type=header, val="Bundle Number"},
+		#dcell {type=header, val="Rack Location"},
+		#dcell {type=header, val="Packet Number"},
+		#dcell {type=header, val="Packet Count"},
 		#dcell {type=header, val="Inward"},
 		#dcell {type=header, val="Scan"},
 		#dcell {type=header, val="Upload"}
