@@ -116,15 +116,21 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 							    cursorColor: 'red',
 							    left: MousePosX,
 							    top: MousePosY,
-								// fontSize: 20,
+								fontSize: 25,
 								// fontFamily: "",
 								hasBorders:true,
 								borderColor:'red',
+								editingBorderColor:'red',
 								borderScaleFactor:2,
 								cornerColor:'red',
+								cornerStrokeColor:'red',
+								// cornerStyle:'circle',
+								touchCornerSize:12,
+								// transparentCorners:false,
 								width: 500
 							  });
-			if(currentText){
+			if(currentText ){
+				// TODO don't add if the textbox is empty
 				canvas.add(currentText);
 				currentText.selectAll();
 				currentText.enterEditing();
@@ -177,6 +183,25 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 	// handle canvas change events
 	canvas.on("object:removed", function(o) {
 		ANP.save_answerpaper_page();
+	});
+
+	// add rectangle box border to textbox object
+	canvas.on('after:render', function() {
+		canvas.contextContainer.strokeStyle = '#F00';
+
+		canvas.forEachObject(function(obj) {
+			if(obj.type != 'textbox')
+				return;
+
+			var bound = obj.getBoundingRect();
+
+			canvas.contextContainer.strokeRect(
+			bound.left + 0.5,
+			bound.top + 0.5,
+			bound.width,
+			bound.height
+			);
+		})
 	});
 
 };
