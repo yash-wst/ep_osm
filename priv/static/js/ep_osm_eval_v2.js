@@ -18,7 +18,7 @@ ANP.IMGURL_CORRECT = 'https://lib.weshinetech.in/images/correct.png';
 ANP.IMGURL_WRONG = 'https://lib.weshinetech.in/images/wrong.png';
 
 var objSelected = null;
-
+var EditingTextbox = false;
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.scrollposap = 0;
@@ -109,6 +109,12 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 		MousePosX = pointer.x;
 		MousePosY = pointer.y;
 
+		// stop editing textbox and save text
+		if(EditingTextbox == true) {
+			ANP.save_editing_textbox(canvas);
+			EditingTextbox=false;
+		}
+
 		//
 		// add text box on canvas in text mode
 		//
@@ -132,15 +138,15 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 								// transparentCorners:false,
 								width: 500
 							  });
-			if(currentText ){
-				// TODO don't add if the textbox is empty
+			if(currentText){
 				canvas.add(currentText);
 				currentText.selectAll();
 				currentText.enterEditing();
 				canvas.renderAll();
+				EditingTextbox = true;
 			}
 			//
-			// return to drawing mode after adding textbox
+			// return to other mode after adding textbox
 			//
 			canvas.isTextMode = false;
 			canvas.isDrawingMode=false;
@@ -339,6 +345,16 @@ ANP.set_draw_mode = function () {
 	var canvas = ANP.get_active_canvas();
 	canvas.isDrawingMode=true;
 	canvas.isTextMode = false;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+ANP.save_editing_textbox = function(canvas) {
+	if( canvas._objects.length > 0 &&
+	 	canvas._objects.at(-1).type == 'textbox')
+	{
+		canvas._objects.at(-1).exitEditing();
+		ANP.save_answerpaper_page();
+	}
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -610,6 +626,7 @@ WstTimer.unload = function () {
 // saves timer seconds on page reload, close
 //
 window.addEventListener('beforeunload', (event) => {
+	ANP.save_editing_textbox(ANP.get_active_canvas());
 	page.timer_event(WstTimer.secondselapsed);
 });
 
