@@ -74,6 +74,9 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 		isDrawingMode: true
 	});
 
+	// loading img from JSON requires this precision setting
+	fabric.Object.NUM_FRACTION_DIGITS = 10;
+
 	// load canvas data
 	ANP.setBackgroundImage(canvas, imgurl);
 	if (canvasdata != "false") {
@@ -341,21 +344,12 @@ ANP.set_draw_mode = function () {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.setBackgroundImage = function (canvas, imgurl) {
-
-	var img = new Image();
-	img.crossOrigin = "anonymous";
-	// TODO this sometimes creates a blank canvas image
-	img.onload = function() {
-		canvas.setBackgroundImage(new fabric.Image(img, {
-			originX: 'left',
-			originY: 'top',
-			left: 0,
-			top: 0,
-			width: ANP.BG_WIDTH,
-			height: ANP.BG_HEIGHT,
-		}), canvas.renderAll.bind(canvas));
-	};
-	img.src = imgurl;
+	fabric.Image.fromURL(imgurl, function(img) {
+	   img.scaleToWidth(canvas.width); // img.scaleX = canvas.width / img.width;
+	   img.scaleToHeight(canvas.height); // img.scaleY = canvas.height / img.height;
+	   canvas.setBackgroundImage(img);
+	   canvas.requestRenderAll();
+	});
 };
 
 ///////////////////////////////////////////////////////////////////////////////
