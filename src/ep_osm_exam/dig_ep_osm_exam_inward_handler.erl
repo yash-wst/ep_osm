@@ -634,6 +634,8 @@ handle_assign_bundle1(Type, BundleDoc, User) ->
 	% init
 	%
 	StateFId = case Type of
+		createdby ->
+			inwardstate;
 		scannedby ->
 			scanningstate;
 		qualityby ->
@@ -1141,14 +1143,13 @@ handle_insert_candidatedoc(BundleDoc, CDoc) ->
 %
 %..............................................................................
 
-handle_create_bundle(ExamId, PacketNumber, RackLocation) ->
+handle_create_bundle(ExamId, PacketNumber, RackLocation, PacketCount) ->
 
 	%
 	% init
 	%
 	{ok, ExamDoc} = anptests:getdoc(ExamId),
 	SeasonId = itf:val(ExamDoc, season_fk),
-
 
 	%
 	% fields to save
@@ -1164,11 +1165,24 @@ handle_create_bundle(ExamId, PacketNumber, RackLocation) ->
 		itf:build(?OSMBDL(scanningstate), ""),
 		itf:build(?OSMBDL(uploadstate), ""),
 		itf:build(?OSMBDL(qcstate), ""),
-		itf:build(?OSMBDL(packet_number),PacketNumber ),
-		itf:build(?OSMBDL(rack_location), RackLocation),
-		itf:build(?OSMBDL(createdby), itxauth:user()),
-		itf:build(?OSMBDL(createdon), helper:epochtimestr())
-	],
+		itf:build(?OSMBDL(packet_number), PacketNumber ),
+		itf:build(?OSMBDL(packet_count), PacketCount ),
+		itf:build(?OSMBDL(rack_location), RackLocation)
+	] ++ case itxauth:role() of
+		?APPOSM_PHYSICAL_INWARDER ->[
+			itf:build(?OSMBDL(receivedby), itxauth:user()),
+			itf:build(?OSMBDL(receivedon), helper:epochtimestr()),
+			itf:build(?OSMBDL(createdby), ""),
+			itf:build(?OSMBDL(createdon), "")
+			];
+		?APPOSM_RECEIVER -> [
+			itf:build(?OSMBDL(receivedby), ""),
+			itf:build(?OSMBDL(receivedon), ""),
+			itf:build(?OSMBDL(createdby), itxauth:user()),
+			itf:build(?OSMBDL(createdon), helper:epochtimestr())
+			];
+		_ -> []
+		end,
 
 
 	%
@@ -1300,7 +1314,7 @@ new_timestamp_inward(ExamDb, BundleId) ->
 %
 %..............................................................................
 
-check_max_limits(Type, DB_state_Key, User) when Type /= qcby ->
+check_max_limits(Type, DB_state_Key, User) when Type /= qcby, Type /= createdby ->
 
 	Settings_key = case Type of
 		scannedby ->

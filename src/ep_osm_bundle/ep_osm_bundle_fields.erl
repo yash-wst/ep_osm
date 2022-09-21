@@ -26,6 +26,12 @@ f(osm_exam_fk = I) ->
 f(number = I) ->
 	itf:textbox_int(?F(I, "Bundle Number"));
 
+f(receivedby = I) ->
+	itf:createdby(?F(I, "Received By"));
+
+f(receivedon = I) ->
+	itf:createdon(?F(I, "Received On"));
+
 f(createdby = I) ->
 	itf:createdby(?F(I, "Created By"));
 

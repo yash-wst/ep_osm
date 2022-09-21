@@ -7,6 +7,7 @@
 
 -define(APPOSM, ep_osm).
 -define(APPOSM_ADMIN, "admin").
+-define(APPOSM_PHYSICAL_INWARDER, "osmphysicalinwarder").
 -define(APPOSM_RECEIVER, "osmreceiver").
 -define(APPOSM_SCANUPLOADER, "osmscanuploader").
 -define(APPOSM_CONTROLLER, "osmcontroller").
@@ -48,6 +49,9 @@
 
 -define(CAPADM(Id), itf:field(ep_osm_cap_admin_fields, Id)).
 -define(CAPADM(Id, Field), itf:field(ep_osm_cap_admin_fields, Id, Field)).
+
+-define(OSMPIN(Id), itf:field(ep_osm_physical_inwarder_fields, Id)).
+-define(OSMPIN(Id, Field), itf:field(ep_osm_physical_inwarder_fields, Id, Field)).
 
 %
 % entities

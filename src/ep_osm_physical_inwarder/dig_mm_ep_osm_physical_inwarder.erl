@@ -1,5 +1,5 @@
 
--module(dig_mm_ep_osm_bundle).
+-module(dig_mm_ep_osm_physical_inwarder).
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -10,19 +10,17 @@
 %------------------------------------------------------------------------------
 
 main() ->
-	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
+	ita:auth(?MODULE, ?AKIT(#template {file="lib/itx/priv/static/templates/html/entered_nomenu.html"})).
 
 title() ->
-	?LN("OSM Bundles").
+	?LN("Profile - OSM Physical Inwarder").
 
 heading() ->
 	title().
 
 form() ->
-	ep_osm_bundle.
+	ep_osm_physical_inwarder.
 
-digmm_actions() -> [
-].
 
 %------------------------------------------------------------------------------
 % records
@@ -48,8 +46,8 @@ digmm_actions() -> [
 % fs - group
 %------------------------------------------------------------------------------
 
-fields(ep_osm_bundle, _Fs) ->
-	ep_osm_bundle:fs(form).
+fields(ep_osm_physical_inwarder, _Fs) ->
+	ep_osm_physical_inwarder:fs(form).
 
 
 
@@ -58,8 +56,7 @@ fields(ep_osm_bundle, _Fs) ->
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
-access(_, ?APPOSM_RECEIVER) -> true;
-access(_, _) -> false.
+access(_, Role) -> ?D(Role), false.
 
 
 
@@ -69,45 +66,18 @@ access(_, _) -> false.
 
 get() ->
 	#dig {
-		mode=get_mode(),
+		mode=?VIEW,
 		module=?MODULE,
-		filters=[
-			?COREXS(season_fk),
-			?OSMBDL(osm_exam_fk),
-			?OSMBDL(receivedby),
-			?OSMBDL(createdby),
-			?OSMBDL(inwardstate),
-			?OSMBDL(scanningstate),
-			?OSMBDL(uploadstate),
-			?OSMBDL(inward_date),
-			?OSMBDL(scanned_date),
-			?OSMBDL(uploaded_date)
-		],
-		events=[
-			ite:button(export, "CSV", {itx, {dig_mm, export}})
-		],
-		config=[
-			{responsive_type, scroll}
-		],
+		filters=ep_osm_physical_inwarder:fs(search),
 		size=25
 	}.
-
-
-get_mode() ->
-	case erlang:get(minijobcontext) of
-		undefined ->
-			?VIEW;
-		_ ->
-			?EXPORT
-	end.
-
 
 
 %------------------------------------------------------------------------------
 % function - title
 %------------------------------------------------------------------------------
 digtitle() ->
-	?LN("OSM Bundles").
+	?LN("Profile - OSM Physical Inwarder").
 
 
 
@@ -143,8 +113,6 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
-event(action_new) ->
-	helper_ui:flash(error, "Cannot create bundle here. Please use DTP login.", 5);
 event(E) ->
 	dig_mm:event(E).
 
@@ -163,14 +131,16 @@ finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
 % save
 %------------------------------------------------------------------------------
 
-%
-% override before create function
-%
-before_create(_FsToSave) ->
 
-	?ASSERT(
-		false,
-		"cannot create bundle from this ui. it needs to be created from osm exam"
+%
+% after create
+%
+after_create(Fs, {ok, Doc}) ->
+	itxprofile:handle_send_welcome_message_email(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
+	),
+	itxprofile:handle_send_welcome_message_sms(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
 	).
 
 

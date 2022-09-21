@@ -37,7 +37,9 @@ fs(basic) -> [
 	?OSMBDL(packet_count),
 	?OSMBDL(rack_location),
 
-	?OSMBDL(createdby),
+	?OSMBDL(receivedby), % physical/bundle inward stage
+	?OSMBDL(receivedon),
+	?OSMBDL(createdby), % booklet inward stage
 	?OSMBDL(createdon),
 	?OSMBDL(scannedby),
 	?OSMBDL(qualityby),
@@ -61,6 +63,8 @@ fs(index) -> [
 	?OSMBDL(osm_exam_fk),
 	?OSMBDL(number),
 	?OSMBDL(packet_number),
+	?OSMBDL(receivedby),
+	?OSMBDL(receivedon),
 	?OSMBDL(createdby),
 	?OSMBDL(createdon),
 	?OSMBDL(scannedby),
@@ -84,6 +88,8 @@ fs(form) -> [
 	?OSMBDL(packet_count),
 	?OSMBDL(rack_location),
 	?OSMBDL(bundle_size),
+	?OSMBDL(receivedby),
+	?OSMBDL(receivedon),
 	?OSMBDL(createdon),
 	?OSMBDL(createdby),
 	?OSMBDL(scannedby),
@@ -106,6 +112,7 @@ fs(mybundle) -> [
 	?OSMBDL(packet_number),
 	?OSMBDL(packet_count),
 	?OSMBDL(rack_location),
+	?OSMBDL(receivedby),
 	?OSMBDL(createdby),
 	?OSMBDL(scannedby),
 	?OSMBDL(qualityby),

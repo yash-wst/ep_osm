@@ -50,6 +50,7 @@ f(osm_exam_fk = I) ->
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
 access(_, ?APPOSM_CONTROLLER) -> true;
+access(_, ?APPOSM_PHYSICAL_INWARDER) -> true;
 access(_, ?APPOSM_RECEIVER) -> true;
 access(_, ?APPOSM_SCANUPLOADER) -> true;
 access(_, ?APPOSM_QC) -> true;
@@ -270,17 +271,20 @@ fetch(D, From, Size, [
 		UploadState = itf:val(BDoc, uploadstate),
 		QCState = itf:val(BDoc, qcstate),
 		BundleStates = {InwardState, ScanningState, UploadState, QCState},
-
 		[
 			#dcell {val=itf:val(BDoc, number)},
 			#dcell {val=itf:val(BDoc, rack_location)},
 			#dcell {val=itf:val(BDoc, packet_number)},
 			#dcell {val=itf:val(BDoc, packet_count)},
 			#dcell {
+				bgcolor='table-success',
+				val=layout_user_info(dict:find(itf:val(BDoc, receivedby), ProfileDocsDict))
+			},
+			#dcell {
 				bgcolor=get_bgcolor(inwardstate, BundleStates),
 				val=[
 					itx:format("~s ~s", [InwardState, itf:val(BDoc, inward_date)]),
-					layout_user_info(dict:find(itf:val(BDoc, createdby), ProfileDocsDict))
+					layout_dtp_by(createdby, BDoc, ProfileDocsDict, BundleStates)
 				]
 			},
 			#dcell {
@@ -330,7 +334,8 @@ fetch(D, From, Size, [
 		#dcell {type=header, val="Rack Location"},
 		#dcell {type=header, val="Packet Number"},
 		#dcell {type=header, val="Packet Count"},
-		#dcell {type=header, val="Inward"},
+		#dcell {type=header, val="Physical Inward"},
+		#dcell {type=header, val="Booklet Inward"},
 		#dcell {type=header, val="Scan"},
 		#dcell {type=header, val="Upload"}
 	] ++ case ep_osm_config:is_qc_enabled() of
@@ -591,7 +596,7 @@ layout_user_info({ok, ProfileDoc}) ->
 		itf:val(ProfileDoc, fullname)
 	]);
 layout_user_info(_) ->
-	"ERROR!".
+	[].
 
 
 
@@ -624,6 +629,22 @@ layout_dtp_by(?APPOSM_RECEIVER, scannedby = Type, BundleDoc, _ProfileDocsDict, [
 	ite:button(
 		launch_assign_dtp_staff, "Assign", {launch_assign_dtp_staff, Type, BundleDoc}
 	);
+
+layout_dtp_by(?APPOSM_RECEIVER, createdby = Type, BundleDoc, ProfileDocsDict, [],
+	{InwardState, _, _, _}) ->
+		case InwardState of
+			?ASSIGNED ->
+				layout_user_info(dict:find(itf:val(BundleDoc, createdby), ProfileDocsDict));
+			?COMPLETED ->
+				layout_user_info(dict:find(itf:val(BundleDoc, createdby), ProfileDocsDict));
+			?NEW ->
+				[ "<br>",
+				ite:button(
+					assign_bundle, "Assign", {assign_bundle, createdby, BundleDoc}
+					)
+				];
+			_ -> [] % discarded
+		end;
 
 
 %
@@ -906,8 +927,8 @@ event({launch_assign_dtp_staff, Type, BundleDoc}) ->
 
 
 event({assign_bundle, Type, BundleDoc}) ->
-
 	TypeLabel = case Type of
+		createdby -> "Booklet Inward";
 		scannedby -> "Scanning";
 		qualityby -> "Uploading";
 		qcby -> "QC"
@@ -953,7 +974,8 @@ event(create_bundle) ->
 	dig_ep_osm_exam_inward_handler:handle_create_bundle(
 		wf:q(osm_exam_fk),
 		wf:q(packet_number),
-		wf:q(rack_location)
+		wf:q(rack_location),
+		wf:q(packet_count)
 	);
 
 event(create_bundle_form) ->

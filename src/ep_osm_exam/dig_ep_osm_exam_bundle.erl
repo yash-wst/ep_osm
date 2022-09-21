@@ -29,6 +29,7 @@ heading() ->
 % access
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
+access(_, ?APPOSM_PHYSICAL_INWARDER) -> true;
 access(_, ?APPOSM_RECEIVER) -> true;
 access(_, ?APPOSM_SCANUPLOADER) -> true;
 access(_, ?APPOSM_QC) -> true;

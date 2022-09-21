@@ -172,6 +172,7 @@ event({confirmation_yes, {Type, BundleDoc}}) ->
 
 event({assign_bundle, State, BundleDoc}) ->
 	Type = case State of
+		inwardstate -> createdby;
 		scanningstate -> scannedby;
 		uploadstate -> qualityby;
 		qcstate -> qcby
@@ -209,7 +210,6 @@ layout() ->
 
 fsfind(?APPOSM_RECEIVER) -> [
 	[
-		itf:build(?OSMBDL(createdby), itxauth:user()),
 		db2es_find:get_field_cond("$in", inwardstate, ["", "new"])
 	]
 ];
@@ -267,6 +267,7 @@ get_active_season_id() ->
 % get dcell
 %
 get_dcell(#field {id=FId} = F, BundleDoc) when
+	FId == inwardstate;
 	FId == scanningstate;
 	FId == uploadstate;
 	FId == qcstate ->
@@ -281,8 +282,13 @@ get_dcell(F, _BundleDoc) ->
 %
 % get assign button
 %
+get_assign_button_based_on_role(?APPOSM_RECEIVER, #field {id=inwardstate}, Status, BundleDoc) when
+	Status == []; Status == ?NEW ->
+	get_assign_button_for_id(inwardstate, BundleDoc);
+
 get_assign_button_based_on_role(?APPOSM_RECEIVER, _, _, _) ->
 	[];
+
 get_assign_button_based_on_role(?APPOSM_SCANUPLOADER, #field {id=scanningstate}, Status, BundleDoc) when
 	Status == []; Status == ?NEW ->
 	case itf:val(BundleDoc, inwardstate) of

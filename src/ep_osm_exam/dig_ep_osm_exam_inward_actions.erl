@@ -45,6 +45,9 @@ layout_actions_bundle(_BundleDoc, _) ->
 
 layout_actions_exam(_IsBundleActive = true) ->
 	case itxauth:role() of
+		?APPOSM_PHYSICAL_INWARDER -> [
+			{create_bundle_form, "Create New Bundle", "Create New Bundle"}
+		];
 		?APPOSM_RECEIVER -> [
 			{create_bundle_form, "Create New Bundle", "Create New Bundle"},
 			{action_import, "+ Import", "+ Import"},
@@ -91,7 +94,7 @@ layout_action_inward_form(BundleDoc) ->
 	% action
 	%
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, State} when State ==[]; State == "new" ->
+		{User, State} when State == []; State == ?NEW; State == ?ASSIGNED ->
 			event(inward_form),
 			[
 				{inward_form, "Inward Form", "Inward Form"}
@@ -119,7 +122,7 @@ layout_action_inwarding(BundleDoc) ->
 	% action
 	%
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, State} when State == []; State == "new" -> [
+		{User, State} when State == []; State == ?NEW; State == ?ASSIGNED-> [
 			{inward_completed, "Inward Completed", "Inward Completed"}
 		];
 		_ -> [
