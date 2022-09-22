@@ -490,7 +490,7 @@ layout_candidate_edit(BundleDoc, CDoc)  ->
 		{_, "discarded", _} ->
 			[];
 		{User, InwardState, ScanningState} when
-			InwardState == []; InwardState == ?NEW; InwardState == ?ASSIGNED
+			InwardState == []; InwardState == ?NEW; InwardState == ?ASSIGNED;
 			ScanningState == [] ->
 			ite:button(
 				edit_candidate,
