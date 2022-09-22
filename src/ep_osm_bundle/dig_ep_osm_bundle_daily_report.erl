@@ -130,11 +130,13 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="PRN"},
 			#dcell {type=header, val="Seat Number"},
 			#dcell {type=header, val="Corrected Seat Number"},
-			#dcell {type=header, val="Fullname"},
 			#dcell {type=header, val="Evaluation State"},
 			#dcell {type=header, val="Inward Timestamp"},
 			#dcell {type=header, val="Bundle Number"},
-			#dcell {type=header, val="Received By"},
+			#dcell {type=header, val="Packet Number"},
+			#dcell {type=header, val="Rack Location"},
+			#dcell {type=header, val="Physical Inward By"},
+			#dcell {type=header, val="Booklet Inward By"},
 			#dcell {type=header, val="Inward State"},
 			#dcell {type=header, val="Inwarded Date"},
 			#dcell {type=header, val="Scanned By"},
@@ -235,7 +237,6 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 		anp_paper_uid,
 		anpseatnumber,
 		anpseatnumber_corrected,
-		anpfullname,
 		anpstate,
 		timestamp_inward
 	],
@@ -243,6 +244,8 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 		case FId of
 			timestamp_inward ->
 				#dcell {val=helper:epochstrtotime(itf:val(CandidateDoc, timestamp_inward))};
+			anpstate ->
+				#dcell {val=ep_osm_helper:get_anpstate_shorthand(itf:val(CandidateDoc, FId))};
 			_ ->
 				#dcell {val=itf:val(CandidateDoc, FId)}
 		end
@@ -273,7 +276,10 @@ layout_exam_doc(ExamDoc) ->
 layout_bundle_doc(BundleDoc) ->
 	FsBundle = [
 		?OSMBDL(number),
-		?OSMBDL(createdby),
+		?OSMBDL(packet_number),
+		?OSMBDL(rack_location),
+		?OSMBDL(receivedby), % Physical Inward By
+		?OSMBDL(createdby), % Booklet inward by
 		?OSMBDL(inwardstate),
 		?OSMBDL(inward_date),
 		?OSMBDL(scannedby),

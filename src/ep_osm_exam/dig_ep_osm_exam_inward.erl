@@ -458,7 +458,7 @@ layout_candidate_remove(BundleDoc, CDoc)  ->
 	User = itxauth:user(),
 
 	case {itf:val(BundleDoc, createdby), itf:val(BundleDoc, inwardstate)} of
-		{User, State} when State == []; State == "new" ->
+		{User, State} when State == []; State == ?NEW; State == ?ASSIGNED ->
 			ite:button(
 				remove_candidate,
 				"x",
@@ -490,7 +490,7 @@ layout_candidate_edit(BundleDoc, CDoc)  ->
 		{_, "discarded", _} ->
 			[];
 		{User, InwardState, ScanningState} when
-			InwardState == []; InwardState == "new";
+			InwardState == []; InwardState == ?NEW; InwardState == ?ASSIGNED
 			ScanningState == [] ->
 			ite:button(
 				edit_candidate,
@@ -1070,6 +1070,8 @@ get_bundle_docs(ExamId, OsmBundleId) ->
 		fields=[
 			itf:textbox(?F(anp_paper_uid)),
 			itf:textbox(?F(anpseatnumber)),
+			itf:textbox(?F(anpseatnumber_corrected)),
+			itf:textbox(?F(anpstate)),
 			itf:textbox(?F(timestamp_inward))
 		]
 	}),

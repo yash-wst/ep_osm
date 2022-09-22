@@ -20,6 +20,9 @@ completed_state_of(Role) ->
 	throw(Role).
 
 
+get_anpstate_shorthand(State) ->
+	?LN(?L2A(State++"_min")).
+
 
 %------------------------------------------------------------------------------
 % end
