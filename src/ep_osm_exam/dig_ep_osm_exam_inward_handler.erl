@@ -6,15 +6,8 @@
 	get_bundle_dir_name/2,
 	sort_candidate_docs/1,
 	assert_entry_does_not_exist_elsewhere/3,
+	redirect_to_main/0,
 	get_bundle_docs/0,
-	redirect_to_main/0,
-	redirect_to_main/0,
-	redirect_to_main/0,
-	sort_candidate_docs/1,
-	sort_candidate_docs/1,
-	get_bundle_docs/0,
-	get_bundle_doc_from_cache/1,
-	get_bundle_number_from_cache/1,
 	get_bundle_doc_from_cache/1,
 	get_bundle_number_from_cache/1,
 	layout_candidate_edit/2,
@@ -337,6 +330,11 @@ handle_inward_completed(ExamId, BundleId) ->
 		itf:build(?OSMBDL(inward_date), helper:date_today_str()),
 		itf:build(?OSMBDL(bundle_size), ?I2S(length(get_bundle_docs())))
 	],
+
+	%
+	% validation if packet count does not match bundle inward size
+	%
+	validate_inward_count(BundleId),
 
 	%
 	% mark all anpstate as NU
@@ -1355,6 +1353,31 @@ check_max_limits(Type, DB_state_Key, User) when Type /= qcby, Type /= createdby 
 check_max_limits(_, _, _) ->
 	ok.
 
+%..............................................................................
+%
+% check if inward count is same as packet count for bundle
+%
+%..............................................................................
+
+validate_inward_count(BundleId) ->
+	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+	PacketCount_Str = itf:val(BundleDoc, packet_count),
+	InwardCount = length(get_bundle_docs()),
+
+	%
+	% some bundles were created without Packet Count,
+	% do not run validation for such bundles
+	%
+	case PacketCount_Str of
+		[] -> ok;
+		_ ->
+			PacketCount_Int = helper:s2i(PacketCount_Str),
+			?ASSERT(
+				InwardCount == PacketCount_Int,
+				itx:format("Booklet Inward Count ~p does not match Packet Count ~p",
+					[InwardCount, PacketCount_Int])
+			)
+	end.
 
 %------------------------------------------------------------------------------
 % end
