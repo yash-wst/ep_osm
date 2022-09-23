@@ -138,6 +138,18 @@ before_save(FsToSave, _FsAll, _Doc) ->
 	FsToSave.
 
 
+
+%
+% after create
+%
+after_create(Fs, {ok, Doc}) ->
+	itxprofile:handle_send_welcome_message_email(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
+	),
+	itxprofile:handle_send_welcome_message_sms(
+		Doc, itf:val(Doc, username), itf:val2(Fs, password_bcrypt)
+	).
+
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
