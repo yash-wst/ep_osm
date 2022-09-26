@@ -71,6 +71,9 @@ fetch(From, Size, Filters) ->
 	#db2_find_response {docs=Docs} = db2_find:get_by_fs(db(), Filters, From, Size),
 	Docs.
 
+fetch(From, Size, Filters, Configs) ->
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(db(), Filters, From, Size, Configs),
+	Docs.
 
 %------------------------------------------------------------------------------
 % delete
