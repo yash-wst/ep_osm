@@ -80,9 +80,9 @@ layout_toolbar_buttons() ->
 		layout_toolbar_button("Rotate", "toolbar-icon-rotate", "toolbar_rotate"),
 		layout_toolbar_button("Flip", "toolbar-icon-flip", "toolbar_flip"),
 		layout_toolbar_button("Erase All", "toolbar-icon-eraseall", "toolbar_eraseall"),
-		layout_toolbar_button("Undo","toolbar-icon-undo", "toolbar_undo"),
-		layout_toolbar_button2("Draw","pencil-alt", "toolbar_draw"),
-		layout_toolbar_button2("Add Text","italic", "toolbar_add_text")
+		layout_toolbar_button("Undo","toolbar-icon-undo", "toolbar_undo")
+		% layout_toolbar_button2("Draw","pencil-alt", "toolbar_draw"),
+		% layout_toolbar_button2("Add Text","italic", "toolbar_add_text")
 	].
 
 
