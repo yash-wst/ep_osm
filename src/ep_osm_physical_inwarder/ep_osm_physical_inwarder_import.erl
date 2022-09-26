@@ -98,7 +98,7 @@ handle_import_csv_to_fs(List) ->
 
 after_save({ok, _ }, ListofFs) ->
 	lists:foreach(fun(Fs) ->
-		dig_mm_ep_osm_cap_admin:after_create(Fs, ok)
+		dig_mm_ep_osm_physical_inwarder:after_create(Fs, ok)
 	end, ListofFs);
 after_save(_SaveRes, ListofFs) -> ok.
 
