@@ -145,6 +145,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Uploaded By"},
 			#dcell {type=header, val="Upload State"},
 			#dcell {type=header, val="Uploaded Date"},
+			#dcell {type=header, val="QC By"},
 			#dcell {type=header, val="QC State"},
 			#dcell {type=header, val="QC Date"}
 		]
@@ -288,6 +289,7 @@ layout_bundle_doc(BundleDoc) ->
 		?OSMBDL(qualityby),
 		?OSMBDL(uploadstate),
 		?OSMBDL(uploaded_date),
+		?OSMBDL(qcby),
 		?OSMBDL(qcstate),
 		?OSMBDL(qc_date)
 	],
