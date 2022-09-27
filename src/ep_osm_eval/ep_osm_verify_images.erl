@@ -81,9 +81,11 @@ layout_student_info(_TFs, Fs) ->
 		anpstate,
 		comments_dtp
 	]), [], table),
+	CommentButton = ite:get(add_comment, "Add comment", comment_dtp),
 	[
 		#p {class="font-weight-bold", text="Student Info"},
-		Es
+		Es,
+		itl:get(?EDIT, [itf:textarea(?F(comment2, "Comment"))], CommentButton, table)
 	].
 
 
@@ -218,7 +220,10 @@ event(move_to_on_hold) ->
 		itl:get(?EDIT, [f(comment)], Event, table)
 	],
 	itl:modal_fs(Es);
-		 
+
+event(comment_dtp) ->
+	handle_add_DTP_comment();
+
 event(Event) ->
 	?D(Event).
 
@@ -277,8 +282,9 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 		fields:build(anpstate, "anpstate_yettostart")
 	],
 	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
+	NewComment = string:join([Changelist, "\n", "Moved from On Hold to Not Uploaded"], "\n"),
 	FComment = itf:d2f(CandidateDoc, fields:get(comments_dtp)),
-	FComment1 = itf:build_comment(FComment, Changelist), 
+	FComment1 = itf:build_comment(FComment, NewComment),
 
 
 	%
@@ -287,6 +293,37 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 	{ok, _} = ep_osm_candidate_api:update(ExamId, CandidateDoc, FsToSave ++ [FComment1]),
 	helper:redirect(wf:uri()).
 
+
+
+
+handle_add_DTP_comment() ->
+	%
+	% init
+	%
+	CandidateId = wf:q(anpid),
+	ExamId = wf:q(anptestid),
+	ExamDb = anpcandidates:db(ExamId),
+	{ok, CandidateDoc} = anpcandidates:getdoc(ExamDb, CandidateId),
+
+	%
+	% get old comments
+	%
+	FComment = itf:d2f(CandidateDoc, fields:get(comments_dtp)),
+
+	%
+	% add new comment to old comments
+	%
+	FComment1 = itf:build_comment(FComment, wf:q(comment2)),
+
+	%
+	% save
+	%
+	case ep_osm_candidate_api:update(ExamId, CandidateDoc, [FComment1]) of
+	{ok, _} ->
+		helper:redirect(wf:uri());
+	_ ->
+		helper_ui:flash(error, "Sorry, could not save!")
+	end.
 
 
 handle_move_to_on_hold(ExamId, CandidateId) ->
