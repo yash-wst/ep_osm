@@ -132,6 +132,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Corrected Seat Number"},
 			#dcell {type=header, val="Evaluation State"},
 			#dcell {type=header, val="Inward Timestamp"},
+			#dcell {type=header, val="Master Data Status"},
 			#dcell {type=header, val="Bundle Number"},
 			#dcell {type=header, val="Packet Number"},
 			#dcell {type=header, val="Rack Location"},
@@ -239,7 +240,8 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 		anpseatnumber,
 		anpseatnumber_corrected,
 		anpstate,
-		timestamp_inward
+		timestamp_inward,
+		master_data_status
 	],
 	lists:map(fun(FId) ->
 		case FId of

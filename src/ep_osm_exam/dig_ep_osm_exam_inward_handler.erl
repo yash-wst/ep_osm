@@ -1022,7 +1022,9 @@ handle_inward(UId, SNo, TotalPages) ->
 	handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, CandidateDocs).
 
 
-
+%
+% inward seat number which does not exist in previously imported master data
+%
 handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, []) ->
 	%
 	% create entry in exam db
@@ -1041,7 +1043,8 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, []) ->
 		itf:build(itf:textbox(?F(anpcentercode)), "B:" ++ BundleNumber),
 		itf:build(itf:textbox(?F(total_pages)), TotalPages),
 		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
-		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, OsmBundleId))
+		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, OsmBundleId)),
+		itf:build(itf:textbox(?F(master_data_status)), "not_matched")
 	],
 	case anpcandidates:save(ExamDb, FsToSave) of
 		{ok, CandidateDoc} ->
@@ -1052,7 +1055,9 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, []) ->
 			helper_ui:flash(error, io_lib:format("Error!: ~s, ~s", [UId, SNo]))
 	end;
 
-
+%
+% inward student seat number which is already in master data
+%
 handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, [Doc]) ->
 
 	%
@@ -1077,7 +1082,8 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, [Doc]) ->
 	FsToSave = [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
 		itf:build(itf:textbox(?F(total_pages)), TotalPages),
-		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, BundleId))
+		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, BundleId)),
+		itf:build(itf:textbox(?F(master_data_status)), "matched")
 	],
 	case ep_osm_candidate_api:update(ExamId, Doc, FsToSave) of
 		{ok, CandidateDoc} ->
