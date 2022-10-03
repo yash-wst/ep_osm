@@ -159,7 +159,9 @@ event({confirmation_yes,submit_redressal}) ->
 	%
 	% update
 	%
+	AnpState = itxconfigs_cache:get2(ep_osm_eval_student_anpstate, "anpstate_moderation"),
 	FsToSave = [
+		fields:build(anpstate, AnpState),
 		fields:build(anp_redressal_state, "submitted")
 	] ++ itf:uivalue([
 		fields:get(anp_redressal_grievance)
