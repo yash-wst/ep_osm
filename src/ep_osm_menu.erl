@@ -89,7 +89,7 @@ menu(Role) when
 	Role == ?APPOSM_MODERATOR;
 	Role == ?APPOSM_REVALUATOR;
 	Role == ?APPOSM_MODERATOR_REVAL ->
-	case itxconfigs_cache:get2(ep_osm_menu_evaluators, false) of
+	case itxconfigs_cache:get2(ep_osm_menu_evaluators, true) of
 		true ->
 			ProfileModule = ?L2A(itx:format("profile_~s", [Role])),
 			[

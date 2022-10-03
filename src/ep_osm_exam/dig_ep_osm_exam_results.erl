@@ -3,7 +3,7 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
-
+-import(dig_ep_osm_exam_evaluator_report, [get_role_group/1]).
 
 %------------------------------------------------------------------------------
 % main
@@ -169,6 +169,12 @@ f(Id) ->
 %------------------------------------------------------------------------------
 access(_, ?APPOSM_ADMIN) -> true;
 access(_, ?APPOSM_ANPADMIN) -> true;
+access(_, Role) when 
+	Role == ?APPOSM_EVALUATOR;
+	Role == ?APPOSM_MODERATOR;
+	Role == ?APPOSM_REVALUATOR;
+	Role == ?APPOSM_MODERATOR_REVAL ->
+		itxcontext:q(id) /= undefined;
 access(_, _) -> false.
 
 
@@ -207,32 +213,59 @@ fs(search, _) -> [
 %------------------------------------------------------------------------------
 
 get() ->
+	RoleGroup = get_role_group(itxauth:role()),
 	#dig {
 		module=?MODULE,
 		filters=fs(search),
 		size=25,
-		actions=[
-			{action_export_results_bulk, "Bulk Export Results", "Bulk Export Results"},
-			{export_results_bulk_pdf, "Bulk Export Results (PDF)", "Bulk Export Results (PDF)"}
-		],
-		events=[
-			ite:button(export, "CSV", {itx, {dig, export}}),
-			ite:button(export_pdf, "PDF", {itx, {dig, export_pdf}})
-		],
-		instructions=[
-			{ok, "You can add, remove and change the order of export by updating exportids shown below"},
-			{ok, string:join(exportids(), ",\n")},
-			{ok, #link {
-				new=true,
-				text="Change export format",
-				url="/dig_config?keyid=ep_osm_result_exportids"
-			}}
-		],
+		actions=get_actions(RoleGroup),
+		instructions=get_instructions(RoleGroup),
 		config=[
 			{responsive_type, scroll},
 			{show_slno, true}
 		]
 	}.
+
+
+%
+% get - events
+%
+get_events() ->
+	[
+		ite:button(export, "CSV", {itx, {dig, export}}),
+		ite:button(export_pdf, "PDF", {itx, {dig, export_pdf}})
+	].
+
+
+
+%
+% get - actions
+%
+get_actions(evaluator) ->
+	[];
+get_actions(_) ->
+	[
+		{action_export_results_bulk, "Bulk Export Results", "Bulk Export Results"},
+		{export_results_bulk_pdf, "Bulk Export Results (PDF)", "Bulk Export Results (PDF)"}
+	].
+
+
+
+%
+% get - instructions
+%
+get_instructions(evaluator) ->
+	[];
+get_instructions(_RoleGroup) ->
+	[
+		{ok, "You can add, remove and change the order of export by updating exportids shown below"},
+		{ok, string:join(exportids(), ",\n")},
+		{ok, #link {
+			new=true,
+			text="Change export format",
+			url="/dig_config?keyid=ep_osm_result_exportids"
+		}}
+	].
 
 
 %------------------------------------------------------------------------------
@@ -417,6 +450,7 @@ fetch(D, From, Size, [
 		D#dig {
 			description=itl:render(itf:d2f_doc(ExamDoc, ?OSMEXM(osm_exam_fk))),
 			total=Count,
+			events=get_events(),
 			actions=[],
 			dcell_headers=Header,
 			config=D#dig.config ++ [
