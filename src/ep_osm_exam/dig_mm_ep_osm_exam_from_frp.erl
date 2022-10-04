@@ -215,23 +215,20 @@ handle_import_from_frp(DateOfExam) ->
 		get_by_field,
 		[FDate]
 	),
-	dig:log(info, io_lib:format("Found ~p exam docs on FRP system", [length(FrpExamDocs)])),
 
+	ActiveFrpExamDocs = lists:filter(fun(EDoc) ->
+		itf:val2(EDoc, state) == ?ACTIVE
+	end, FrpExamDocs),
 
-	%
-	% remove duplicates of exams from frp
-	%
-	FrpExamDocsDict = helper:get_dict_from_docs(FrpExamDocs, subject_code_fk),
-	FrpExamDocsUnique = dict:to_list(FrpExamDocsDict),
+	dig:log(info, io_lib:format("Found ~p exam docs on FRP system", [length(ActiveFrpExamDocs)])),
 
 
 	%
 	% for each doc
 	%
-
-	lists:foreach(fun({_, FrpExamDoc}) ->
-			handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc)
-	end, FrpExamDocsUnique),
+	lists:foreach(fun(FrpExamDoc) ->
+		handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc)
+	end, ActiveFrpExamDocs),
 
 
 	%
