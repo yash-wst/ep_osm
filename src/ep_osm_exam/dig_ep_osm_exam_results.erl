@@ -233,7 +233,8 @@ get() ->
 get_events() ->
 	[
 		ite:button(export, "CSV", {itx, {dig, export}}),
-		ite:button(export_pdf, "PDF", {itx, {dig, export_pdf}})
+		ite:button(export_pdf, "PDF", {itx, {dig, export_pdf}}),
+		ite:button(action_submit_results_to_rps, "Submit Results", action_submit_results_to_rps)
 	].
 
 
@@ -576,6 +577,15 @@ layout() ->
 event({itx, E}) ->
 	ite:event(E);
 
+event({confirmation_yes, action_submit_results_to_rps}) ->
+	handle_submit_results_to_rps(wf:q(id));
+
+event(action_submit_results_to_rps) ->
+	itl:confirmation(
+		"Are you sure you want to submit results to Result Processing System?",
+		action_submit_results_to_rps
+	);
+
 event(action_export_results_bulk) ->
 	dig_mm:handle_show_action("Bulk Export Results", layout_export_results_bulk());
 
@@ -591,6 +601,90 @@ event(export_results_bulk) ->
 % handler
 %------------------------------------------------------------------------------
 
+%..............................................................................
+%
+% handle - submit results to rps
+%
+%..............................................................................
+
+handle_submit_results_to_rps(TestId) ->
+
+	%
+	% init
+	%
+	Role = itxauth:role(),
+	{ok, Doc} = ep_osm_exam_api:get(TestId),
+	MarkTypeId = itf:val(Doc, marktype),
+	ResultUploadState = itf:val(Doc, reset_booklet_state),
+	OsmEvaluatorType = "profiletype_" ++ Role,
+	EvaluationType = case Role of
+		"anpevaluator" -> "evaluation";
+		"anpmoderator" -> "moderation";
+		"anprevaluator" -> "revaluation";
+		"anpmoderator_reval" -> "moderation_reval"
+	end,
+
+
+
+	%
+	% assert - marktype is set
+	%
+	?ASSERT(
+		MarkTypeId /= [],
+		"Error! Marktype is not set"
+	),
+
+
+	%
+	% assert - not uploaded
+	%
+	?ASSERT(
+		ResultUploadState /= "uploaded",
+		"Error! Results already uploaded."
+	),
+
+
+	%
+	% assert - none pending
+	%
+	Stats = ep_osm_exam_api:get_evaluation_stats0(TestId),
+	lists:foreach(fun(PendingState) ->
+		?ASSERT(
+			proplists:get_value([PendingState], Stats) == 0,
+			"Error! Evaluation pending. Please complete all evaluations."
+		)
+	end, ep_osm_exam_api:get_pending_states()),
+
+
+
+	%
+	% submit
+	%
+	{CsvDataSize, CsvData} = ep_osm_exam_api:csv_frp(TestId, OsmEvaluatorType),
+	{ok, _} = up_core_marks_upload_queue_api:create_rpc(
+		itf:val(Doc, season_fk),
+		itf:val(Doc, subject_code_fk),
+		?L2A(MarkTypeId),
+		?L2B(CsvData),
+		CsvDataSize,
+		EvaluationType
+	),
+
+
+	%
+	% update doc state to uplaoded
+	%
+	FsToSave = [
+		fields:build(result_upload_status, "uploaded")
+	],
+	{ok, _} = ep_osm_exam_api:save(FsToSave, ep_osm_exam:fs(all), TestId),
+
+
+
+	%
+	% alert
+	%
+	helper_ui:flash(success, "Uploaded").
 
 %..............................................................................
 %

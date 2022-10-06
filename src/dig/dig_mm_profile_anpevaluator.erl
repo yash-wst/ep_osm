@@ -189,11 +189,17 @@ before_save(FsToSave, _FsAll, _Doc) ->
 %
 % renderer subjects
 %
-renderer_subjects(_, _, #field {label=L, uivalue=SubjectIds}) ->
+renderer_subjects(_, _, #field {label=L, uivalue=SubjectIds0} ->
 
 	%
 	% get subject docs from cache
 	%
+	SubjectIds = case SubjectIds0 of
+		undefined ->
+			[];
+		_ ->
+			SubjectIds0
+	end,
 	Docs = ep_core_subject_api:get_docs_from_cache(SubjectIds),
 	SubjectCodes = lists:map(fun(Doc) ->
 		itf:val(Doc, subject_code)

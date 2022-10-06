@@ -46,6 +46,19 @@ list() ->
 	end, db:getdocs(db())).
 
 
+get_pending_states() -> [
+	"anpstate_not_uploaded",
+	"anpstate_quality_check",
+	"anpstate_on_hold",
+	"anpstate_yettostart",
+	"anpstate_active",
+	"anpstate_moderation",
+	"anpstate_revaluation",
+	"anpstate_moderation_reval",
+	"anpstate_evaluation_rejected"
+].
+
+
 %------------------------------------------------------------------------------
 % check
 %------------------------------------------------------------------------------
