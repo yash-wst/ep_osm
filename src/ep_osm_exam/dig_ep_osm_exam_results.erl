@@ -624,7 +624,13 @@ handle_submit_results_to_rps(TestId) ->
 		"anpmoderator_reval" -> "moderation_reval"
 	end,
 
-
+	%
+	% assert - result_upload_status should be "scanning_done"
+	%
+	?ASSERT(
+		(itf:val(Doc, result_upload_status) == "scanning_done"),
+		"Can not submit marks, scanning is not complete yet!"
+	),
 
 	%
 	% assert - marktype is set

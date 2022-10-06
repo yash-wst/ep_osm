@@ -416,6 +416,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	SubjectCode = itf:val(FrpSubjectDoc, subject_code),
 	SubjectPattern = itf:val(FrpSubjectDoc, pattern),
 	ExamName = itf:val(FrpExamDoc, exam_name),
+	MarkType = itf:val2(FrpExamDoc, mark_type_fk),
 
 
 	%
@@ -440,6 +441,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 				itf:val(OsmSeasonDoc, code), SubjectCode
 			),
 			FsToCreate = [
+				fields:build(marktype, MarkType),
 				fields:build(season_fk, SeasonId),
 				fields:build(subject_code_fk, SubjectId),
 				fields:build(aws_s3_dir, S3Dir),
