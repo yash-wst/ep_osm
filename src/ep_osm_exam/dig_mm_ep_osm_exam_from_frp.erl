@@ -382,7 +382,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 			itf:build(itf:textbox(?F(anpseatnumber)), PRN1),
 			itf:build(itf:textbox(?F(anpfullname)), Name1),
 			itf:build(itf:textbox(?F(anpcentercode)), "0"),
-			itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded")
+			itf:build(itf:textbox(?F(anpstate)), "anpstate_expected")
 		]
 	end, FrpStudentListMissing),
 	{ok, Res} = anpcandidates:savebulk(ExamDb, ListOfFsToSave),
