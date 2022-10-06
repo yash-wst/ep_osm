@@ -189,7 +189,7 @@ before_save(FsToSave, _FsAll, _Doc) ->
 %
 % renderer subjects
 %
-renderer_subjects(_, _, #field {label=L, uivalue=SubjectIds0} ->
+renderer_subjects(_, _, #field {label=L, uivalue=SubjectIds0}) ->
 
 	%
 	% get subject docs from cache
