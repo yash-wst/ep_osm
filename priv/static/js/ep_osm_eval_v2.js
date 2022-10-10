@@ -2,8 +2,8 @@
 
 var ANP = {};
 
-ANP.mapPageNoWithCanvasID = {};
-ANP.PageCount = 1;
+ANP.mapPageNoWithCanvasID = new Array();
+ANP.PageCount = 0;
 
 ANP.BG_WIDTH = 1300;
 ANP.BG_HEIGHT = 900;
@@ -96,8 +96,7 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 
 	// map page numbers with answer paper image file name for page navigation by pageNo
 	// this is required for detecting active page no, active canvas via scroll position
-	ANP.mapPageNoWithCanvasID[ANP.PageCount] = canvasid;
-	ANP.PageCount = ANP.PageCount + 1;
+	ANP.PageCount = ANP.mapPageNoWithCanvasID.push(canvasid);
 
 	//
 	// if cltr or cltr + alt keys are pressed then
@@ -186,12 +185,12 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 
 	// handle canvas change events
 	canvas.on("object:added", function() {
-		ANP.save_answerpaper_page();
+		ANP.save_answerpaper_page(canvasid);
 	});
 
 	// handle canvas change events
 	canvas.on("object:removed", function(o) {
-		ANP.save_answerpaper_page();
+		ANP.save_answerpaper_page(canvasid);
 	});
 
 	// add rectangle box border to textbox object
@@ -217,17 +216,13 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.save_answerpaper_page = function () {
-	ANP.mark_page_in_page_nav_dropdown();
+ANP.save_answerpaper_page = function (canvasid) {
 
-	var canvas = ANP.get_active_canvas();
-	if (page && page.canvas_save) {
-		page.canvas_save(
-			ANP.get_active_canvasID(),
-		 	JSON.stringify(canvas)
-		 );
-	}
+	ANP.mark_page_in_page_nav_dropdown(ANP.get_page_no_from_canvasid(canvasid));
 
+	var canvas = ANP.canvasobjs[canvasid];
+	if (page && page.canvas_save)
+		page.canvas_save(canvasid, JSON.stringify(canvas));
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -259,7 +254,7 @@ ANP.clicked_flip = function () {
 	canvas.backgroundImage.flipY = !canvas.backgroundImage.flipY;
 	canvas.backgroundImage.flipX = !canvas.backgroundImage.flipX;
 	canvas.renderAll();
-	ANP.save_answerpaper_page();
+	ANP.save_answerpaper_page(ANP.get_active_canvasID());
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -298,7 +293,7 @@ ANP.clicked_rotate = function () {
 	}
 
 	canvas.renderAll();
-	ANP.save_answerpaper_page();
+	ANP.save_answerpaper_page(ANP.get_active_canvasID());
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -307,12 +302,12 @@ ANP.clicked_clear = function () {
 	var canvas = ANP.get_active_canvas();
 	canvas.clear().renderAll();
 	ANP.setBackgroundImage(canvas, ANP.get_active_canvasID());
-	ANP.save_answerpaper_page();
+	ANP.save_answerpaper_page(ANP.get_active_canvasID());
 
 	//
 	// remove green button color
 	//
-	$('.page-nav-dropdown input[type="button"][value=' + ANP.get_page_no() + ']')
+	$('.page-nav-dropdown input[type="button"][value=' + ANP.get_page_no_from_scroll_height() + ']')
 	.removeClass('bg-success btn-success btn-outline-success')
 	.addClass('btn-outline-secondary');
 };
@@ -353,7 +348,7 @@ ANP.save_editing_textbox = function(canvas) {
 	 	canvas._objects.at(-1).type == 'textbox')
 	{
 		canvas._objects.at(-1).exitEditing();
-		ANP.save_answerpaper_page();
+		ANP.save_answerpaper_page(ANP.get_active_canvasID());
 	}
 };
 
@@ -396,14 +391,14 @@ ANP.download_pdf = function (sno) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.mark_page_in_page_nav_dropdown = function() {
-	$('.page-nav-dropdown input[type="button"][value=' + ANP.get_page_no() + ']')
+ANP.mark_page_in_page_nav_dropdown = function(pageNo) {
+	$('.page-nav-dropdown input[type="button"][value=' + pageNo + ']')
 		.addClass('btn-success btn-outline-success');
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ANP.get_page_no = function(){
+ANP.get_page_no_from_scroll_height = function(){
 	ANP.OFFSET_TOP = $('.navbar.navbar-expand').outerHeight()
 			   + $('.sticky-top').outerHeight();
 	var scrolled = $(document).scrollTop() + ANP.OFFSET_TOP;
@@ -417,7 +412,7 @@ ANP.get_page_no = function(){
 
 ANP.get_active_canvasID = function () {
 
-	return ANP.mapPageNoWithCanvasID[ANP.get_page_no()];
+	return ANP.mapPageNoWithCanvasID[ANP.get_page_no_from_scroll_height() -1];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -427,14 +422,20 @@ ANP.get_active_canvas = function () {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+ANP.get_page_no_from_canvasid = function (canvasid) {
+	return 1 + ANP.mapPageNoWithCanvasID.indexOf(canvasid);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 //
 // update page number on navbar
 //
 ///////////////////////////////////////////////////////////////////////////////
 ANP.update_page_number_on_navbar = function() {
-	ActivePage = ANP.get_page_no();
+	ActivePage = ANP.get_page_no_from_scroll_height();
 	if (true == $('.visiblepanel').hasClass("wfid_anpcandidate_answerpaper")) {
-		$('#navbar_page_no').text("".concat(ActivePage, "/", ANP.PageCount -1, "  " ));
+		$('#navbar_page_no').text("".concat(ActivePage, "/", ANP.PageCount, "  " ));
 	}
 }
 
