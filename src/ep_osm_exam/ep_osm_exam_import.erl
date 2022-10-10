@@ -431,8 +431,9 @@ handle_import_csv_to_fs(List) ->
 		{ok, FacDoc} = dict:find(FacultyCode, DictFac),
 		{ok, PgmDoc} = dict:find(ProgramCode, DictPgm),
 		{ok, SubDoc} = dict:find(SubjectCode, DictSub),
-		S3Dir = ep_osm_exam_api:s3dir(
-			SeasonCode, itf:val(SubDoc, subject_code)
+		TestId = db:get_uuid(),
+		S3Dir = ep_osm_exam_api:s3dir_new(
+			SeasonDoc, SubDoc, TestId
 		),
 
 
@@ -440,6 +441,7 @@ handle_import_csv_to_fs(List) ->
 		% fs
 		%
 		[
+			fields:build('_id', TestId),
 			fields:build(season_fk, SeasonId),
 			fields:build(faculty_code_fk, itf:idval(FacDoc)),
 			fields:build(program_code_fk, itf:idval(PgmDoc)),

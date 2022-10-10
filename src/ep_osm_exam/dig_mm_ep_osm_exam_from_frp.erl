@@ -417,7 +417,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	SubjectPattern = itf:val(FrpSubjectDoc, pattern),
 	ExamName = itf:val(FrpExamDoc, exam_name),
 	MarkType = itf:val2(FrpExamDoc, mark_type_fk),
-
+	TestId = db:get_uuid(),
 
 	%
 	% find osm exam docs
@@ -437,10 +437,11 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	%
 	case OsmExamDocs of
 		[] ->
-			S3Dir = ep_osm_exam_api:s3dir(
-				itf:val(OsmSeasonDoc, code), SubjectCode
+			S3Dir = ep_osm_exam_api:s3dir_new(
+				OsmSeasonDoc, FrpSubjectDoc, TestId
 			),
 			FsToCreate = [
+				fields:build('_id', TestId),
 				fields:build(marktype, MarkType),
 				fields:build(season_fk, SeasonId),
 				fields:build(subject_code_fk, SubjectId),

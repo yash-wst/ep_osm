@@ -585,6 +585,21 @@ s3dir(SeasonCode, SubjectCode) ->
 	S3Dir.
 
 
+s3dir_new(SeasonDoc, SubjectDoc, TestId) ->
+	SeasonCode = itf:val(SeasonDoc, code),
+	SubjectCode = itf:val(SubjectDoc, subject_code),
+	case itxconfigs_cache:get2(ep_osm_exam_s3dir_format, undefined) of
+		"uid" ->
+			ep_osm_exam_api:s3dir(
+				itf:idval(SeasonDoc), TestId
+			);
+		_ ->
+			ep_osm_exam_api:s3dir(
+				SeasonCode, SubjectCode
+			)
+	end.
+
+
 
 
 %------------------------------------------------------------------------------
