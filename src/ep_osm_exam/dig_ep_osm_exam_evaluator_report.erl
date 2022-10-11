@@ -386,15 +386,33 @@ fetch(D, _From, _Size, [
 	%
 	% get evaluation stats
 	%
-	Stats = ep_osm_exam_api:getstats_evaldate(ExamId),
+	Stats = ep_osm_exam_api:get_capcentre_stats_test(ExamId, all, 4),
+	Stats1 = lists:sort(fun(A, B) ->
+		A < B
+	end, Stats),
+
+
+	%
+	% get unique ips
+	%
+	IPs = lists:map(fun({[IP, _State, _Date, _ProfileId], _Count}) ->
+		IP
+	end, Stats1),
+	IPs1 = helper:sort(helper:unique(IPs)),
+
+
+	%
+	% get cap centre dict
+	%
+	CapCentreDocsDict = ep_osm_cap_api:getdocs_dict_by_ip(IPs1),
 
 
 	%
 	% get profile docs
 	%
-	ProfileIds = lists:map(fun({[_, ProfileId], _}) ->
+	ProfileIds = lists:map(fun({[_IP, _State, _Date, ProfileId], _Count}) ->
 		ProfileId
-	end, Stats),
+	end, Stats1),
 	ProfileIdsUnique = helper:unique(ProfileIds),
 	ProfileDocs = profiles:getdocs_by_ids(ProfileIdsUnique),
 	ProfileDocsDict = helper:get_dict_from_docs(ProfileDocs),
@@ -404,13 +422,19 @@ fetch(D, _From, _Size, [
 	%
 	% layout results
 	%
-	Results = lists:map(fun({[Date, ProfileId], Count}) ->
+	Results = lists:map(fun({[IP, _State, Date, EvaluatorId], Count}) ->
 
 		%
 		% init
 		%
-		ProfileDoc = helper:get_doc_or_empty_doc_from_dict(ProfileId, ProfileDocsDict),
+		ProfileDoc = helper:get_doc_or_empty_doc_from_dict(EvaluatorId, ProfileDocsDict),
 
+		CapCentreName = case dict:find(IP, CapCentreDocsDict) of
+			{ok, CapDoc} ->
+				itf:val(CapDoc, name);
+			_ ->
+				""
+		end,
 
 		%
 		% get stats per profile
@@ -436,6 +460,12 @@ fetch(D, _From, _Size, [
 				val=Date
 			},
 			#dcell {
+				val=IP
+			},
+			#dcell {
+				val=CapCentreName
+			},
+			#dcell {
 				val=Count
 			},
 			#dcell {
@@ -444,13 +474,13 @@ fetch(D, _From, _Size, [
 					new=true,
 					text="Report",
 					url=itx:format("/~p?id=~s&evaluatorid=~s", [
-						?MODULE, ExamId, ProfileId
+						?MODULE, ExamId, EvaluatorId
 					])
 				}
 			}
 		]
 
-	end, Stats),
+	end, Stats1),
 
 
 
@@ -464,6 +494,8 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="Email"},
 		#dcell {type=header, val="Role"},
 		#dcell {type=header, val="Date"},
+		#dcell {type=header, val="IP"},
+		#dcell {type=header, val="CAP Centre Name"},
 		#dcell {type=header, val="Count"},
 		#dcell {type=header, show_csv=false, val="Report"}
 	],
@@ -870,7 +902,6 @@ handle_export_evaluator_stats_bulk(Fs, Dir, From) ->
 	%
 	dig:log(info, io_lib:format("Fetching docs from ~p", [From])),
 	Docs = ep_osm_exam_api:fetch(From, ?BATCH_SIZE, Fs),
-
 
 
 	%
