@@ -469,6 +469,27 @@ fetch(D, _From, _Size, [
 				val=Count
 			},
 			#dcell {
+				val= itf:val(ProfileDoc, beneficiary_name)
+			},
+			#dcell {
+				val= itf:val(ProfileDoc, bank_name)
+			},
+			#dcell {
+				val= itf:val(ProfileDoc, bank_branch_name)
+			},
+			#dcell {
+				val= itf:val(ProfileDoc, bank_account_no)
+			},
+			#dcell {
+				val= itf:val(ProfileDoc, bank_ifsc_code)
+			},
+			#dcell {
+				val= itl:render(ProfileDoc, fields:get(bank_account_type))
+			},
+			#dcell {
+				val= itf:val(ProfileDoc, pancard_n)
+			},
+			#dcell {
 				show_csv=false,
 				val=#link {
 					new=true,
@@ -497,6 +518,13 @@ fetch(D, _From, _Size, [
 		#dcell {type=header, val="IP"},
 		#dcell {type=header, val="CAP Centre Name"},
 		#dcell {type=header, val="Count"},
+		#dcell {type=header, val="Beneficiary_name"},
+		#dcell {type=header, val="Bank Name"},
+		#dcell {type=header, val="Branch Name"},
+		#dcell {type=header, val="Account Number"},
+		#dcell {type=header, val="IFSC code"},
+		#dcell {type=header, val="Account Type"},
+		#dcell {type=header, val="PAN Card No"},
 		#dcell {type=header, show_csv=false, val="Report"}
 	],
 
