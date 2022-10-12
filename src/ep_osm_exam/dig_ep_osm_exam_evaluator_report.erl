@@ -386,11 +386,16 @@ fetch(D, _From, _Size, [
 	%
 	% get evaluation stats
 	%
-	Stats = ep_osm_exam_api:get_capcentre_stats_test(ExamId, all, 4),
+	FullStats = ep_osm_exam_api:get_capcentre_stats_test(ExamId, all, 4),
+
+	Stats = case FullStats of
+				[] -> get_old_stats_in_new_format(ExamId);
+				_ -> FullStats
+			end,
+
 	Stats1 = lists:sort(fun(A, B) ->
 		A < B
 	end, Stats),
-
 
 	%
 	% get unique ips
@@ -1021,6 +1026,22 @@ get_val({ok, Val}) ->
 	Val;
 get_val(error) ->
 	0.
+
+%
+% adds empty columns to old stats to match new stats format
+%
+get_old_stats_in_new_format(ExamId) ->
+	Stats = ep_osm_exam_api:getstats_evaldate(ExamId),
+
+	%
+	% extend empty columns to match signature of new stats with IP and state
+ 	%
+	lists:map(fun(OldStatsFormat) ->
+		{[Date, ProfileId], Count} = OldStatsFormat,
+
+		% new format - {[IP, State, Date, ProfileId], Count}
+		{["","", Date, ProfileId], Count}
+	end, Stats).
 
 
 
