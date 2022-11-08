@@ -208,7 +208,7 @@ event(move_to_yet_to_start) ->
 	]}, move_to_yet_to_start);
 
 event(move_to_on_hold_confirmed) ->
-	handle_move_to_on_hold(wf:q(anptestid), wf:q(anpid));
+	handle_move_to_on_hold(wf:q(anptestid), wf:q(anpid), wf:qs(anpcandidate_onhold_reasons));
 
 event(move_to_on_hold) ->
 	Event = ite:get(move_to_on_hold_confirmed, "Move to On-Hold"),
@@ -217,7 +217,7 @@ event(move_to_on_hold) ->
 			class="fw-bold",
 			text="Please mention why this booklet is put on-hold?"
 		},
-		itl:get(?EDIT, [f(comment)], Event, table)
+		itl:get(?EDIT, [fields:get(anpcandidate_onhold_reasons), f(comment)], Event, table)
 	],
 	itl:modal_fs(Es);
 
@@ -279,7 +279,8 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 	% fs to save
 	%
 	FsToSave = [
-		fields:build(anpstate, "anpstate_yettostart")
+		fields:build(anpstate, "anpstate_yettostart"),
+		itf:build(fields:get(anpcandidate_onhold_reasons), [])
 	],
 	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
 	NewComment = string:join([Changelist, "\n", "Moved from On Hold to Not Uploaded"], "\n"),
@@ -326,7 +327,7 @@ handle_add_DTP_comment() ->
 	end.
 
 
-handle_move_to_on_hold(ExamId, CandidateId) ->
+handle_move_to_on_hold(ExamId, CandidateId, OnHoldReasons) ->
 
 	%
 	% init
@@ -339,7 +340,8 @@ handle_move_to_on_hold(ExamId, CandidateId) ->
 	% fs to save
 	%
 	FsToSave = [
-		fields:build(anpstate, "anpstate_on_hold")
+		fields:build(anpstate, "anpstate_on_hold"),
+		itf:build(fields:get(anpcandidate_onhold_reasons), OnHoldReasons)
 	],
 	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
 	NewComment = string:join([Changelist, wf:q(comment)], "\n"),
