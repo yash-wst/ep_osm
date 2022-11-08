@@ -553,7 +553,7 @@ fetch(D, _From, _Size, [
 			total=length(ProfileDocs),
 			description=#link {
 				url=itx:format("/anptest?mode=view&anptestid=~s", [ExamId]),
-				text=io_lib:format("~s / ~s / ~s", [
+				text=io_lib:format("~ts / ~ts / ~ts", [
 					itf:val(TFs, anptestcourseid),
 					itf:val(TFs, testname),
 					?LN(?L2A(itf:val(TFs, teststatus)))
@@ -946,7 +946,7 @@ handle_export_evaluator_stats_bulk(Fs, Dir, From) ->
 		% init
 		%
 		timer:sleep(1000),
-		dig:log(warning, io_lib:format("Processing ... ~s", [itf:val(Doc, testname)])),
+		dig:log(warning, io_lib:format("Processing ... ~ts", [itf:val(Doc, testname)])),
 
 
 		%
@@ -984,8 +984,8 @@ handle_export_evaluator_stats_bulk(Fs, Dir, From) ->
 
 
 handle_export_evaluator_stats_bulk_create_file(Doc, #dig {filters=Fs} = D) ->
-	{Name, FilePath} = dig:get_filename_path(io_lib:format("~s_~s_~s", [
-		itf:val(Doc, anptestcourseid), itf:val(Doc, testname), dig:export_filename(D)
+	{Name, FilePath} = dig:get_filename_path(io_lib:format("~s_~s", [
+		itf:val(Doc, anptestcourseid), dig:export_filename(D)
 	])),
 	dig:handle_export(Name, FilePath, D, Fs).
 
