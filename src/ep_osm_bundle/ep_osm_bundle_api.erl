@@ -258,6 +258,9 @@ get_stats_scanning_completed_by_date(Date) ->
 get_stats_upload_completed_by_date(Date) ->
 	get_stats_state_completed_by_date(uploaded_date, Date).
 
+get_stats_qc_completed_by_date(Date) ->
+	get_stats_state_completed_by_date(qc_date, Date).
+
 
 get_stats_state_completed_by_date(State, Date) ->
 	%

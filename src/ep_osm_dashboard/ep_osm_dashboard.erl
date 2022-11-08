@@ -129,9 +129,10 @@ widget_scanning_stats() ->
 %
 widget_dtp_progress() ->
 	layout:grow([
-		layout:g(4, widget_inward_progress()),
-		layout:g(4, widget_scanning_progress()),
-		layout:g(4, widget_upload_progress())
+		layout:g(3, widget_inward_progress()),
+		layout:g(3, widget_scanning_progress()),
+		layout:g(3, widget_upload_progress()),
+		layout:g(3, widget_qc_progress())
 	]).
 
 widget_inward_progress() ->
@@ -145,6 +146,10 @@ widget_scanning_progress() ->
 widget_upload_progress() ->
 	widget_progress("Upload Completed", fun(Date) ->
 		ep_osm_bundle_api:get_stats_upload_completed_by_date(Date)
+	end).
+widget_qc_progress() ->
+	widget_progress("QC Completed", fun(Date) ->
+		ep_osm_bundle_api:get_stats_qc_completed_by_date(Date)
 	end).
 
 widget_progress(Title, Fun) ->
@@ -211,8 +216,7 @@ widget_evaluation_stats() ->
 	Es1 = widget_evaluation_stats("Evaluation Status", Stats, [
 		anpstate_yettostart,
 		anpstate_active,
-		anpstate_completed,
-		anpstate_evaluation_rejected
+		anpstate_completed
 	]),
 	Es2 = widget_evaluation_stats("Moderation Status", Stats, [
 		anpstate_moderation,
@@ -222,14 +226,19 @@ widget_evaluation_stats() ->
 		anpstate_revaluation,
 		anpstate_revaluation_completed
 	]),
+	Es4 = widget_evaluation_stats("Unevaluated Status", Stats, [
+		anpstate_evaluation_rejected,
+		anpstate_on_hold,
+		anpstate_discarded
+	]),
 
 
 	%
 	% return widget
 	%
 	layout:grow(lists:map(fun(Es) ->
-		layout:g(4, Es)
-	end, [Es1, Es2, Es3])).
+		layout:g(3, Es)
+	end, [Es1, Es2, Es3, Es4])).
 
 
 widget_evaluation_stats(Title, Stats, States) ->
@@ -267,6 +276,8 @@ color(anpstate_revaluation_completed) ->
 	'#1cbb8c';
 color(anpstate_evaluation_rejected) ->
 	'#dc3545';
+color(anpstate_on_hold) ->
+	'#fcb92c';
 color(_) ->
 	''.
 
