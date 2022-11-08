@@ -133,6 +133,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Evaluation State"},
 			#dcell {type=header, val="Inward Timestamp"},
 			#dcell {type=header, val="Master Data Status"},
+			#dcell {type=header, val="On Hold Reasons"},
 			#dcell {type=header, val="Bundle Number"},
 			#dcell {type=header, val="Packet Number"},
 			#dcell {type=header, val="Rack Location"},
@@ -241,7 +242,8 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 		anpseatnumber_corrected,
 		anpstate,
 		timestamp_inward,
-		master_data_status
+		master_data_status,
+		anpcandidate_onhold_reasons
 	],
 	lists:map(fun(FId) ->
 		case FId of
@@ -249,6 +251,11 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 				#dcell {val=helper:epochstrtotime(itf:val(CandidateDoc, timestamp_inward))};
 			anpstate ->
 				#dcell {val=ep_osm_helper:get_anpstate_shorthand(itf:val(CandidateDoc, FId))};
+			anpcandidate_onhold_reasons ->
+				List = itf:val2(CandidateDoc, anpcandidate_onhold_reasons),
+				Tokens= string:tokens(List, ","),
+				ListOnUI = string:join(Tokens, "\n"),
+				#dcell {val=ListOnUI};
 			_ ->
 				#dcell {val=itf:val(CandidateDoc, FId)}
 		end

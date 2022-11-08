@@ -1073,7 +1073,8 @@ get_bundle_docs(ExamId, OsmBundleId) ->
 			itf:textbox(?F(anpseatnumber_corrected)),
 			itf:textbox(?F(anpstate)),
 			itf:textbox(?F(timestamp_inward)),
-			itf:textbox(?F(master_data_status))
+			itf:textbox(?F(master_data_status)),
+			fields:get(anpcandidate_onhold_reasons)
 		]
 	}),
 
