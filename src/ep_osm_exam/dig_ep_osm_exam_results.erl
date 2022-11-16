@@ -655,8 +655,9 @@ handle_submit_results_to_rps(TestId) ->
 	%
 	Stats = ep_osm_exam_api:get_evaluation_stats0(TestId),
 	lists:foreach(fun(PendingState) ->
+		StateCount = proplists:get_value([PendingState], Stats),
 		?ASSERT(
-			proplists:get_value([PendingState], Stats) == 0,
+			((StateCount == 0) or (StateCount == undefined)),
 			"Error! Evaluation pending. Please complete all evaluations."
 		)
 	end, ep_osm_exam_api:get_pending_states()),
@@ -667,14 +668,22 @@ handle_submit_results_to_rps(TestId) ->
 	% submit
 	%
 	{CsvDataSize, CsvData} = ep_osm_exam_api:csv_frp(TestId, OsmEvaluatorType),
-	{ok, _} = up_core_marks_upload_queue_api:create_rpc(
-		itf:val(Doc, season_fk),
-		itf:val(Doc, subject_code_fk),
-		?L2A(MarkTypeId),
-		?L2B(CsvData),
-		CsvDataSize,
-		EvaluationType
+	RpcRes = rpc:call(
+		itxnode:uni(),
+		up_core_marks_upload_queue_api,
+		create_rpc,
+		[
+			itf:val(Doc, season_fk), itf:val(Doc, subject_code_fk),
+			?L2A(MarkTypeId), ?L2B(CsvData), CsvDataSize, EvaluationType
+		]
 	),
+	case RpcRes of
+		{badrpc, Reason} ->
+			helper_ui:flash(error, io_lib:format("Failed! ~p", [Reason]));
+		_ ->
+			ok
+	end,
+
 
 
 	%
