@@ -416,7 +416,7 @@ handle_upload_completed(ExamId, BundleId) ->
 		%  get keys
 		%
 		UploadedDir = ?FLATTEN(S3Dir ++ "/" ++ itf:val(CDoc, anpseatnumber)),
-		Keys = helper_s3:get_keys(UploadedDir, ".jpg"),
+		Keys = helper_s3:get_keys(UploadedDir, [".jpg", ".pdf"]),
 
 
 		%

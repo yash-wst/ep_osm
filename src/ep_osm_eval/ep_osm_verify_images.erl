@@ -126,7 +126,25 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 	Cols = itxconfigs_cache:get2(ep_osm_verify_images_cols, 1),
 	ColSize = 12 div Cols,
 	Es = lists:map(fun(ImageUrl) ->
+
 		AName = anpcandidate:get_aname_from_imgurl(ImageUrl),
+		EsUrl = case filename:extension(AName) of
+			".pdf" ->
+				#iframe {
+					src=ImageUrl,
+					width="100%",
+					height="900",
+					frameborder = "0"
+				};
+			_ ->
+				#image {
+					class="border border-2 border-primary",
+					style="width: 100%",
+					image=ImageUrl
+				}
+		end,
+
+
 		layout:g(ColSize, [
 			lists:flatten(io_lib:format("
 				<a id='~s' href='#'></a>", [AName]
@@ -135,12 +153,10 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 				class="bg-info p-2 mt-3",
 				text=AName
 			},
-			#image {
-				class="border border-2 border-primary",
-				style="width: 100%",
-				image=ImageUrl
-			}
+			EsUrl
 		])
+
+
 	end, ImgUrls),
 	layout:grow(Es).
 

@@ -412,7 +412,7 @@ layout_uploaded_pages(ExamDoc, _BundleDoc, CDoc, ?COMPLETED) ->
 		TotalPages = helper:l2i(itf:val(CDoc, total_pages)),
 		ExpectedImagesCount = get_expected_images_from_total_pages(TotalPages),
 		Keys = helper_s3:list_keys_config(Bucket, DirPath, [
-			{extension, ".jpg"}
+			{extension, [".jpg", ".pdf"]}
 		]),
 		LengthKeys = length(Keys),
 
