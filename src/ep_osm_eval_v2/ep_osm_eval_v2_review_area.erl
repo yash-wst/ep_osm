@@ -178,13 +178,32 @@ layout_answerpaper(TFs, Fs) ->
 %
 %..............................................................................
 layout_answerpaper_page(ImgUrl=CanvasId, AName, CanvasData, PageNo) ->
+
+
+	%
+	% init
+	%
+	ImgExt = filename:extension(ImgUrl),
+
+
 	%
 	%  create html tags
 	%
 	PageTitle = #panel{class="text-center", text=AName},
 
-	CanvasTag = itx:format("<canvas id='~s' class='CanvasNum_~p'></canvas>",
-		[CanvasId, PageNo]),
+	CanvasTag = case ImgExt of
+		".pdf" ->
+			#iframe {
+				src=ImgUrl,
+				width="100%",
+				height="900",
+				frameborder="0"
+			};
+		_ ->
+			itx:format("<canvas id='~s' class='CanvasNum_~p'></canvas>",
+				[CanvasId, PageNo])
+	end,
+
 
 	CanvasBody = #panel{
 		html_id=AName,
@@ -211,6 +230,12 @@ layout_answerpaper_page(ImgUrl=CanvasId, AName, CanvasData, PageNo) ->
 	%
 	% layout each answer sheet image
 	%
+	CanvasClass = case ImgExt of
+		".pdf" ->
+			[];
+		_ ->
+			" m-auto "
+	end,
 	layout_panel("w-100 bg-light",
 		layout_panel("card",
 			[
@@ -223,7 +248,7 @@ layout_answerpaper_page(ImgUrl=CanvasId, AName, CanvasData, PageNo) ->
 					]
 				),
 
-				layout_panel("card-body m-auto p-2", CanvasBody)
+				layout_panel("card-body p-2 " ++ CanvasClass, CanvasBody)
 			]
 		)
 	).

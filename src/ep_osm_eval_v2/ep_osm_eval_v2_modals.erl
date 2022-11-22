@@ -217,10 +217,25 @@ modal_evaluator_markings() ->
 %
 %-------------------------------------------------------------------------------
 count_canvas_marking_data() ->
+
+	%
+	% init
+	%
     Fs = anpcandidate:get_fs(),
-	LofTodo = length(helper:state(filenames)),
+    Filenames = helper:state(filenames),
+
+
+    %
+    % FilenamesPDF 
+    %
+    FilenamesPDF = lists:filter(fun(Filename) ->
+    	filename:extension(Filename) == ".pdf"
+    end, Filenames),
+
+
+	LofTodo = length(Filenames),
 	CanvasData = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ anpcandidate:role())),
 	LofDone = anpcandidate:get_marked_pages_count(CanvasData),
 
-	{LofDone, LofTodo}.
+	{LofDone + length(FilenamesPDF), LofTodo}.
 
