@@ -6,11 +6,11 @@
 
 pagejs() -> [
 	fabricjs,
-	"/lib/ep_osm/priv/static/js/ep_osm_eval_v2.1.js"
+	"/lib/ep_osm/priv/static/js/ep_osm_eval_v2.2.js"
 ].
 
 pagecss() -> [
-	"/lib/ep_osm/priv/static/css/ep_osm_eval_v2.css"
+	"/lib/ep_osm/priv/static/css/ep_osm_eval_v2.2.css"
 ].
 
 

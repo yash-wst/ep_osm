@@ -39,34 +39,46 @@ layout_toolbar_button2(Text, Fa_icon_name, _Id) ->
 
 
 layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
-		#panel {
-			class="bg-white p-2 shadow-lg
-			border border-dark border-top-0 border-bottom-0",
-			body=[
+	ToolbarIcon = case Bg_image_css_name of
+		"toolbar-icon-color" ->
+			#panel{
+				style="height: 25px;max-width: 25px;border-radius: 8px;background-color:red;",
+				class="rounded-circle mx-auto swatchy-trigger
+					swatchy-output swatchy-display"
+				};
+		_ ->
+			#panel {
+				style="width:25px;height:25px;transform:scale(1.4);",
+				class=itx:format("card-img-top my-0 mx-auto ~s",
+				 [Bg_image_css_name])
+			}
+	end,
 
-				%
-				% clickable svg icon
-				%
-				#link {
-					html_id =_Id,
-					body=[
-						#panel {
-							style="width:25px;height:25px;transform:scale(1.4);",
-							class=itx:format("card-img-top my-0 mx-auto ~s",
-							 [Bg_image_css_name])
-						},
+	#panel {
+		class="bg-white p-2 shadow-lg
+		border border-dark border-top-0 border-bottom-0",
+		body=[
 
-						%
-						% clickable text under icon
-						%
-						#panel {
-							text=Text,
-							style="font-size:12px;"
-						}
-					]
-				}
-			]
-		}.
+			%
+			% clickable svg icon
+			%
+			#link {
+				html_id =_Id,
+				body=[
+
+					ToolbarIcon,
+
+					%
+					% clickable text under icon
+					%
+					#panel {
+						text=Text,
+						style="font-size:12px;"
+					}
+				]
+			}
+		]
+	}.
 
 
 
@@ -77,6 +89,7 @@ layout_toolbar_button(Text, Bg_image_css_name, _Id) ->
 %-------------------------------------------------------------------------------
 layout_toolbar_buttons() ->
 	[
+		layout_toolbar_button("Color", "toolbar-icon-color", "toolbar_color"),
 		layout_toolbar_button("Rotate", "toolbar-icon-rotate", "toolbar_rotate"),
 		layout_toolbar_button("Flip", "toolbar-icon-flip", "toolbar_flip"),
 		layout_toolbar_button("Erase All", "toolbar-icon-eraseall", "toolbar_eraseall"),

@@ -65,7 +65,6 @@ ANP.showpanel = function (panelid, switched, aname) {
 ///////////////////////////////////////////////////////////////////////////////
 
 ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
-
 	// get url of the current image
 	var canvasid = imgurl;
 
@@ -80,7 +79,7 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 	// load canvas data
 	ANP.setBackgroundImage(canvas, imgurl);
 	if (canvasdata != "false") {
-		canvas.loadFromJSON(canvasdata);
+		// canvas.loadFromJSON(canvasdata);
 	}
 
 	// init canvas properties
@@ -359,6 +358,9 @@ ANP.setBackgroundImage = function (canvas, imgurl) {
 	var img = new Image();
 	img.crossOrigin = "anonymous";
 	img.onload = function() {
+		ctx = canvas.getContext("2d");
+		canvas.width = ANP.BG_WIDTH;
+		canvas.height = ANP.BG_HEIGHT;
 		canvas.setBackgroundImage(new fabric.Image(img, {
 			originX: 'left',
 			originY: 'top',
@@ -439,7 +441,17 @@ ANP.update_page_number_on_navbar = function() {
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// change color of drawing pen
+//
+///////////////////////////////////////////////////////////////////////////////
 
+ANP.changeCanvasPenColor= function(newColor){
+		Object.keys(ANP.canvasobjs).forEach(key => {
+		  ANP.canvasobjs[key].freeDrawingBrush.color = newColor;; // the value of the current key.
+		});
+}
 ///////////////////////////////////////////////////////////////////////////////
 //
 // mark current number as blue in page navigation dropdown
@@ -651,6 +663,7 @@ $(document).ready(function() {
 	ANP.update_page_number_on_navbar();
 	ANP.enable_navbar_fullscreen_button();
 	ANP.highlight_active_page();
+	InitColorPicker();
 
 	//
 	// remove unnecessary padding from review area
@@ -694,6 +707,7 @@ $(document).ready(function() {
 	$('#toolbar_draw').click(function() {
 		ANP.set_draw_mode();
 	});
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -782,3 +796,72 @@ document.addEventListener('keydown', function(event) {
 });
 
 ///////////////////////////////////////////////////////////////////////////////
+//
+// color picker popup
+//
+///////////////////////////////////////////////////////////////////////////////
+
+let hasColorPickerRun = false;
+
+function InitColorPicker(
+    autoClose=true,
+    swatches=[
+        "#F44336", "#BA68C8","#4FC3F7", "#8BC34A", "#FFEB3B", "#FFB74D"
+    ]
+) {
+
+    if (!hasColorPickerRun) {
+        hasColorPickerRun = true;
+        let swatchyCount = document.querySelectorAll('.swatchy-trigger');
+
+        for (let id = 0; id < swatchyCount.length; id++) {
+
+            let output
+            let container
+
+            document.querySelectorAll('.swatchy-trigger').item(id).addEventListener('click', toggleColorPickerPopup)
+            output = document.querySelectorAll('.swatchy-output').item(id)
+
+            // create popup element
+            container = document.createElement("div")
+            container.classList.add('swatchy-element')
+            container.setAttribute('style', 'display: none;')
+            output.before(container)
+
+            // add swatches to popup
+            let swatchContainer = document.createElement('div')
+            swatchContainer.classList.add('swatchy-swatches')
+            container.appendChild(swatchContainer)
+
+            let swatchCount = -1;
+            for (const swatch of swatches) {
+                swatchCount++;
+                let colorButton = document.createElement('div')
+                colorButton.setAttribute('data-swatchy-color', swatch)
+                colorButton.style.backgroundColor = swatch
+                colorButton.classList.add('swatchy-color-button')
+                colorButton.addEventListener('click', selectColor)
+                swatchContainer.appendChild(colorButton)
+
+            }
+
+            function selectColor(e) {
+                let input = document.querySelectorAll('.swatchy-output').item(id)
+                let newColor = e.target.getAttribute('data-swatchy-color')
+                input.setAttribute('value', newColor)
+                input.setAttribute('data-swatchy-color', newColor)
+                input.setAttribute('style', 'background-color: ' + newColor + '; color: ' + newColor + ';')
+                // change color of canvas pen
+				ANP.changeCanvasPenColor(newColor);
+
+                if (autoClose) {
+                    toggleColorPickerPopup()
+                }
+            }
+
+            function toggleColorPickerPopup() {
+            	$('.swatchy-element').toggle();
+            }
+        }
+    }
+}
