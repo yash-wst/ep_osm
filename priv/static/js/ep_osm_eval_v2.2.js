@@ -79,7 +79,7 @@ ANP.layout_answerpaper_page = function (imgurl, canvasdata) {
 	// load canvas data
 	ANP.setBackgroundImage(canvas, imgurl);
 	if (canvasdata != "false") {
-		// canvas.loadFromJSON(canvasdata);
+		canvas.loadFromJSON(canvasdata);
 	}
 
 	// init canvas properties
@@ -359,8 +359,6 @@ ANP.setBackgroundImage = function (canvas, imgurl) {
 	img.crossOrigin = "anonymous";
 	img.onload = function() {
 		ctx = canvas.getContext("2d");
-		canvas.width = ANP.BG_WIDTH;
-		canvas.height = ANP.BG_HEIGHT;
 		canvas.setBackgroundImage(new fabric.Image(img, {
 			originX: 'left',
 			originY: 'top',
