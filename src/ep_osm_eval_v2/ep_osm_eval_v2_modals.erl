@@ -95,6 +95,8 @@ layout_submit_pages_remaining() ->
 %
 %-------------------------------------------------------------------------------
 layout_submit() ->
+	ep_osm_eval_asserts:check_all_images_are_loaded(get_canvas_data()),
+
 	{LofDone, LofTodo} = count_canvas_marking_data(),
 
 	case LofDone >= LofTodo of
@@ -216,12 +218,17 @@ modal_evaluator_markings() ->
 % Misc
 %
 %-------------------------------------------------------------------------------
+get_canvas_data() ->
+	Fs = anpcandidate:get_fs(),
+	CanvasData = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ anpcandidate:role())),
+	CanvasData.
+
+
 count_canvas_marking_data() ->
 
 	%
 	% init
 	%
-    Fs = anpcandidate:get_fs(),
     Filenames = helper:state(filenames),
 
 
@@ -234,8 +241,7 @@ count_canvas_marking_data() ->
 
 
 	LofTodo = length(Filenames),
-	CanvasData = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ anpcandidate:role())),
+	CanvasData = get_canvas_data(),
 	LofDone = anpcandidate:get_marked_pages_count(CanvasData),
 
 	{LofDone + length(FilenamesPDF), LofTodo}.
-
