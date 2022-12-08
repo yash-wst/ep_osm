@@ -419,7 +419,6 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	MarkType = itf:val2(FrpExamDoc, mark_type_fk),
 
 	FacultyId = itf:val2(FrpExamDoc, faculty_code_fk),
-	CourseId = itf:val2(FrpExamDoc, course_code_fk),
 	ProgramId = itf:val2(FrpExamDoc, program_code_fk),
 
 	TestId = db:get_uuid(),
@@ -451,7 +450,6 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 				fields:build(season_fk, SeasonId),
 
 				fields:build(faculty_code_fk, FacultyId),
-				fields:build(course_code_fk, CourseId),
 				fields:build(program_code_fk, ProgramId),
 				fields:build(subject_code_fk, SubjectId),
 
