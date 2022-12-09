@@ -76,7 +76,9 @@ exportids() -> [
 	"moderator_reval_total",
 	"total",
 	"marks_per_question",
-	"marks_per_marked_question"
+	"marks_per_marked_question",
+	"total_pages_todo",
+	"total_pages_done"
 ].
 
 
@@ -160,6 +162,11 @@ f("ip_anprevaluator") ->
 f("ip_anpmoderator_reval") ->
 	itf:textbox(?F(ip_anpmoderator_reval, "Moderator Reval IP"));
 
+f("total_pages_todo") ->
+	itf:textbox(?F(total_pages_todo, "Total pages to evaluate"));
+
+f("total_pages_done") ->
+	itf:textbox(?F(total_pages_done, "Total pages evaluated"));
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -1256,6 +1263,28 @@ val(#docs {
 		?D({E, M, erlang:get_stacktrace()}),
 		[]
 	end;
+
+
+val(#docs {
+	doc=Doc
+}, "total_pages_todo") ->
+
+	Fs = itf:d2f(Doc, ep_osm_candidate:fs(all)),
+	CanvasData = fields:getuivalue(Fs, anpcanvas_anpevaluator),
+	Filenames = lists:map(fun({Aname, _Val}) ->
+		Aname
+	end, CanvasData),
+	?I2S(length(Filenames));
+
+
+
+val(#docs {
+	doc=Doc
+}, "total_pages_done") ->
+	Fs = itf:d2f(Doc, ep_osm_candidate:fs(all)),
+	CanvasData = fields:getuivalue(Fs, anpcanvas_anpevaluator),
+	?I2S(anpcandidate:get_marked_pages_count(CanvasData));
+
 
 
 val(#docs {
