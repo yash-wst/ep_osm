@@ -431,10 +431,13 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 		fields:build(anptestcourseid, SubjectCode),
 		fields:build(exam_pattern, SubjectPattern)
 	],
-	#db2_find_response {docs=OsmExamDocs} = db2_find:get_by_fs(
+	#db2_find_response {docs=OsmExamDocs0} = db2_find:get_by_fs(
 		anptests:getdb(), FsFind, 0, ?INFINITY
 	),
 
+	OsmExamDocs = lists:filter(fun(EDoc) ->
+		itf:val2(EDoc, marktype) == MarkType
+	end, OsmExamDocs0),
 
 	%
 	% create or skip
