@@ -10,7 +10,7 @@ pagejs() -> [
 ].
 
 pagecss() -> [
-	"/lib/ep_osm/priv/static/css/ep_osm_v2.css"
+	"/lib/ep_osm/priv/static/css/ep_osm_2.css"
 ].
 
 
