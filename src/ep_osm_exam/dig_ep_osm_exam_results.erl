@@ -78,7 +78,8 @@ exportids() -> [
 	"marks_per_question",
 	"marks_per_marked_question",
 	"total_pages_todo",
-	"total_pages_done"
+	"total_pages_done",
+	"total_pages_missing_bg"
 ].
 
 
@@ -167,6 +168,9 @@ f("total_pages_todo") ->
 
 f("total_pages_done") ->
 	itf:textbox(?F(total_pages_done, "Total pages evaluated"));
+
+f("total_pages_missing_bg") ->
+	itf:textbox(?F(total_pages_missing_bg, "Total pages missing b/g image"));
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -1284,6 +1288,14 @@ val(#docs {
 	Fs = itf:d2f(Doc, ep_osm_candidate:fs(all)),
 	CanvasData = fields:getuivalue(Fs, anpcanvas_anpevaluator),
 	?I2S(anpcandidate:get_marked_pages_count(CanvasData));
+
+
+val(#docs {
+	doc=Doc
+}, "total_pages_missing_bg") ->
+	Fs = itf:d2f(Doc, ep_osm_candidate:fs(all)),
+	CanvasData = fields:getuivalue(Fs, anpcanvas_anpevaluator),
+	?I2S(ep_osm_helper:getcount_canvases_without_background_image(CanvasData));
 
 
 

@@ -24,6 +24,47 @@ get_anpstate_shorthand(State) ->
 	?LN(?L2A(State++"_min")).
 
 
+
+%..............................................................................
+%
+% get canvases without background image
+%
+%..............................................................................
+
+get_canvases_without_background_image(CanvasData) ->
+	lists:filter(fun({_ImageName, JSONdata}) ->
+		%
+		% init
+		%
+		{struct, Res} = mochijson2:decode(JSONdata),
+		{struct, BgImageData} = proplists:get_value(
+			<<"backgroundImage">>, Res, {struct, notFound}
+		),
+
+
+		SrcUrl = case BgImageData of
+			notFound ->
+				undefined;
+			_ ->
+				proplists:get_value(<<"src">>, BgImageData)
+		end,
+
+		case SrcUrl of
+			undefined ->
+				true;
+			"" ->
+				true;
+			_ ->
+				false
+		end
+	
+	end, CanvasData).
+
+
+
+getcount_canvases_without_background_image(CanvasData) ->
+	length(get_canvases_without_background_image(CanvasData)).
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------

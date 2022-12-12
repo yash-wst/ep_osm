@@ -4,10 +4,10 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 
-
-%
+%------------------------------------------------------------------------------
 % checks if all images are properly loaded on canvas
-%
+%------------------------------------------------------------------------------
+
 check_all_images_are_loaded(CanvasData) ->
 	{_, ImproperBgImagePageNos} = lists:foldl(fun({ImageName, JSONdata}, {PageNo, PageNos}) ->
 		%
@@ -48,3 +48,8 @@ check_all_images_are_loaded(CanvasData) ->
 		length(ImproperBgImagePageNos) == 0,
 		ErrorStr
 	).
+
+
+%------------------------------------------------------------------------------
+% end
+%------------------------------------------------------------------------------
