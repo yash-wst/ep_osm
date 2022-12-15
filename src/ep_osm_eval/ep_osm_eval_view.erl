@@ -86,7 +86,7 @@ layout() ->
 			layout:g(4, layout_evaluator_marking(TFs, Fs, RoleFId)),
 			layout:g(4, layout_page_nos(TFs, Fs, RoleFId))
 		]),
-		anpcandidate:layout_answerpaper(TFs, Fs)
+		anpcandidate_answerpaper:layout_answerpaper(TFs, Fs)
 	]}),
 	akit_fullpage:layout(Es, nav()).
 
@@ -150,7 +150,7 @@ layout_page_nos(TFs, Fs, RoleFId) ->
 	% build row
 	%
 	CanvasDataVal = fields:getuivalue(Fs, helper:l2a("anpcanvas_" ++ ?A2L(RoleFId))),
-	Rows = anpcandidate:layout_page_nos_rows(CanvasDataVal, Filenames, 4),
+	Rows = anpcandidate_pagenos:layout_page_nos_rows(CanvasDataVal, Filenames, 4),
 	Table = #table {
 		class="table table-bordered",
 		rows=Rows

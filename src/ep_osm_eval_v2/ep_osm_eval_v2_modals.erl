@@ -101,7 +101,7 @@ layout_submit() ->
 
 	case LofDone >= LofTodo of
 		true ->
-			{modal, anpcandidate:layout_submit_confirm()};
+			{modal, anpcandidate_submit:layout_submit_confirm()};
 		false ->
 			{modal, layout_submit_pages_remaining()}
 	end.
