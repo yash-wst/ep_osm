@@ -9,10 +9,6 @@ pagejs() -> [
 	"/lib/ep_osm/priv/static/js/ep_osm_2.js"
 ].
 
-pagecss() -> [
-	"/lib/ep_osm/priv/static/css/ep_osm_2.css"
-].
-
 
 main() ->
 	ita:auth(?APPOSM, ?MODULE, ?AKIT(#template {file="lib/ep_osm/priv/static/templates/html/ep_osm_eval.html"})).

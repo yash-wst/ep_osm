@@ -103,10 +103,18 @@ layout_marking_scheme(TFs, Fs) ->
 %
 %-------------------------------------------------------------------------------
 layout_marks_box(TFs, Fs) ->
+
+	Style = case itf:val(TFs, anptesttype) of
+		"anptesttype_thesis" ->
+			"display: none;";
+		_ ->
+			"width:250px;z-index:2001;border-radius: 12px;"
+	end,
+
 	[
 		#panel {
 			html_id="marks_box",
-			style="width:250px;z-index:2001;border-radius: 12px;",
+			style=Style,
 			class="d-flex flex-column float-left position-fixed start-1 bottom-0
 			 mb-2 ms-2 bg-white p-3 justify-content-center border border-dark shadow-lg",
 			body=[

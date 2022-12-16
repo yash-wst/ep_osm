@@ -130,7 +130,13 @@ layout_bottom_semicircle() ->
 % layout toolbar
 %
 %-------------------------------------------------------------------------------
-layout_toolbar() ->
+layout_toolbar(TestFs) ->
+	layout_toolbar(TestFs, itf:val(TestFs, anptesttype)).
+
+layout_toolbar(_, "anptesttype_thesis") ->
+	[];
+
+layout_toolbar(_, _) ->
 	#span {
 		html_id="toolbar_floating",
 		style="z-index:1001;",

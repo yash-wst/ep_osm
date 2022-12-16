@@ -51,7 +51,7 @@ layout() ->
 	Elements = [
 		ep_osm_eval_v2_navbar:layout_navbar(),
 
-    	ep_osm_eval_v2_toolbar:layout_toolbar(),
+    	ep_osm_eval_v2_toolbar:layout_toolbar(TestFs),
 
     	ep_osm_eval_v2_marks_box:layout_marks_box(TestFs, Fs),
 
