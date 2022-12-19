@@ -89,13 +89,14 @@ layout_link_evaluator_markings() ->
 %..............................................................................
 layout_link_student_grievance() ->
 	case itxauth:role() of
-		"anprevaluator" ->
+		?APPOSM_EVALUATOR ->
+			[];
+		_ ->
 			#link{
 				text="Student Grievance",
 				class="link-primary text-center mx-2 px-2",
 				postback={show_grievance_modal}
-			};
-		_ -> []
+			}
 	end.
 
 

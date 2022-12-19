@@ -117,8 +117,9 @@ layout_submit() ->
 %
 %-------------------------------------------------------------------------------
 layout_student_grievance() ->
-anpcandidate:layout_answerpaper_grievance(
-	fields:getuivalue(anpcandidate:get_fs(), anp_redressal_grievance)).
+	anpcandidate_answerpaper:layout_answerpaper_grievance(
+		fields:getuivalue(anpcandidate:get_fs(), anp_redressal_grievance)
+	).
 
 
 
