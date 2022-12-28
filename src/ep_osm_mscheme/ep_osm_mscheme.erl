@@ -90,7 +90,8 @@ layout() ->
 %..............................................................................
 
 layout(?CREATE, _) ->
-	itl:get(?CREATE, fs(create), ite:get(create), table);
+	Es = itl:get(?CREATE, fs(create), ite:get(create), table),
+	?AKIT({layout, card, Es});
 
 
 
