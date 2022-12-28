@@ -112,6 +112,45 @@ delete_by_field(F = #field {}) ->
 anptestid() ->
 	wf:q(anptest:id()).
 
+
+
+%------------------------------------------------------------------------------
+% thesis evaluation
+%------------------------------------------------------------------------------
+
+getdoc_thesis_report(DynamicFormId, CandidateDocId, ProfileId) ->
+	FsFind = [
+		itf:build(?CORAPP(ep_core_dynamic_form_fk), DynamicFormId),
+		itf:build(?CORAPP(application_host_id), CandidateDocId),
+		itf:build(?CORAPP(createdby), ProfileId)
+	],
+	DbConfig = [
+		{use_index, ["application_host_id"]}
+	],
+	case ep_core_application_api:fetch(0, 1, FsFind, DbConfig) of
+		[] ->
+			{[]};
+		[AppDoc0] ->
+			AppDoc0
+	end.
+
+
+
+create_thesis_report(DynamicFormId, CandidateDocId, ProfileId) ->
+	Fs = [
+		itf:build(?CORAPP(application_number), helper:uidintstr()),
+		itf:build(?CORAPP(ep_core_dynamic_form_fk), DynamicFormId),
+		itf:build(?CORAPP(createdon), helper:epochtimestr()),
+		itf:build(?CORAPP(createdby), ProfileId),
+		itf:build(?CORAPP(application_host_id), CandidateDocId),
+		itf:build(?CORAPP(application_host_module), "ep_osm_eval"),
+		itf:build(?CORAPP(application_state), ?CORFRM_STATE_NEW),
+		itf:build(?CORAPP(application_step), ""),
+		itf:build_comment(?CORAPP(comments), "created")
+	],
+	ep_core_application_api:save(Fs).
+
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
