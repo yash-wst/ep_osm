@@ -79,8 +79,8 @@ layout() ->
 	Es = ?AKIT({layout, card_list_group, [
 		layout_student_info(TFs, Fs),
 		layout:grow([
-			layout:g(4, layout_evaluator_marking(TFs, Fs, RoleFId)),
-			layout:g(4, layout_page_nos(TFs, Fs, RoleFId))
+			layout_evaluator_marking(TFs, Fs, RoleFId),
+			layout_page_nos(TFs, Fs, RoleFId)
 		]),
 		anpcandidate_answerpaper:layout_answerpaper(TFs, Fs)
 	]}),
@@ -121,17 +121,45 @@ layout_student_info(_TFs, Fs) ->
 %
 
 layout_evaluator_marking(TFs, Fs, RoleFId) ->
-	[
+	layout_evaluator_marking(TFs, Fs, RoleFId, itf:val(TFs, anptesttype)).
+
+layout_evaluator_marking(TFs, Fs, RoleFId, "anptesttype_thesis") ->
+	%
+	% get form
+	%
+	FormId = itf:val(TFs, anptesttype_thesis_formid),
+	{ok, FormDoc} = ep_core_dynamic_form_api:get(FormId),
+	FormRec = ep_core_dynamic_form_helper:form_rec(FormDoc),
+	CandidateDocId = itf:val(Fs, '_id'),
+	ProfileIdFId = ?L2A(itx:format("profileidfk_~p", [RoleFId])),
+	ProfileId = itf:val(Fs, ProfileIdFId),
+
+
+	%
+	% layout
+	%
+	AppDoc = ep_osm_candidate_api:getdoc_thesis_report(
+		FormId, CandidateDocId, ProfileId
+	),
+	ep_core_application_layout:layout(AppDoc, FormRec, ?REVIEW);
+
+layout_evaluator_marking(TFs, Fs, RoleFId, _) ->
+	Es = [
 		#p {class="font-weight-bold", text="Markings"},
 		anpcandidate:layout_evaluator_marking_0(TFs, Fs, RoleFId)
-	].
+	],
+	layout:g(4, Es).
 
 
 %
 % layout - page numbers
 %
-
 layout_page_nos(TFs, Fs, RoleFId) ->
+	layout_page_nos(TFs, Fs, RoleFId, itf:val(TFs, anptesttype)).
+
+layout_page_nos(_TFs, _Fs, _RoleFId, "anptesttype_thesis") ->
+	[];
+layout_page_nos(TFs, Fs, RoleFId, _) ->
 
 	%
 	% init
@@ -153,10 +181,11 @@ layout_page_nos(TFs, Fs, RoleFId) ->
 	},
 
 
-	[
+	Es = [
 		#p {class="font-weight-bold", text="Pages"},
 		Table
-	].
+	],
+	layout:g(4, Es).
 
 
 
