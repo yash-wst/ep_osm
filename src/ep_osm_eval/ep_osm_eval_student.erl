@@ -195,6 +195,9 @@ event(Event) ->
 % get anpid anptestid
 %
 get_anptestid_anpid(SeasonId, SubjectId, PRN) ->
+	get_anptestid_anpid(SeasonId, SubjectId, PRN, []).
+
+get_anptestid_anpid(SeasonId, SubjectId, PRN, MType) ->
 	%
 	% get osm exam by season id and subject id
 	%
@@ -207,10 +210,17 @@ get_anptestid_anpid(SeasonId, SubjectId, PRN) ->
 	ExamDocs =ep_osm_exam_api:fetch(0, 10, FsFind, [
 		{use_index, ["season_fk"]}
 	]),
-	get_anptestid_anpid(SeasonId, SubjectId, PRN, ExamDocs).
+
+	FExamDocs = case ExamDocs of
+		[ED] -> [ED];
+		[] -> [];
+		_ -> lists:filter(fun(Doc) -> itf:val2(Doc, marktype) == MType end, ExamDocs)
+	end,
+
+	get_anptestid_anpid1(SeasonId, SubjectId, PRN, FExamDocs).
 
 
-get_anptestid_anpid(_SeasonId, _SubjectId, PRN, [ExamDoc]) ->
+get_anptestid_anpid1(_SeasonId, _SubjectId, PRN, [ExamDoc]) ->
 	%
 	% get candidate doc
 	%
@@ -221,7 +231,7 @@ get_anptestid_anpid(_SeasonId, _SubjectId, PRN, [ExamDoc]) ->
 		CFs ->
 			{ExamId, itf:val(CFs, '_id')}
 	end;
-get_anptestid_anpid(_SeasonId, _SubjectId, _PRN, Docs) ->
+get_anptestid_anpid1(_SeasonId, _SubjectId, _PRN, Docs) ->
 	{error, Docs}.
 
 
