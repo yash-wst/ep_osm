@@ -626,7 +626,7 @@ handle_submit_results_to_rps(TestId) ->
 	Role = itxauth:role(),
 	{ok, Doc} = ep_osm_exam_api:get(TestId),
 	MarkTypeId = itf:val(Doc, marktype),
-	ResultUploadState = itf:val(Doc, reset_booklet_state),
+	ResultUploadState = itf:val(Doc, result_upload_status),
 	OsmEvaluatorType = "profiletype_" ++ Role,
 	EvaluationType = case Role of
 		"anpevaluator" -> "evaluation";
@@ -635,13 +635,6 @@ handle_submit_results_to_rps(TestId) ->
 		"anpmoderator_reval" -> "moderation_reval"
 	end,
 
-	%
-	% assert - result_upload_status should be "scanning_done"
-	%
-	?ASSERT(
-		(itf:val(Doc, result_upload_status) == "scanning_done"),
-		"Can not submit marks, scanning is not complete yet!"
-	),
 
 	%
 	% assert - marktype is set
@@ -653,11 +646,17 @@ handle_submit_results_to_rps(TestId) ->
 
 
 	%
-	% assert - not uploaded
+	% assert expected result upload state required to proceed with upload
 	%
+	ResultUploadStateExpected = case Role of
+		"anpevaluator" -> "scanning_done";
+		"anpmoderator" -> "uploaded";
+		"anprevaluator" -> "uploaded_moderation";
+		"anpmoderator_reval" -> "uploaded_revaluation"
+	end,
 	?ASSERT(
-		ResultUploadState /= "uploaded",
-		"Error! Results already uploaded."
+		ResultUploadState == ResultUploadStateExpected,
+		"Can not submit marks, previous step not completed or marks already uploaded"
 	),
 
 
