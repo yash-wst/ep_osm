@@ -38,6 +38,13 @@ getdocs_by_teststatus(Status) ->
 	Docs.
 
 
+getdoc_from_cache(Id) ->
+	Fn = fun() ->
+		ep_osm_exam_api:get(Id)
+	end,
+	itxdoc_cache:get({?MODULE, Id}, Fn, 10).
+
+
 
 
 list() ->
@@ -251,6 +258,23 @@ get_evaluation_stats0(TestId) ->
 			anpcandidates:db(TestId), "state_assigned", SK, EK, 1
 		)
 	end.
+
+
+get_evaluation_stats0_count_by_states(TestId, ListOfListOfStates) ->
+	Stats = get_evaluation_stats0(TestId),
+	StatsDict = dict:from_list(Stats),
+	lists:map(fun(States) ->
+		lists:foldl(fun(State, Acc) ->
+			Key = [State],
+			case dict:find(Key, StatsDict) of
+				{ok, Val} ->
+					Acc + Val;
+				_ ->
+					Acc
+			end
+		end, 0, States)
+	end, ListOfListOfStates).
+
 
 
 
