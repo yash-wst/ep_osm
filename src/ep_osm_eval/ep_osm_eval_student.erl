@@ -100,7 +100,7 @@ layout_marking_scheme(TFs, Fs) ->
 
 layout_answerpaper(TFs, Fs) ->
 	itl:wire_script("ANP.disable_selection();"),
-	layout:grow(layout:g(12, anpcandidate:layout_answerpaper(TFs, Fs))).
+	layout:grow(layout:g(12, anpcandidate_answerpaper:layout_answerpaper(TFs, Fs))).
 
 
 %..............................................................................
