@@ -2,6 +2,7 @@
 -module(dig_ep_osm_exam_results).
 -compile(export_all).
 -include("records.hrl").
+-include_lib("up_core/include/records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
 -import(dig_ep_osm_exam_evaluator_report, [get_role_group/1]).
 
@@ -28,6 +29,8 @@ heading() ->
 -record(docs, {
 	examdoc,
 	seasondoc,
+	facultydoc,
+	coursedoc,
 	programdoc,
 	subjectdoc,
 	mschemedoc,
@@ -46,10 +49,15 @@ heading() ->
 exportids() -> [
 	"season_code",
 	"season_name",
+	"faculty_code",
+	"faculty_name",	
+	"course_code",
+	"course_name",
 	"program_code",
 	"program_name",
 	"subject_code",
 	"subject_name",
+	"subject_type",
 	"testtotalmarks",
 	"osm_bundle_fk",
 	"prn",
@@ -79,7 +87,14 @@ exportids() -> [
 	"marks_per_marked_question",
 	"total_pages_todo",
 	"total_pages_done",
-	"total_pages_missing_bg"
+	"total_pages_missing_bg",
+	"serial_number",
+	"student_division",
+	"admission_status",
+	"marktype",
+	"testname",
+	"frequency_number",
+	"marks_per_question_inpods"
 ].
 
 
@@ -91,10 +106,17 @@ f("season_" ++ Id) ->
 	F = ?COREXS(?L2A(Id)),
 	F#field {label="Season " ++ F#field.label};
 
+
+f("faculty_" ++ _ = Id) ->
+	?CORFAC(?L2A(Id));
+
+f("course_" ++ _ = Id) ->
+	?UPCOURSE(?L2A(Id));
+
 f("program_" ++ _ = Id) ->
 	?CORPGM(?L2A(Id));
 
-f("subject_" ++ _ = Id) ->
+f("subject_" ++ _ = Id) when Id /= "subject_type" ->
 	?CORSUB(?L2A(Id));
 
 f("prn") ->
@@ -171,6 +193,31 @@ f("total_pages_done") ->
 
 f("total_pages_missing_bg") ->
 	itf:textbox(?F(total_pages_missing_bg, "Total pages missing b/g image"));
+
+f("subject_type") ->
+	itf:textbox(?F(subject_type, "Subject Type"));
+
+f("serial_number") ->
+	itf:textbox(?F(serial_number, "Serial Number"));
+
+f("student_division") ->
+	itf:textbox(?F(student_division, "Student Division"));
+
+f("admission_status") ->
+	itf:textbox(?F(admission_status, "Admission Status"));
+
+f("marktype") ->
+	fields:get(marktype);
+
+f("testname") ->
+	itf:textbox(?F(testname, "Test Name"));
+
+f("frequency_number") ->
+	itf:textbox(?F(frequency_number, "Frequency Number"));
+
+f("marks_per_question_inpods") ->
+	itf:textbox(?F(marks_per_question_inpods, "Marks Per Question (InPods)"));
+
 
 f(Id) ->
 	fields:get(?L2A(Id)).
@@ -331,6 +378,7 @@ fetch(D, From, Size, [
 	end, ExportIds),
 	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
 	SeasonId = itf:val(ExamDoc, season_fk),
+	FacultyId = itf:val(ExamDoc, faculty_code_fk),
 	ProgramId = itf:val(ExamDoc, program_code_fk),
 	SubjectId = itf:val(ExamDoc, subject_code_fk),
 	MSchemeId = itf:val(ExamDoc, osm_mscheme_fk),
@@ -343,6 +391,7 @@ fetch(D, From, Size, [
 	% get docs
 	%
 	SeasonDoc = itx:okdoc(ep_core_exam_season_api:get(SeasonId)),
+	FacultyDoc = itx:okdoc(ep_core_faculty_api:get(FacultyId)),
 	ProgramDoc = itx:okdoc(ep_core_program_api:get(ProgramId)),
 	SubjectDoc = itx:okdoc(ep_core_subject_api:get(SubjectId)),
 	MSchemeDoc = itx:okdoc(ep_osm_mscheme_api:get(MSchemeId)),
@@ -400,6 +449,7 @@ fetch(D, From, Size, [
 		RecDoc = #docs {
 			examdoc=ExamDoc,
 			seasondoc=SeasonDoc,
+			facultydoc=FacultyDoc,
 			programdoc=ProgramDoc,
 			subjectdoc=SubjectDoc,
 			mschemedoc=MSchemeDoc,
@@ -417,6 +467,7 @@ fetch(D, From, Size, [
 		lists:foldl(fun
 			(Id, Acc) when 
 				Id == "marks_per_question";
+				Id == "marks_per_question_inpods";
 				Id == "marks_per_marked_question" ->
 				MPQVals = val(RecDoc, Id),
 				Acc ++ lists:map(fun(MPQVal) ->
@@ -442,6 +493,7 @@ fetch(D, From, Size, [
 	Header = lists:foldl(fun
 		(Id, Acc) when 
 			Id == "marks_per_question";
+			Id == "marks_per_question_inpods";
 			Id == "marks_per_marked_question" ->
 			Acc ++ get_question_headers(Id, MSchemeDoc, ListOfAllQuestions);
 		(Id, Acc) ->
@@ -1114,6 +1166,15 @@ val(#docs {
 	get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole);
 
 
+val(#docs {
+	doc=Doc,
+	listofquestions=ListOfAllQuestions,
+	evaluatorrole=EvaluatorRole
+}, Id) when
+	Id == "marks_per_question_inpods" ->
+	get_marks_per_question_inpods(Doc, ListOfAllQuestions, EvaluatorRole);
+
+
 
 val(#docs {
 	examdoc=ExamDoc
@@ -1136,6 +1197,13 @@ val(#docs {
 	Id == "season_code" ->
 	itf:val(SeasonDoc, f(Id));
 
+
+val(#docs {
+	facultydoc=FacultyDoc
+}, Id) when
+	Id == "faculty_name";
+	Id == "faculty_code" ->
+	itf:val(FacultyDoc, f(Id));
 
 
 val(#docs {
@@ -1297,6 +1365,20 @@ val(#docs {
 	?I2S(ep_osm_helper:getcount_canvases_without_background_image(CanvasData));
 
 
+val(#docs {
+	examdoc=ExamDoc
+}, Id) when
+	Id == "marktype" ->
+	FMarkType = itf:d2f_doc(ExamDoc, f(Id)),
+	itl:render(FMarkType);
+
+
+val(#docs {
+	examdoc=ExamDoc
+}, Id) when
+	Id == "testname" ->
+	itf:val(ExamDoc, f(Id));
+
 
 val(#docs {
 	doc=Doc
@@ -1360,6 +1442,35 @@ get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole) ->
 	end, [], ListOfAllQuestions).
 
 
+%
+% get - marks per question inpods
+%
+get_marks_per_question_inpods(Doc, ListOfAllQuestions, EvaluatorRole) ->
+	%
+	% init
+	%
+	EvaluatorMarkingId = ?L2A(?FLATTEN(io_lib:format("anpmarking_anp~s", [EvaluatorRole]))),
+	MarkingValues = itf:val(Doc, fields:get(EvaluatorMarkingId)),
+	MarkingValuesDict = dict:from_list(MarkingValues),
+
+	%
+	% get values
+	%
+	lists:foldl(fun({MarkingId, _QuestionId, _MaxMarks}, Acc) ->
+		case dict:find(MarkingId, MarkingValuesDict) of
+			{ok, ObtainedMarksFloatStr} ->
+				ObtainedMarks = helper:s2f_v1(ObtainedMarksFloatStr),
+				ObtainedMarksFmt = lists:flatten(io_lib:format("~.2f", [ObtainedMarks])),
+				Acc ++ [
+					"Descriptive", "", ObtainedMarksFmt
+				];
+			error ->
+				Acc ++ [
+					"", "", ""
+				]
+		end
+	end, [], ListOfAllQuestions).
+
 
 %
 % get - list of questions
@@ -1402,6 +1513,25 @@ get_question_headers("marks_per_marked_question", MSchemeDoc, _ListOfAllQuestion
 			val_export=string:join([QuestionLabel, MaxMarksLabel], " / ")
 		}
 	end, MarkedQuestions);
+
+
+get_question_headers("marks_per_question_inpods", _, ListOfAllQuestions) ->
+	lists:foldl(fun({_MarkingId, QuestionId, _MaxMarks}, Acc) ->
+		Acc ++ [
+			#dcell {
+				type=header,
+				val=itx:format("Question Type of ~s", [QuestionId])
+			},
+			#dcell {
+				type=header,
+				val="Option"
+			},
+			#dcell {
+				type=header,
+				val=itx:format("Marks of ~s", [QuestionId])
+			}
+		]
+	end, [], ListOfAllQuestions);
 
 
 get_question_headers("marks_per_question", _, ListOfAllQuestions) ->
