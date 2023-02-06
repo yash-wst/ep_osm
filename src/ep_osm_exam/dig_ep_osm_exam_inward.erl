@@ -31,6 +31,14 @@ form() ->
 % fields
 %------------------------------------------------------------------------------
 
+fids(inward) ->
+	InwardFIds0 = itxconfigs_cache:get2(dig_ep_osm_exam_inward_fids, [
+		"anp_paper_uid", "anpseatnumber", "total_pages"
+	]),
+	[?L2A(FId) || FId <- InwardFIds0].
+
+
+
 f(osm_exam_fk = I) ->
 	F = itf:textbox(?F(I, "OSM Exam")),
 	F#field {
@@ -42,6 +50,65 @@ f(osm_exam_fk = I) ->
 		end
 	}.
 
+
+
+%
+% fs - inward
+%
+fs(inward) -> [
+	itf:textbox(?F(anp_paper_uid, "Barcode / UID"), 
+		validators(anp_paper_uid, []), textbox_enterkey),
+	itf:textbox(?F(anpseatnumber, "Student Seat No."), 
+		validators(anpseatnumber, []), textbox_enterkey),
+	itf:textbox(?F(total_pages, "Total Pages"), 
+		validators(total_pages, ["integer_or_empty"]), textbox_enterkey),
+	itf:textbox(?F(anp_paper_booklet_slno, "Booklet Sl. No."), 
+		validators(anp_paper_booklet_slno, []), textbox_enterkey)
+];
+
+fs({inward, Config}) ->
+
+	%
+	% init
+	%
+	InwardFIds = fids(inward),
+
+
+	%
+	% build fs
+	%
+	PagesPerBooklet = proplists:get_value(pages_per_booklet, Config, []),
+	Fs = fs(inward),
+	lists:map(fun(FId) ->
+
+		%
+		% find field
+		%
+		F = itf:find(Fs, FId),
+
+
+		%
+		% return
+		%
+		case FId of
+			total_pages ->
+				itf:build(F, PagesPerBooklet);
+			_ ->
+				F
+		end
+	end, InwardFIds).
+
+
+%------------------------------------------------------------------------------
+% validators
+%------------------------------------------------------------------------------
+
+validators(FId, Default) ->
+	Key = ?L2A(itx:format("dig_ep_osm_exam_inward_validators_~p", [FId])),
+	ValidatorListStr = itxconfigs_cache:get2(
+		Key, Default
+	),
+	[?L2A(Validator) || Validator <- ValidatorListStr].
 
 
 %------------------------------------------------------------------------------
@@ -512,17 +579,27 @@ layout_candidate_edit(BundleDoc, CDoc)  ->
 %..............................................................................
 
 layout_inward_form() ->
+
+	%
+	% init
+	%
 	ExamId = wf:q(id),
 	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
 	PagesPerBooklet = itf:val(ExamDoc, pages_per_booklet),
-	Fs = [
-		itf:textbox(?F(anp_paper_uid, "Barcode / UID"), [], textbox_enterkey),
-		itf:textbox(?F(anpseatnumber, "Student Seat No."), [], textbox_enterkey),
-		itf:build(
-			itf:textbox(?F(total_pages, "Total Pages"), [], textbox_enterkey),
-			PagesPerBooklet
-		)
-	],
+
+
+	%
+	% build fs
+	%
+	Fs = fs({inward, [
+		{pages_per_booklet, PagesPerBooklet}
+	]}),
+
+
+
+	%
+	% layout form
+	%
 	itl:get(?CREATE, Fs, noevent, line).
 
 
@@ -630,7 +707,7 @@ layout_dtp_by(?APPOSM_RECEIVER, scannedby = Type, BundleDoc, _ProfileDocsDict, [
 		launch_assign_dtp_staff, "Assign", {launch_assign_dtp_staff, Type, BundleDoc}
 	);
 
-layout_dtp_by(?APPOSM_RECEIVER, createdby = Type, BundleDoc, ProfileDocsDict, [],
+layout_dtp_by(?APPOSM_RECEIVER, createdby, BundleDoc, ProfileDocsDict, [],
 	{InwardState, _, _, _}) ->
 		case InwardState of
 			?ASSIGNED ->
@@ -786,6 +863,10 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+event(create) ->
+	event(textbox_enterkey);	
+
+
 event({confirmation_yes, discard_bundle}) ->
 	dig_ep_osm_exam_inward_handler:handle_discard_bundle();
 	

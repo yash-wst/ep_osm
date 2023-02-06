@@ -236,7 +236,11 @@ handle_edit_candidate_dialog(CId) ->
 	%
 	% layout 
 	%
-	Fs = itf:d2f(CandidateDoc, anpcandidate:fs(edit_receiver)),
+	FIdsInward = dig_ep_osm_exam_inward:fids(inward),
+	FsEditReceiver = itf:d2f(CandidateDoc, anpcandidate:fs(edit_receiver)),
+	Fs = lists:map(fun(FId) ->
+		itf:find(FsEditReceiver, FId)
+	end, FIdsInward),
 	Fs1 = dig_mm:id_map(CId, Fs),
 	Event = ite:get(?NID(edit_receiver, CId), "Save", {edit_receiver, CId}),
 	Es = itl:get(?EDIT, Fs1, Event, table),
@@ -963,15 +967,25 @@ handle_print_bundle_cover(ExamId, BundleId) ->
 handle_inward([], [], _) ->
 	helper_ui:flash(error, "Please enter either barcode or student seat number", 5);
 
-handle_inward(UId, SNo, TotalPages) ->
+
+handle_inward(UId, SNo, _TotalPages) ->
 
 	%
-	% assert total pages in int or empty
+	% init
 	%
-	?ASSERT(
-		(TotalPages ==[]) or (helper:l2i(TotalPages) /= error),
-		"Total pages should be empty or an integer"
-	),
+	SNo1 = ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo),
+	FsInward = dig_ep_osm_exam_inward:fs(inward),
+	FsInwardUi = itf:fs_merge(itf:uivalue(FsInward), [
+		itf:build(fields:get(anpseatnumber), SNo1)
+	]),
+
+
+	%
+	% validate inward fs
+	%
+	handle_validate_inward_fs(FsInwardUi),
+
+
 	case UId of
 		[] ->
 			valid;
@@ -1010,7 +1024,6 @@ handle_inward(UId, SNo, TotalPages) ->
 	%
 	% search for existing docs
 	%
-	SNo1 = ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo),
 	FsToSearchCandidate = [
 		itf:build(itf:textbox(?F(anpseatnumber)), SNo1)
 	],
@@ -1019,29 +1032,34 @@ handle_inward(UId, SNo, TotalPages) ->
 			{use_index, ["anpseatnumber"]}
 		]
 	),
-	handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, CandidateDocs).
+	handle_inward(ExamId, OsmBundleId, FsInwardUi, CandidateDocs).
 
 
 %
 % inward seat number which does not exist in previously imported master data
 %
-handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, []) ->
+handle_inward(ExamId, OsmBundleId, FsInwardUi, []) ->
+
+	%
+	% init
+	%
+	UId = itf:val2(FsInwardUi, anp_paper_uid),
+	SNo = itf:val2(FsInwardUi, anpseatnumber),
+
+
+
 	%
 	% create entry in exam db
 	%
-
 	ExamDb = anpcandidates:db(ExamId),
 	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
 	BundleNumber = get_bundle_number_from_cache(OsmBundleId),
 
 
 
-	FsToSave = [
-		itf:build(itf:textbox(?F(anp_paper_uid)), UId),
-		itf:build(itf:textbox(?F(anpseatnumber)), ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo)),
+	FsToSave = FsInwardUi ++ [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
 		itf:build(itf:textbox(?F(anpcentercode)), "B:" ++ BundleNumber),
-		itf:build(itf:textbox(?F(total_pages)), TotalPages),
 		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
 		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, OsmBundleId)),
 		itf:build(itf:textbox(?F(master_data_status)), "not_matched")
@@ -1058,11 +1076,14 @@ handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, []) ->
 %
 % inward student seat number which is already in master data
 %
-handle_inward(ExamId, OsmBundleId, UId, SNo, TotalPages, [Doc]) ->
+handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 
 	%
 	% init
 	%
+	UId = itf:val2(FsInwardUi, anp_paper_uid),
+	SNo = itf:val2(FsInwardUi, anpseatnumber),
+	TotalPages = itf:val2(FsInwardUi, total_pages),
 	ExamDb = anpcandidates:db(ExamId),
 	BundleId = itf:val(Doc, osm_bundle_fk),
 	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
@@ -1384,6 +1405,40 @@ validate_inward_count(BundleId) ->
 					[InwardCount, PacketCount_Int])
 			)
 	end.
+
+
+
+%..............................................................................
+%
+% handle - validate inward fs
+%
+%..............................................................................
+
+handle_validate_inward_fs(Fs) ->
+	%
+	% for each field
+	%
+	lists:foreach(fun(#field {label=Label, uivalue=Val, validators=Validators}) ->
+
+		%
+		% for each validator of the field
+		%
+		lists:foreach(fun(ValidatorId) ->
+
+			%
+			% validate
+			%
+			ValidatorFn = validators:get(ValidatorId),
+			ValidatorTip = validators:tip(ValidatorId),
+			?ASSERT(
+				ValidatorFn(undefined, Val),
+				itx:format("~ts: ~ts", [Label, ValidatorTip])
+			)
+
+		end, Validators)
+	end, Fs).
+
+
 
 %------------------------------------------------------------------------------
 % end
