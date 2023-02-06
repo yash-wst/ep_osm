@@ -3,6 +3,7 @@
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
 -import(dig_ep_osm_exam_inward, [
+	fs/1,
 	get_bundle_dir_name/2,
 	sort_candidate_docs/1,
 	assert_entry_does_not_exist_elsewhere/3,
@@ -1146,14 +1147,17 @@ handle_inward_focus_textbox() ->
 
 
 handle_insert_candidatedoc(BundleDoc, CDoc) ->
+	FsInward = fs(table),
 	Row = #tablerow {cells=[
-		#tablecell {body=[]},
-		#tablecell {body=itf:val(CDoc, anp_paper_uid)},
-		#tablecell {body=itf:val(CDoc, anpseatnumber)},
+		#tablecell {body=[]}
+	] ++ 
+	lists:map(fun(Fi) ->
+		#tablecell {body=itf:val(CDoc, Fi#field.id)}
+	end, FsInward)
+	++ [
 		#tablecell {body=helper:epochstrtotime(itf:val(CDoc, timestamp_inward))},
 		#tablecell {body=?LN(?L2A(itf:val(CDoc, anpstate)))},
 		#tablecell {body=itf:val(CDoc, anpfullname)},
-		#tablecell {body=itf:val(CDoc, total_pages)},
 		#tablecell {body=""},
 		#tablecell {body=layout_candidate_edit(BundleDoc, CDoc)},
 		#tablecell {body=layout_candidate_remove(BundleDoc, CDoc)}

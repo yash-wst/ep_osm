@@ -53,6 +53,13 @@ f(osm_exam_fk = I) ->
 
 
 %
+% fs - table
+%
+fs(table) ->
+	fs({inward, []});
+
+
+%
 % fs - inward
 %
 fs(inward) -> [
@@ -212,14 +219,17 @@ fetch(D, _From, _Size, [
 	%
 	% results
 	%
+	FsInward = fs(table),
+
 	Results = lists:map(fun(CDoc) ->
+		
+		lists:map(fun(Fi) ->
+			#dcell {val=itf:val(CDoc, Fi#field.id)}
+		end, FsInward) ++
 		[
-			#dcell {val=itf:val(CDoc, anp_paper_uid)},
-			#dcell {val=itf:val(CDoc, anpseatnumber)},
 			#dcell {val=helper:epochstrtotime(itf:val(CDoc, timestamp_inward))},
 			#dcell {val=?LN(?L2A(itf:val(CDoc, anpstate)))},
 			#dcell {val=itf:val(CDoc, anpfullname)},
-			#dcell {val=itf:val(CDoc, total_pages)},
 			#dcell {val=layout_uploaded_pages(ExamDoc, BundleDoc, CDoc)},
 			#dcell {val=layout_candidate_edit(BundleDoc, CDoc)},
 			#dcell {val=layout_candidate_remove(BundleDoc, CDoc)}
@@ -230,13 +240,13 @@ fetch(D, _From, _Size, [
 	%
 	% header
 	%
-	Header = [
-		#dcell {type=header, val="Barcode / UID"},
-		#dcell {type=header, val="Seat No."},
+	Header = lists:map(fun(Fi) ->
+			#dcell {type=header, val=Fi#field.label}
+	end, FsInward) ++
+	[
 		#dcell {type=header, val="Inward Timestamp"},
 		#dcell {type=header, val="State"},
 		#dcell {type=header, val="Student Name"},
-		#dcell {type=header, val="Total Pages"},
 		#dcell {type=header, val="Uploaded Images"},
 		#dcell {type=header, val="Edit"},
 		#dcell {type=header, val="Remove"}
