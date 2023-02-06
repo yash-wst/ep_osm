@@ -8,16 +8,19 @@
 %------------------------------------------------------------------------------
 
 layout() ->
-	layout(configs:get(ep_osm, false)).
+	layout(
+		configs:get(ep_osm, false),
+		itxconfigs_cache:get2(ep_osm_dashboard_enabled, true)
+	).
 
-layout(true) ->
+layout(true, true) ->
 	Key = {?MODULE, layout},
 	layout:grow([
 		widget_evaluation_stats(),
 		widget_dtp_progress(),
 		itxdoc_cache:get(Key, fun layout_from_db/0, 10)
 	]);
-layout(false) ->
+layout(_, _) ->
 	[].
 
 
