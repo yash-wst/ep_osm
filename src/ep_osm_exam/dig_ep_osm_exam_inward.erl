@@ -28,9 +28,16 @@ form() ->
 
 
 %------------------------------------------------------------------------------
-% fields
+% fids
 %------------------------------------------------------------------------------
 
+fids(table) ->
+	case itxconfigs_cache:get2(dig_ep_osm_exam_table_fids, undefined) of
+		undefined ->
+			fids(inward);
+		TableFIds0 ->
+			[?L2A(FId) || FId <- TableFIds0]
+	end;
 fids(inward) ->
 	InwardFIds0 = itxconfigs_cache:get2(dig_ep_osm_exam_inward_fids, [
 		"anp_paper_uid", "anpseatnumber", "total_pages"
@@ -38,6 +45,10 @@ fids(inward) ->
 	[?L2A(FId) || FId <- InwardFIds0].
 
 
+
+%------------------------------------------------------------------------------
+% fields
+%------------------------------------------------------------------------------
 
 f(osm_exam_fk = I) ->
 	F = itf:textbox(?F(I, "OSM Exam")),
@@ -52,11 +63,17 @@ f(osm_exam_fk = I) ->
 
 
 
+%------------------------------------------------------------------------------
+% fs
+%------------------------------------------------------------------------------
+
 %
 % fs - table
 %
 fs(table) ->
-	fs({inward, []});
+	lists:map(fun(FId) ->
+		fields:get(FId)
+	end, fids(table));
 
 
 %
