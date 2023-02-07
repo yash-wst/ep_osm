@@ -181,14 +181,19 @@ handle_import_from_frp() ->
 	%
 	Context = wf_context:context(),
 	DateOfExam = wf:q(date_of_test),
-
+	Email = myauth:email(),
 
 	%
 	% function
 	%
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		handle_import_from_frp(DateOfExam)
+		handle_import_from_frp(DateOfExam),
+		email:send(
+			[Email],
+			"Create exams from RPS",
+			io_lib:format("Task completed. Date of exam : ~s", [DateOfExam])
+		)
 	end,
 
 
@@ -209,12 +214,13 @@ handle_import_from_frp(DateOfExam) ->
 	%
 	% get exam from frp of matching date
 	%
-	{_, FrpExamDocs} = rpc:call(
+	{_, FrpExamDocs} = rpc_call(
 		itxnode:frp(),
 		up_core_exam_api,
 		get_by_field,
 		[FDate]
 	),
+
 
 	ActiveFrpExamDocs = lists:filter(fun(EDoc) ->
 		itf:val2(EDoc, state) == ?ACTIVE
@@ -257,13 +263,13 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 	%
 	% get season and subject docs from frp
 	%
-	{ok, FrpSeasonDoc} = rpc:call(
+	{ok, FrpSeasonDoc} = rpc_call(
 		itxnode:frp(),
 		ep_core_exam_season_api,
 		get,
 		[SeasonId]
 	),
-	{ok, FrpSubjectDoc} = rpc:call(
+	{ok, FrpSubjectDoc} = rpc_call(
 		itxnode:frp(),
 		ep_core_subject_api,
 		get,
@@ -344,7 +350,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	%
 	% get student list from frp
 	%
-	FrpStudentList = rpc:call(
+	FrpStudentList = rpc_call(
 		itxnode:frp(),
 		dig_result_upload_handlers,
 		handle_download_prns,
@@ -621,6 +627,18 @@ sanitise_prn("PRN:" ++ PRN) ->
 sanitise_prn(PRN) ->
 	PRN.
 
+
+
+%
+% rpc call
+%
+rpc_call(Node, Module, Function, Args) ->
+	case configs:getatom(uniapps_deployment_type, standalone) of
+		cluster ->
+			erlang:apply(Module, Function, Args);
+		_ ->
+			rpc:call(Node, Module, Function, Args)
+	end.
 
 %------------------------------------------------------------------------------
 % end
