@@ -165,6 +165,9 @@ layout_dtp_marks_omr_form() ->
 % events
 %------------------------------------------------------------------------------
 
+event(update_dtp_marks_manual) ->
+	handle_update_dtp_marks_manual();
+
 event(dtp_marks_manual_form) ->
 	dig_mm:handle_show_action(
 		"DTP Marks (Manual)",
@@ -186,6 +189,81 @@ event({itx, E}) ->
 %------------------------------------------------------------------------------
 % handler
 %------------------------------------------------------------------------------
+
+%..............................................................................
+%
+% handle - update dtp marks
+%
+%..............................................................................
+
+handle_update_dtp_marks_manual() ->
+
+	%
+	% init
+	%
+	ExamId = wf:q(id),
+	ExamDb = anpcandidates:db(ExamId),
+	FsUi = itf:uivalue(fs(dtp_marks_manual)),
+
+	%
+	% get candidate doc
+	%
+	FsFind = [
+		itf:build(itf:textbox(?F(anp_paper_uid)), wf:q(anp_paper_uid))
+	],
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		ExamDb, FsFind, 0, 1, [
+			{use_index, ["anp_paper_uid"]}
+		]
+	),
+	handle_update_dtp_marks_manual(Docs, FsUi, ExamId).
+
+
+%
+% save
+%
+handle_update_dtp_marks_manual([Doc], FsUi, ExamId) ->
+	%
+	% init
+	%
+	UId = itf:val(Doc, anp_paper_uid),
+	FsToSave = FsUi ++ [
+		itf:build(fields:get(anpstate), "anpstate_completed")
+	],
+	Changelist = itf:fs_changelist(Doc, FsToSave),
+
+	case Changelist of
+		[] ->
+			helper_ui:flash(warning, "No changes.");
+		_ ->
+			FComment = itf:d2f(Doc, fields:get(comments_dtp)),
+			FComment1 = itf:build_comment(FComment, Changelist), 
+			case ep_osm_candidate_api:update(ExamId, Doc, FsToSave ++ [FComment1]) of
+				{ok, Doc1} ->
+					helper_ui:flash(success, io_lib:format("Saved ~s: ~s vs. ~s", [
+						itf:val(Doc1, anp_paper_uid),
+						itf:val(Doc1, dtp_marks_manual),
+						itf:val(Doc1, dtp_marks_omr)
+					]), 5);
+				Error ->
+					?D(Error),
+					helper_ui:flash(error, io_lib:format("Error!: ~s", [UId]))
+			end
+	end;
+
+
+%
+% not found
+%
+handle_update_dtp_marks_manual([], _FsUi, _ExamDb) ->
+	Message = itx:format("~s not found!", [wf:q(anp_paper_uid)]),
+	helper_ui:flash(error, Message, 5);
+
+%
+% error - multiple found 
+%
+handle_update_dtp_marks_manual(_, _FsUi, _ExamDb) ->
+	helper_ui:flash(error, "Error!").
 
 
 
