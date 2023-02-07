@@ -123,7 +123,8 @@ fetch(D, From, Size, Fs) ->
 					new=true,
 					url=io_lib:format("/dig_ep_osm_exam_inward?id=~s", [itf:idval(ExamDoc)])
 				}
-			])}
+			] ++ action_dtp_marks_entry(ExamDoc)
+			)}
 		]
 
 	end, ExamDocs),
@@ -221,6 +222,23 @@ get_bundles_count(Bundles, StateFId) ->
 	length(DocsComplete).
 
 
+
+%------------------------------------------------------------------------------
+% actions
+%------------------------------------------------------------------------------
+
+action_dtp_marks_entry(ExamDoc) ->
+	case itxconfigs_cache:get2(ep_osm_exam_dtp_marks_enabled, false) of
+		true -> [
+			#link {
+				text="Marks Entry",
+				new=true,
+				url=io_lib:format("/dig_ep_osm_exam_dtp_marks?id=~s", [itf:idval(ExamDoc)])
+			}
+		];
+		_ -> [
+		]
+	end.
 
 
 %------------------------------------------------------------------------------
