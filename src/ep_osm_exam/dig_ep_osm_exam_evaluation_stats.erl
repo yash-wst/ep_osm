@@ -865,6 +865,8 @@ get_class(State, Number) when Number > 0 ->
 	case State of
 		"anpstate_expected" ->
 			"table-info";
+		"anpstate_absent" ->
+			"table-info";
 		"anpstate_quality_check" ->
 			"table-warning";
 		"anpstate_on_hold" ->
@@ -892,7 +894,9 @@ get_class(State, Number) when Number > 0 ->
 		"anpstate_evaluation_rejected" ->
 			"table-danger";
 		"anpstate_discarded" ->
-			"table-info"
+			"table-info";
+		_ ->
+			""
 	end;
 
 

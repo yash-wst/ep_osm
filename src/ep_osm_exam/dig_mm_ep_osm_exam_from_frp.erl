@@ -348,7 +348,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 		[FrpSeasonId, FrpSubjectId, MarkTypeId]
 	),
 	FrpStudentList = sanitise_frp_list(FrpStudentList0),
-	LoLFrpStudentList = helper:list_split(FrpStudentList, 5),
+	LoLFrpStudentList = helper:list_split(FrpStudentList, 250),
 
 
 	%
@@ -728,11 +728,13 @@ get_demo_frp_list(Size) ->
 	UId = helper:uidintstr(),
 	lists:map(fun(Index) ->
 		[
-			itx:format("~s_~p", [UId, Index]),
-			itx:format("Name ~p", [Index]),
-			""
+			itx:format("~s_~p", [UId, Index]), itx:format("Name ~p", [Index]), ""
 		]
-	end, lists:seq(1, Size)).
+	end, lists:seq(1, Size)) ++ [
+		[
+			itx:format("AB_~s", [UId]), itx:format("Name AB~s", [UId]), "ab"
+		]
+	].
 
 
 %
