@@ -86,7 +86,14 @@ get() ->
 		mode=?VIEW,
 		module=?MODULE,
 		filters=fs(form),
-		size=25
+		size=25,
+		actions=[
+			{action_import, "Create by date", "Create by date"}
+		],
+		config=[
+			{actions_default, false},
+			{action_layout_type, buttons}
+		]
 	}.
 
 
@@ -326,51 +333,83 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	% init
 	%
 	dig:log(info, "Updating student list ... "),
-	OsmExamId = itf:idval(OsmExamDoc),
-	ExamDb = anpcandidates:db(OsmExamId),
 	FrpSeasonId = itf:val(FrpExamDoc, season_fk),
 	FrpSubjectId = itf:val(FrpExamDoc, subject_code_fk),
-
-
-	%
-	% get student list from osm exam
-	%
-	Db2FindRec = db2_find:getrecord_by_fs(
-		ExamDb, [], 0, ?INFINITY
-	),
-	#db2_find_response {docs=OsmCandidateDocs} = db2_find:find(Db2FindRec#db2_find {
-		fields=[
-			itf:textbox(?F(anpseatnumber))
-		]
-	}),
-	OsmCandidateDocsDict = helper:get_dict_from_docs(OsmCandidateDocs, anpseatnumber),
-
+	MarkTypeId = get_mark_type(OsmExamDoc),
 
 
 	%
 	% get student list from frp
 	%
-	FrpStudentList = rpc_call(
+	FrpStudentList0 = rpc_call(
 		itxnode:frp(),
 		dig_result_upload_handlers,
 		handle_download_prns,
-		[FrpSeasonId, FrpSubjectId, end_exam_marks]
+		[FrpSeasonId, FrpSubjectId, MarkTypeId]
 	),
+	FrpStudentList = sanitise_frp_list(FrpStudentList0),
+	LoLFrpStudentList = helper:list_split(FrpStudentList, 5),
+
+
+	%
+	% start import
+	%
+	lists:foreach(fun(FrpStudentListBatch) ->
+		handle_import_from_frp_examdoc_upload_student_list_batch(
+			FrpExamDoc, OsmExamDoc, FrpStudentListBatch
+		)
+	end, LoLFrpStudentList),
+
+	dig:log(success, io_lib:format("Completed for: ~ts", [
+		itf:val(OsmExamDoc, anptestcourseid)
+	]));
+
+
+
+handle_import_from_frp_examdoc_upload_student_list(_, _) ->
+	skip.
+
+
+%..............................................................................
+%
+% handle - upload student list batch
+%
+%..............................................................................
+
+handle_import_from_frp_examdoc_upload_student_list_batch(
+	FrpExamDoc, OsmExamDoc, FrpStudentList
+) ->
+
+
+	%
+	% init
+	%
+	dig:log(info, "Updating student list batch ... "),
+	OsmExamId = itf:idval(OsmExamDoc),
+	ExamDb = anpcandidates:db(OsmExamId),
+	FrpSeasonId = itf:val(FrpExamDoc, season_fk),
+	FrpSubjectId = itf:val(FrpExamDoc, subject_code_fk),
+	PRNs = get_prns_from_frp_list(FrpStudentList),
+
+
+	%
+	% get student docs from prn
+	%
+	FsFind = [
+		db2es_find:get_field_cond("$in", anpseatnumber, PRNs)
+	],
+	OsmCandidateDocs = ep_osm_candidate_api:fetch(OsmExamId, 0, ?INFINITY, FsFind, [
+		{use_index, ["anpseatnumber"]}
+	]),
+	OsmCandidateDocsDict = helper:get_dict_from_docs(OsmCandidateDocs, anpseatnumber),
 
 
 	%
 	% find student list that does not exist on osm
 	%
 	FrpStudentListMissing = lists:filter(fun([PRN | _]) ->
-		case string:to_lower(PRN) of
-			"enrol" ++ _ ->
-				false;
-			"\"enrol" ++ _ ->
-				false;
-			_ ->
-				PRN1 = sanitise_prn(PRN),
-				dict:find(PRN1, OsmCandidateDocsDict) == error
-		end
+		PRN1 = sanitise_prn(PRN),
+		dict:find(PRN1, OsmCandidateDocsDict) == error
 	end, FrpStudentList),
 	dig:log(info, io_lib:format("RPS: SeasonId:~p SubjectId:~p", [FrpSeasonId, FrpSubjectId])), % Season and subject in RPS.
 	dig:log(info, io_lib:format("From RPS: ~p", [length(FrpStudentList)-1])), % Header in rps list
@@ -381,14 +420,14 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	%
 	% create student list
 	%
-	ListOfFsToSave = lists:map(fun([PRN, Name | _]) ->
+	ListOfFsToSave = lists:map(fun([PRN, Name | _] = Row) ->
 		Name1 = helper:replace_this_with_that(Name, "\"", ""),
 		PRN1 = sanitise_prn(PRN),
 		[
 			itf:build(itf:textbox(?F(anpseatnumber)), PRN1),
 			itf:build(itf:textbox(?F(anpfullname)), Name1),
 			itf:build(itf:textbox(?F(anpcentercode)), "0"),
-			itf:build(itf:textbox(?F(anpstate)), "anpstate_expected")
+			itf:build(itf:textbox(?F(anpstate)), import_anpstate(Row))
 		]
 	end, FrpStudentListMissing),
 	{ok, Res} = anpcandidates:savebulk(ExamDb, ListOfFsToSave),
@@ -398,12 +437,9 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	% update status
 	%
 	{OKs, Errors} = db_helper:bulksave_summary(Res),
-	dig:log(success, io_lib:format("Saved. Oks: ~p, Errors: ~p", [OKs, Errors]));
+	dig:log(success, io_lib:format("Saved. Oks: ~p, Errors: ~p", [OKs, Errors])).
 
 
-
-handle_import_from_frp_examdoc_upload_student_list(_, _) ->
-	skip.
 
 
 %..............................................................................
@@ -638,6 +674,77 @@ rpc_call(Node, Module, Function, Args) ->
 			erlang:apply(Module, Function, Args);
 		_ ->
 			rpc:call(Node, Module, Function, Args)
+	end.
+
+
+
+%
+% sanitise frp list
+%
+sanitise_frp_list(FrpStudentList) ->
+	lists:foldl(fun([PRN | Tail], Acc) ->
+		case string:to_lower(PRN) of
+			"enrol" ++ _ ->
+				Acc;
+			"\"enrol" ++ _ ->
+				Acc;
+			_ ->
+				PRN1 = sanitise_prn(PRN),
+				Acc ++ [
+					[PRN1 | Tail]
+				]
+		end
+	end, [], FrpStudentList).
+
+
+
+%
+% get prn from from list
+%
+get_prns_from_frp_list(List) ->
+	lists:map(fun([PRN | _]) ->
+		PRN
+	end, List).
+
+
+
+%
+% get mark type id
+%
+get_mark_type(OsmExamDoc) ->
+	case itf:val(OsmExamDoc, marktype) of
+		[] ->
+			end_exam_marks;
+		MarkTypeStr ->
+			?L2A(MarkTypeStr)
+	end.
+
+
+
+%
+% get demo frp list for testing purposes
+%
+get_demo_frp_list(Size) ->
+	UId = helper:uidintstr(),
+	lists:map(fun(Index) ->
+		[
+			itx:format("~s_~p", [UId, Index]),
+			itx:format("Name ~p", [Index]),
+			""
+		]
+	end, lists:seq(1, Size)).
+
+
+%
+% import_anpstate(Row)
+%
+import_anpstate(Row) ->
+	LastColumn = lists:last(Row),
+	case  string:to_lower(LastColumn) of
+		"ab" ->
+			"anpstate_absent";
+		_ ->
+			"anpstate_expected"
 	end.
 
 %------------------------------------------------------------------------------
