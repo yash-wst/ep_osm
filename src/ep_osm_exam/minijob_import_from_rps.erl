@@ -115,11 +115,14 @@ create_and_run(Fs) ->
 do(Doc) ->
 
 	%
-	% needs to reset context as rps download prn
+	% needs to reset profileid from context as rps download prn
 	% function looks for admin profile id in itx_profiles
 	% which does not exist as this is cross-app call.
 	%
-	erlang:put(itxcontext, undefined),
+	Context = erlang:get(itxcontext),
+	erlang:put(itxcontext, Context#itxcontext {
+		profileid=undefined
+	}),
 
 	%
 	% start processing
