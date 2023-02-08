@@ -984,7 +984,7 @@ handle_inward(UId, SNo, _TotalPages) ->
 	%
 	% validate inward fs
 	%
-	handle_validate_inward_fs(FsInwardUi),
+	handle_validate_inward_fs(itf:uivalue(FsInward)),
 
 
 	case UId of
