@@ -390,6 +390,7 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 	FrpSeasonId = itf:val(FrpExamDoc, season_fk),
 	FrpSubjectId = itf:val(FrpExamDoc, subject_code_fk),
 	PRNs = get_prns_from_frp_list(FrpStudentList),
+	SeatNumberId = ep_osm_id:get(anpseatnumber, in, profile_student),
 
 
 	%
@@ -411,6 +412,12 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 		PRN1 = sanitise_prn(PRN),
 		dict:find(PRN1, OsmCandidateDocsDict) == error
 	end, FrpStudentList),
+
+
+
+	%
+	% logs
+	%
 	dig:log(info, io_lib:format("RPS: SeasonId:~p SubjectId:~p", [FrpSeasonId, FrpSubjectId])), % Season and subject in RPS.
 	dig:log(info, io_lib:format("From RPS: ~p", [length(FrpStudentList)-1])), % Header in rps list
 	dig:log(info, io_lib:format("Missing found: ~p", [length(FrpStudentListMissing)])),
@@ -420,11 +427,21 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 	%
 	% create student list
 	%
+	ProfileDocsDict = get_profile_docs_dict_from_frp_list(
+		FrpStudentListMissing, SeatNumberId
+	),
+
+
 	ListOfFsToSave = lists:map(fun([PRN, Name | _] = Row) ->
 		Name1 = helper:replace_this_with_that(Name, "\"", ""),
 		PRN1 = sanitise_prn(PRN),
 		[
-			itf:build(itf:textbox(?F(anpseatnumber)), PRN1),
+			itf:build(
+				itf:textbox(?F(anpseatnumber)),
+				import_anpseatnumber(
+					PRN1, dict:find(PRN1, ProfileDocsDict), SeatNumberId
+				)
+			),
 			itf:build(itf:textbox(?F(anpfullname)), Name1),
 			itf:build(itf:textbox(?F(anpcentercode)), "0"),
 			itf:build(itf:textbox(?F(anpstate)), import_anpstate(Row))
@@ -737,8 +754,37 @@ get_demo_frp_list(Size) ->
 	].
 
 
+
 %
-% import_anpstate(Row)
+% get profiles docs dict from missing prn
+%
+get_profile_docs_dict_from_frp_list(_FrpStudentListMissing, prn) ->
+	dict:new();
+get_profile_docs_dict_from_frp_list(FrpStudentListMissing, _) ->
+	MissingPRNs = lists:map(fun([PRN | _]) ->
+		sanitise_prn(PRN)
+	end, FrpStudentListMissing),
+	ProfileDocs = itxprofiles:getdocs_by_usernames(MissingPRNs),
+	helper:get_dict_from_docs(ProfileDocs, prn).
+
+
+%------------------------------------------------------------------------------
+% import functions
+%------------------------------------------------------------------------------
+
+
+%
+% import anp seat number
+%
+import_anpseatnumber(_PRN, {ok, Doc}, SeatNumberId) when 
+	SeatNumberId /= prn ->
+	itf:val(Doc, SeatNumberId);
+import_anpseatnumber(PRN, _, _) ->
+	PRN.
+
+
+%
+% import anpstate
 %
 import_anpstate(Row) ->
 	LastColumn = lists:last(Row),
