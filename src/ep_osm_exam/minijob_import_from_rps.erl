@@ -113,6 +113,17 @@ create_and_run(Fs) ->
 %------------------------------------------------------------------------------
 
 do(Doc) ->
+
+	%
+	% needs to reset context as rps download prn
+	% function looks for admin profile id in itx_profiles
+	% which does not exist as this is cross-app call.
+	%
+	erlang:put(itxcontext, undefined),
+
+	%
+	% start processing
+	%
 	DateOfExam = itf:val(Doc, date_of_test),
 	dig_mm_ep_osm_exam_from_frp:handle_import_from_frp(DateOfExam).
 
