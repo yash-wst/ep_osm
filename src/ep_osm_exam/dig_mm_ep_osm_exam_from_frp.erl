@@ -182,7 +182,23 @@ before_save(FsToSave, _FsAll, _Doc) ->
 %..............................................................................
 
 handle_import_from_frp() ->
+	case configs:getbool(process_via_minijob, false) of
+		false ->
+			handle_import_from_frp_via_taskqueue();
+		true ->
+			handle_import_from_frp_via_minijob()
+	end.
 
+
+handle_import_from_frp_via_minijob() ->
+	FDate = minijob_import_from_rps:f(date_of_test),
+	{ok, Doc} = minijob_import_from_rps:create_and_run([
+		itf:build(FDate, wf:q(date_of_test))
+	]),
+	minijob_status:show_status(Doc).
+
+
+handle_import_from_frp_via_taskqueue() ->
 	%
 	% init
 	%
