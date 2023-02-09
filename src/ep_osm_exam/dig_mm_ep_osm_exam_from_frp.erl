@@ -364,6 +364,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 		[FrpSeasonId, FrpSubjectId, MarkTypeId]
 	),
 	FrpStudentList = sanitise_frp_list(FrpStudentList0),
+	save_frp_list_to_file(FrpStudentList),
 	LoLFrpStudentList = helper:list_split(FrpStudentList, 250),
 
 
@@ -784,6 +785,42 @@ get_profile_docs_dict_from_frp_list(FrpStudentListMissing, _) ->
 	helper:get_dict_from_docs(ProfileDocs, prn).
 
 
+%
+% save frp list
+%
+save_frp_list_to_file(FrpStudentList) ->
+
+	%
+	% init
+	%
+	FrpStudentList1 = lists:map(fun(Line) ->
+		string:join(Line, ",")
+	end, FrpStudentList),
+	FrpStudentList2 = string:join(FrpStudentList1, "\n"),
+
+	%
+	% write to file
+	%
+	Filename = itx:format("rps_list_~s.csv", [helper:uidintstr()]),
+	Filepath = itx:format("/tmp/~s", [Filename]),
+	ok = file:write_file(Filepath, helper:l2b(FrpStudentList2)),
+
+
+	%
+	% zip and upload to minijob
+	%
+	case erlang:get(minijobcontext) of
+		undefined ->
+			skip;
+		MinijobDoc ->
+			FilenameZip = itx:format("~s.zip", [Filename]),
+			FilepathZip = itx:format("/tmp/~s", [FilenameZip]),
+			helper:cmd("cd /tmp; zip ~s ~s", [FilenameZip, Filename]),
+			{ok, _} = minijob_api:upload_file(MinijobDoc, FilenameZip, FilepathZip)
+	end.
+
+
+
 %------------------------------------------------------------------------------
 % import functions
 %------------------------------------------------------------------------------
@@ -804,7 +841,8 @@ import_anpseatnumber(PRN, _, _) ->
 %
 import_anpstate(Row) ->
 	LastColumn = lists:last(Row),
-	case  string:to_lower(LastColumn) of
+	LastColumn1 = helper:replace_this_with_that(LastColumn, "\"", ""),
+	case  string:to_lower(LastColumn1) of
 		"ab" ->
 			"anpstate_absent";
 		_ ->
