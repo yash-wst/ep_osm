@@ -411,10 +411,27 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 
 
 	%
-	% get student docs from prn
+	% create student profile docs dict
+	%
+	ProfileDocsDict = get_profile_docs_dict_from_frp_list(
+		PRNs, SeatNumberId
+	),
+
+
+	%
+	% prns may not be seat numbers so get the proper value based on
+	% seatnumber id
+	%
+	SeatNumbers = lists:map(fun(PRN) ->
+		import_anpseatnumber(PRN, dict:find(PRN, ProfileDocsDict), SeatNumberId)
+	end, PRNs),
+
+
+	%
+	% get candidates docs from osm exam db and create dict
 	%
 	FsFind = [
-		db2es_find:get_field_cond("$in", anpseatnumber, PRNs)
+		db2es_find:get_field_cond("$in", anpseatnumber, SeatNumbers)
 	],
 	OsmCandidateDocs = ep_osm_candidate_api:fetch(OsmExamId, 0, ?INFINITY, FsFind, [
 		{use_index, ["anpseatnumber"]}
@@ -426,8 +443,8 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 	% find student list that does not exist on osm
 	%
 	FrpStudentListMissing = lists:filter(fun([PRN | _]) ->
-		PRN1 = sanitise_prn(PRN),
-		dict:find(PRN1, OsmCandidateDocsDict) == error
+		SeatNumber = import_anpseatnumber(PRN, dict:find(PRN, ProfileDocsDict), SeatNumberId),
+		dict:find(SeatNumber, OsmCandidateDocsDict) == error
 	end, FrpStudentList),
 
 
@@ -441,22 +458,14 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 	dig:log(info, io_lib:format("Already exist: ~p", [length(OsmCandidateDocs)])),
 
 
-	%
-	% create student list
-	%
-	ProfileDocsDict = get_profile_docs_dict_from_frp_list(
-		FrpStudentListMissing, SeatNumberId
-	),
-
 
 	ListOfFsToSave = lists:map(fun([PRN, Name | _] = Row) ->
 		Name1 = helper:replace_this_with_that(Name, "\"", ""),
-		PRN1 = sanitise_prn(PRN),
 		[
 			itf:build(
 				itf:textbox(?F(anpseatnumber)),
 				import_anpseatnumber(
-					PRN1, dict:find(PRN1, ProfileDocsDict), SeatNumberId
+					PRN, dict:find(PRN, ProfileDocsDict), SeatNumberId
 				)
 			),
 			itf:build(itf:textbox(?F(anpfullname)), Name1),
