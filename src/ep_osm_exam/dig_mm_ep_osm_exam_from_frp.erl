@@ -414,7 +414,7 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 	% create student profile docs dict
 	%
 	ProfileDocsDict = get_profile_docs_dict_from_frp_list(
-		PRNs, SeatNumberId
+		FrpStudentList, SeatNumberId
 	),
 
 
