@@ -32,6 +32,10 @@ heading() ->
 % fs
 %------------------------------------------------------------------------------
 
+fs(import) -> [
+	itf:textbox(?F(id, "Exam Id"))
+];
+
 fs(dtp_marks_manual) ->
 	FUId = fields:get(anp_paper_uid),
 	FMarks = fields:get(dtp_marks_manual),
@@ -185,6 +189,18 @@ event({itx, E}) ->
 	ite:event(E).
 
 
+start_upload_event(Event) ->
+	dig_mm:start_upload_event(Event).
+
+finish_upload_event({_, dtp_marks_omr_file}, AttachmentName, LocalFileData, _Node) ->
+	dig_mm_import:handle_finish_upload_event(
+		?MODULE, ep_osm_candidate, ep_osm_candidate_api, 
+		ep_osm_candidate_dtp_marks_omr_import,
+		{file, AttachmentName, LocalFileData}
+	);
+
+finish_upload_event(Tag, AttachmentName, LocalFileData, Node) ->
+	dig_mm:finish_upload_event(Tag, AttachmentName, LocalFileData, Node).
 
 %------------------------------------------------------------------------------
 % handler
