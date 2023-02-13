@@ -70,18 +70,22 @@ exportids() -> [
 	"anpevaluator_eval_date",
 	"ip_anpevaluator",
 	"evaluator_total",
+	"marks_per_question_anpevaluator",
 	"profileidfk_anpmoderator",
 	"anpmoderator_eval_date",
 	"ip_anpmoderator",
 	"moderator_total",
+	"marks_per_question_anpmoderator",
 	"profileidfk_anprevaluator",
 	"anprevaluator_eval_date",
 	"ip_anprevaluator",
 	"revaluator_total",
+	"marks_per_question_anprevaluator",
 	"profileidfk_anpmoderator_reval",
 	"anpmoderator_reval_eval_date",
 	"ip_anpmoderator_reval",
 	"moderator_reval_total",
+	"marks_per_question_anpmoderator_reval",
 	"total",
 	"marks_per_question",
 	"marks_per_marked_question",
@@ -153,7 +157,15 @@ f("courseid") ->
 	fields:get(anptestcourseid);
 
 f("marks_per_question") ->
-	itf:textbox(?F(marks_per_question, "Marks Per Question"));
+	itf:textbox(?F(marks_per_question, "Marks Per Question (Current State)"));
+
+f("marks_per_question_inpods") ->
+	itf:textbox(?F(marks_per_question_inpods, "Marks Per Question (InPods)"));
+
+f("marks_per_question_" ++ Role = Id) ->
+	FId = ?L2A(Id),
+	Label = itx:format("Marks Per Question (~s)", [?LN(?L2A(Role))]),
+	itf:textbox(?F(FId, Label));
 
 f("marks_per_marked_question") ->
 	itf:textbox(?F(marks_per_marked_question, "Marks Per Marked Question"));
@@ -214,9 +226,6 @@ f("testname") ->
 
 f("frequency_number") ->
 	itf:textbox(?F(frequency_number, "Frequency Number"));
-
-f("marks_per_question_inpods") ->
-	itf:textbox(?F(marks_per_question_inpods, "Marks Per Question (InPods)"));
 
 
 f(Id) ->
@@ -318,7 +327,7 @@ get_instructions(evaluator) ->
 get_instructions(_RoleGroup) ->
 	[
 		{ok, "You can add, remove and change the order of export by updating exportids shown below"},
-		{ok, string:join(exportids(), ",\n")},
+		{ok, layout_exportids()},
 		{ok, #link {
 			new=true,
 			text="Change export format",
@@ -468,6 +477,10 @@ fetch(D, From, Size, [
 			(Id, Acc) when 
 				Id == "marks_per_question";
 				Id == "marks_per_question_inpods";
+				Id == "marks_per_question_anpevaluator";
+				Id == "marks_per_question_anpmoderator";
+				Id == "marks_per_question_anprevaluator";
+				Id == "marks_per_question_anpmoderator_reval";
 				Id == "marks_per_marked_question" ->
 				MPQVals = val(RecDoc, Id),
 				Acc ++ lists:map(fun(MPQVal) ->
@@ -494,6 +507,10 @@ fetch(D, From, Size, [
 		(Id, Acc) when 
 			Id == "marks_per_question";
 			Id == "marks_per_question_inpods";
+			Id == "marks_per_question_anpevaluator";
+			Id == "marks_per_question_anpmoderator";
+			Id == "marks_per_question_anprevaluator";
+			Id == "marks_per_question_anpmoderator_reval";
 			Id == "marks_per_marked_question" ->
 			Acc ++ get_question_headers(Id, MSchemeDoc, ListOfAllQuestions);
 		(Id, Acc) ->
@@ -1175,6 +1192,12 @@ val(#docs {
 	get_marks_per_question_inpods(Doc, ListOfAllQuestions, EvaluatorRole);
 
 
+val(#docs {
+	doc=Doc,
+	listofquestions=ListOfAllQuestions
+}, "marks_per_question_anp" ++ EvaluatorRole) ->
+	get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole);
+
 
 val(#docs {
 	examdoc=ExamDoc
@@ -1534,7 +1557,7 @@ get_question_headers("marks_per_question_inpods", _, ListOfAllQuestions) ->
 	end, [], ListOfAllQuestions);
 
 
-get_question_headers("marks_per_question", _, ListOfAllQuestions) ->
+get_question_headers("marks_per_question" ++ _ = Id, _, ListOfAllQuestions) ->
 	lists:map(fun({_MarkingId, QuestionId, MaxMarks}) ->
 		#dcell {
 			type=header,
@@ -1691,6 +1714,38 @@ layout_export_results_bulk() ->
 		ite:get(export_results_bulk, "Export"), table).
 
 
+
+
+%..............................................................................
+%
+% layout - export ids
+%
+%..............................................................................
+
+layout_exportids() ->
+	%
+	% init
+	%
+	ExportIds = exportids(),
+	ExportFs = lists:map(fun(Id) ->
+		f(Id)
+	end, ExportIds),
+
+
+	%
+	% fs desc table
+	%
+	FsVals = lists:map(fun(#field {id=Id, label=Label}) ->
+		[Id, Label]
+	end, ExportFs),
+
+
+	%
+	% table
+	%
+	dig:layout_vals(#dig {}, FsVals, [
+		"Id", "Label"
+	]).
 
 
 %------------------------------------------------------------------------------
