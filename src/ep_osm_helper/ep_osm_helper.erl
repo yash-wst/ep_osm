@@ -16,6 +16,8 @@ completed_state_of("anprevaluator") ->
 	"anpstate_revaluation_completed";
 completed_state_of("anpmoderator_reval") ->
 	"anpstate_moderation_reval_completed";
+completed_state_of("dtp_marks_" ++ _) ->
+	"anpstate_completed";
 completed_state_of(Role) ->
 	throw(Role).
 

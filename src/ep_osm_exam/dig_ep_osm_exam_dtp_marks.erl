@@ -239,6 +239,20 @@ handle_update_dtp_marks_manual() ->
 % save
 %
 handle_update_dtp_marks_manual([Doc], FsUi, ExamId) ->
+
+	%
+	% asserts
+	%
+	CandidateState = itf:val(Doc, anpstate),
+	MarksEntryEnabledStates = ep_osm_config:get_dtp_marks_enabled_states(),
+	?ASSERT(
+		lists:member(CandidateState, MarksEntryEnabledStates),
+		itx:format("Error. Candidate state ~p. Required ~p", [
+			?LN(?L2A(CandidateState)), MarksEntryEnabledStates
+		])
+	),
+
+
 	%
 	% init
 	%

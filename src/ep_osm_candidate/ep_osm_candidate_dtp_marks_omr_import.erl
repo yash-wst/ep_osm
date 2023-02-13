@@ -60,14 +60,15 @@ handle_import_csv_to_fs(List) ->
 	ExamDb = ep_osm_candidate_api:db(ExamId),
 	Docs = db2_find:getdocs_by_ids(ExamDb, anp_paper_uid, UIds),
 	DocsDict = helper:get_dict_from_docs(Docs, anp_paper_uid),
+	MarksEntryEnabledStates = ep_osm_config:get_dtp_marks_enabled_states(),
 
 	%
 	% update fields
 	%
-	lists:map(fun([
+	lists:foldl(fun([
 		AnpPaperUId,
 		Marks
-	]) ->
+	], Acc) ->
 
 		%
 		% init
@@ -95,9 +96,17 @@ handle_import_csv_to_fs(List) ->
 		%
 		% return full and final fs
 		%
-		itf:fs_merge(Fs, FsToSave ++ [FComment1])
+		CandidateState = itf:val(Doc, anpstate),
+		case lists:member(CandidateState, MarksEntryEnabledStates) of
+			true ->
+				Acc ++ [
+					itf:fs_merge(Fs, FsToSave ++ [FComment1])
+				];
+			_ ->
+				Acc
+		end
 
-	end, List).
+	end, [], List).
 
 
 

@@ -20,3 +20,17 @@ get_min_time_for_evaluation() ->
 	end.
 
 
+
+%------------------------------------------------------------------------------
+% dtp marks can be entered only if candidate is in the following states
+%------------------------------------------------------------------------------
+
+get_dtp_marks_enabled_states() ->
+	itxconfigs_cache:get2(ep_osm_exam_dtp_marks_enabled_states, [
+			"anpstate_expected", "anpstate_yettostart"
+	]).
+
+
+%------------------------------------------------------------------------------
+% end
+%------------------------------------------------------------------------------

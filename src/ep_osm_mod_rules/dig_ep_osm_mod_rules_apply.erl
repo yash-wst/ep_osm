@@ -498,8 +498,8 @@ handle_apply_yes_test_doc_batch("difference" = Type, ApplyAcc, Rules, ExamDoc, F
 		%
 		% init
 		%
-		Role1Id = ?L2A(?FLATTEN("total_" ++ Role1)),
-		Role2Id = ?L2A(?FLATTEN("total_" ++ Role2)),
+		Role1Id = get_total_fid_for_role(Role1),
+		Role2Id = get_total_fid_for_role(Role2),
 		DiffPercentageInt = ?S2I(DiffPercentage),
 		AcceptableCompletedStates = [
 			ep_osm_helper:completed_state_of(Role1),
@@ -802,6 +802,14 @@ get_x_percent_of(CandidateList, MovePercentage) ->
 	end, lists:seq(1, MoveCount)).
 
 
+
+%
+% get total fid for role
+%
+get_total_fid_for_role("dtp_marks_" ++ _ = Role) ->
+	?L2A(?FLATTEN(Role));
+get_total_fid_for_role(Role) ->
+	?L2A(?FLATTEN("total_" ++ Role)).
 
 %------------------------------------------------------------------------------
 % end

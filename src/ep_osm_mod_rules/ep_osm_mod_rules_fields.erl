@@ -130,7 +130,9 @@ options(evaluator_role) ->
 		?F(anpevaluator, "Evaluator"),
 		?F(anpmoderator, "Moderator"),
 		?F(anprevaluator, "Revaluator"),
-		?F(anpmoderator_reval, "Reval Moderator")
+		?F(anpmoderator_reval, "Reval Moderator"),
+		?F(dtp_marks_manual, "DTP Marks (Manual)"),
+		?F(dtp_marks_omr, "DTP Marks (OMR)")
 	]);
 
 options(osm_mod_rules_fk) ->
