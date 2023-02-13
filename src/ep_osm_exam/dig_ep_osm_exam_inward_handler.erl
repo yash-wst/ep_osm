@@ -975,7 +975,7 @@ handle_inward(UId, SNo, _TotalPages) ->
 	% init
 	%
 	SNo1 = ?CASE_IF_THEN_ELSE(SNo, [], UId, SNo),
-	FsInward = dig_ep_osm_exam_inward:fs(inward),
+	FsInward = dig_ep_osm_exam_inward:fs({inward, []}),
 	FsInwardUi = itf:fs_merge(itf:uivalue(FsInward), [
 		itf:build(fields:get(anpseatnumber), SNo1)
 	]),
