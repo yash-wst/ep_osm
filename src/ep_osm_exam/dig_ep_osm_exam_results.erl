@@ -98,7 +98,10 @@ exportids() -> [
 	"marktype",
 	"testname",
 	"frequency_number",
-	"marks_per_question_inpods"
+	"marks_per_question_inpods",
+	"anp_paper_booklet_slno",
+	"dtp_marks_manual",
+	"dtp_marks_omr"
 ].
 
 
