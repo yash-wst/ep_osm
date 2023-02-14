@@ -207,8 +207,8 @@ handle_import_validate_duplicates(List) ->
 			SeatNumber | _
 		] = Csv,
 		
-		Acc1 = dict:update_counter({SubjectCode, PRN}, 1, Acc),
-		dict:update_counter({SubjectCode, SeatNumber}, 1, Acc1)
+		Acc1 = dict:update_counter({anp_paper_uid, SubjectCode, PRN}, 1, Acc),
+		dict:update_counter({anpseatnumber, SubjectCode, SeatNumber}, 1, Acc1)
 	
 	end, dict:new(), List),
 
