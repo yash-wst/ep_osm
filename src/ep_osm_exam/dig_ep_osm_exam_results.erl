@@ -71,21 +71,25 @@ exportids() -> [
 	"ip_anpevaluator",
 	"evaluator_total",
 	"marks_per_question_anpevaluator",
+	"marks_per_marked_question_anpevaluator",
 	"profileidfk_anpmoderator",
 	"anpmoderator_eval_date",
 	"ip_anpmoderator",
 	"moderator_total",
 	"marks_per_question_anpmoderator",
+	"marks_per_marked_question_anpmoderator",
 	"profileidfk_anprevaluator",
 	"anprevaluator_eval_date",
 	"ip_anprevaluator",
 	"revaluator_total",
 	"marks_per_question_anprevaluator",
+	"marks_per_marked_question_anprevaluator",
 	"profileidfk_anpmoderator_reval",
 	"anpmoderator_reval_eval_date",
 	"ip_anpmoderator_reval",
 	"moderator_reval_total",
 	"marks_per_question_anpmoderator_reval",
+	"marks_per_marked_question_anpmoderator_reval",
 	"total",
 	"marks_per_question",
 	"marks_per_marked_question",
@@ -172,6 +176,12 @@ f("marks_per_question_" ++ Role = Id) ->
 
 f("marks_per_marked_question") ->
 	itf:textbox(?F(marks_per_marked_question, "Marks Per Marked Question"));
+
+f("marks_per_marked_question_" ++ Role = Id) ->
+	FId = ?L2A(Id),
+	Label = itx:format("Marks Per Marked Question (~s)", [?LN(?L2A(Role))]),
+	itf:textbox(?F(FId, Label));
+
 
 f("profileidfk_anpevaluator") ->
 	fields:get(profileidfk_anpevaluator);
@@ -484,7 +494,11 @@ fetch(D, From, Size, [
 				Id == "marks_per_question_anpmoderator";
 				Id == "marks_per_question_anprevaluator";
 				Id == "marks_per_question_anpmoderator_reval";
-				Id == "marks_per_marked_question" ->
+				Id == "marks_per_marked_question";
+				Id == "marks_per_marked_question_anpevaluator";
+				Id == "marks_per_marked_question_anpmoderator";
+				Id == "marks_per_marked_question_anprevaluator";
+				Id == "marks_per_marked_question_anpmoderator_reval" ->
 				MPQVals = val(RecDoc, Id),
 				Acc ++ lists:map(fun(MPQVal) ->
 					#dcell {
@@ -514,7 +528,11 @@ fetch(D, From, Size, [
 			Id == "marks_per_question_anpmoderator";
 			Id == "marks_per_question_anprevaluator";
 			Id == "marks_per_question_anpmoderator_reval";
-			Id == "marks_per_marked_question" ->
+			Id == "marks_per_marked_question";
+			Id == "marks_per_marked_question_anpevaluator";
+			Id == "marks_per_marked_question_anpmoderator";
+			Id == "marks_per_marked_question_anprevaluator";
+			Id == "marks_per_marked_question_anpmoderator_reval" ->
 			Acc ++ get_question_headers(Id, MSchemeDoc, ListOfAllQuestions);
 		(Id, Acc) ->
 			#field {label=Label} = f(Id),
@@ -1176,6 +1194,14 @@ val(#docs {
 	);
 
 
+val(#docs {
+	doc=Doc,
+	mschemedoc=MSchemeDoc
+}, "marks_per_marked_question_anp" ++ EvaluatorRole) ->
+	get_marks_per_marked_question(
+		MSchemeDoc, Doc, EvaluatorRole
+	);
+
 
 val(#docs {
 	doc=Doc,
@@ -1513,7 +1539,7 @@ get_list_of_questions(TDoc) ->
 %
 % get - question headers
 %
-get_question_headers("marks_per_marked_question", MSchemeDoc, _ListOfAllQuestions) ->
+get_question_headers("marks_per_marked_question" ++ _, MSchemeDoc, _ListOfAllQuestions) ->
 
 	EvaluatorMarkingId = anpmarking_anpevaluator,
 	List = ep_osm_mscheme:handle_get_marks_per_question(MSchemeDoc, {[]}, EvaluatorMarkingId),
