@@ -484,7 +484,7 @@ handle_convert_widget_to_tuple_calc(
 handle_convert_widget_to_tuple_calc(
 	MDict,
 	_ParentType,
-	ParentId,
+	_ParentId,
 	#field {id=Id, subfields=[#field {uivalue=?WTYPE_RULE} | _] = Subfields}
 ) ->
 
@@ -498,7 +498,7 @@ handle_convert_widget_to_tuple_calc(
 	% ids
 	%
 	CurrentId = itx:format("~s~s", [?WTYPE_RULE, Id]),
-	ParentIdNext = get_parentid_next(ParentId, CurrentId),
+	ParentIdNext = CurrentId,
 
 
 
