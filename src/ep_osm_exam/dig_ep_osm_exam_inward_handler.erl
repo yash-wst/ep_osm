@@ -1084,7 +1084,6 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 	%
 	UId = itf:val2(FsInwardUi, anp_paper_uid),
 	SNo = itf:val2(FsInwardUi, anpseatnumber),
-	TotalPages = itf:val2(FsInwardUi, total_pages),
 	ExamDb = anpcandidates:db(ExamId),
 	BundleId = itf:val(Doc, osm_bundle_fk),
 	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
@@ -1101,9 +1100,9 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 	%
 	% fs to save
 	%
-	FsToSave = [
+	FsToSave = FsInwardUi ++ [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
-		itf:build(itf:textbox(?F(total_pages)), TotalPages),
+		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
 		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, BundleId)),
 		itf:build(itf:textbox(?F(master_data_status)), "matched")
 	],
