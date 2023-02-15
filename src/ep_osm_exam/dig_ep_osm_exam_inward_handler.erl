@@ -1015,8 +1015,9 @@ handle_inward(UId, SNo, _TotalPages) ->
 	% assert - bundle is not full
 	%
 	BundleDocs = get_bundle_docs(),
+	BundleSize = itxconfigs_cache:get2(ep_osm_exam_inward_bundle_size, 60),
 	?ASSERT(
-		length(BundleDocs) < 61,
+		length(BundleDocs) < (BundleSize + 1),
 		"bundle full; create new bundle"
 	),
 
