@@ -9,6 +9,7 @@
 	assert_entry_does_not_exist_elsewhere/3,
 	redirect_to_main/0,
 	get_bundle_docs/0,
+	get_bundle_docs_count/0,
 	get_bundle_doc_from_cache/1,
 	get_bundle_number_from_cache/1,
 	layout_candidate_edit/2,
@@ -333,7 +334,7 @@ handle_inward_completed(ExamId, BundleId) ->
 	FsToSave = [
 		itf:build(?OSMBDL(inwardstate), "completed"),
 		itf:build(?OSMBDL(inward_date), helper:date_today_str()),
-		itf:build(?OSMBDL(bundle_size), ?I2S(length(get_bundle_docs())))
+		itf:build(?OSMBDL(bundle_size), ?I2S(get_bundle_docs_count()))
 	],
 
 	%
@@ -1014,10 +1015,10 @@ handle_inward(UId, SNo, _TotalPages) ->
 	%
 	% assert - bundle is not full
 	%
-	BundleDocs = get_bundle_docs(),
+	BundleDocsCount = get_bundle_docs_count(),
 	BundleSize = itxconfigs_cache:get2(ep_osm_exam_inward_bundle_size, 60),
 	?ASSERT(
-		length(BundleDocs) < (BundleSize + 1),
+		BundleDocsCount < (BundleSize + 1),
 		"bundle full; create new bundle"
 	),
 
@@ -1393,7 +1394,7 @@ check_max_limits(_, _, _) ->
 validate_inward_count(BundleId) ->
 	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
 	PacketCount_Str = itf:val(BundleDoc, packet_count),
-	InwardCount = length(get_bundle_docs()),
+	InwardCount = get_bundle_docs_count(),
 
 	%
 	% some bundles were created without Packet Count,

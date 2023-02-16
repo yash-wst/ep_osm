@@ -1150,7 +1150,34 @@ layout_osm_exam_name(OsmExamId) ->
 	]).
 
 
+%
+% get bundle docs count
+%
+get_bundle_docs_count() ->
+	%
+	% init
+	%
+	ExamId = wf:q(id),
+	OsmBundleId = wf:q(osm_bundle_fk),
+	ExamDb = anpcandidates:db(ExamId),
+	Fs = [
+		fields:build(osm_bundle_fk, OsmBundleId)
+	],
+	ViewName = {"osm_bundle_fk", "osm_bundle_fk"},
+	SK = itxview:fields_to_sk(Fs),
+	EK = itxview:fields_to_ek(Fs),
 
+
+	%
+	% count
+	%
+	itxview:get_count_by_fields1(ExamDb, SK, EK, ViewName).
+
+
+
+%
+% get bundle docs
+%
 get_bundle_docs() ->
 	ExamId = wf:q(id),
 	OsmBundleId = wf:q(osm_bundle_fk),
