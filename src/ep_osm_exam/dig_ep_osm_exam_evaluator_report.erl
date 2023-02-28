@@ -492,7 +492,7 @@ fetch(D, _From, _Size, [
 				val= itl:render(ProfileDoc, fields:get(bank_account_type))
 			},
 			#dcell {
-				val= itf:val(ProfileDoc, pancard_n)
+				val= itf:val(ProfileDoc, pancard_no)
 			},
 			#dcell {
 				show_csv=false,
