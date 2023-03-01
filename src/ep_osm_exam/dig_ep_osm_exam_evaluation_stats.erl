@@ -597,7 +597,8 @@ handle_send_reminder_confirmed() ->
 
 
 handle_send_reminder_confirmed_via_minijob(_RoleId) ->
-	{ok, Doc} = minijob_send_reminders_to_osm_evaluators:create_and_run([
+	{ok, Doc} = minijob_send_reminders_to_osm_evaluators:create_and_run(
+		filters() ++ [
 		fields:build(osm_profiletype, wf:q(osm_profiletype))
 	]),
 	minijob_status:show_status(Doc).
@@ -635,7 +636,7 @@ handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 	%
 	% get active tests
 	%
-	Docs = ep_osm_exam_api:fetch(0, ?INFINITY, [fields:build(teststatus, ?ACTIVE)]),
+	Docs = get_active_exam_docs_after_filter(),
 	dig:log(info, io_lib:format("~p active tests found", [length(Docs)])),
 
 	%
@@ -704,7 +705,7 @@ handle_send_reminder_confirmed(RoleId, Doc, _, _AnpCheckState) ->
 	%
 	ProfileIds = anpcandidates:get_evaluators_for_test(TFs, RoleId),
 	ProfileIdsUnique = helper:unique(ProfileIds),
-	dig:log(danger, io_lib:format("Sending ~p SMSes", [length(ProfileIdsUnique)])),
+	dig:log(danger, io_lib:format("Sending ~p messages", [length(ProfileIdsUnique)])),
 
 
 	%
@@ -717,7 +718,8 @@ handle_send_reminder_confirmed(RoleId, Doc, _, _AnpCheckState) ->
 	% send notification
 	%
 	lists:foreach(fun(ProfileDoc) ->
-		anptest:send_reminder_sms_to_evaluator(TFs, ProfileDoc, SubjectName)
+		anptest:send_reminder_sms_to_evaluator(TFs, ProfileDoc, SubjectName),
+		anptest:send_reminder_email_to_evaluator(TFs, ProfileDoc, SubjectName)
 	end, ProfileDocs).
 
 
@@ -756,7 +758,7 @@ handle_send_reminder() ->
 			%
 			% get active tests
 			%
-			Docs = ep_osm_exam_api:fetch(0, ?INFINITY, [fields:build(teststatus, ?ACTIVE)]),
+			Docs = get_active_exam_docs_after_filter(),
 			itl:confirmation(
 				io_lib:format("Are you sure you want to send reminder for ~p exams?", [length(Docs)]),
 				send_reminder
@@ -1020,6 +1022,19 @@ number_of_reminders_sent_today() ->
 		]
 	),
 	length(AuditDocs).
+
+
+
+%
+% get active tests after fitlers
+%
+get_active_exam_docs_after_filter() ->
+	Filters = itf:fs_merge(filters(), [
+		fields:build(teststatus, ?ACTIVE)
+	]),
+	ep_osm_exam_api:fetch(0, ?INFINITY, Filters).
+
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------

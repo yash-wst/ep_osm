@@ -47,7 +47,7 @@ fs(_Doc) ->
 % fs -
 %
 fs() ->
-	[
+	dig_ep_osm_exam_evaluation_stats:fs(search) ++ [
 		fields:get(osm_profiletype)
 	].
 
@@ -111,8 +111,26 @@ create_and_run(Fs) ->
 %------------------------------------------------------------------------------
 
 do(Doc) ->
+	%
+	% init
+	%
 	"profiletype_" ++ ProfileType = itf:val(Doc, osm_profiletype),
 	RoleId = ?L2A(ProfileType),
+	FsSearch = dig_ep_osm_exam_evaluation_stats:fs(search),
+	Filters = itf:d2f(Doc, FsSearch),
+
+
+	%
+	% create dig
+	%
+	Dig = dig_ep_osm_exam_evaluation_stats:get(),
+	helper:state(dig, Dig#dig {filters=Filters}),
+
+
+
+	%
+	% process job
+	%
 	dig_ep_osm_exam_evaluation_stats:handle_send_reminder_confirmed(RoleId).
 
 
