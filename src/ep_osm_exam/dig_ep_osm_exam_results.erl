@@ -310,13 +310,29 @@ get() ->
 %
 % get - events
 %
-get_events() ->
+get_events(ExamDoc) ->
 	[
 		ite:button(export, "CSV", {itx, {dig, export}}),
 		ite:button(export_pdf, "PDF", {itx, {dig, export_pdf}}),
-		ite:button(action_submit_results_to_rps, "Submit Results", action_submit_results_to_rps)
+		ite:button(action_submit_results_to_rps, "Submit Results", action_submit_results_to_rps),
+		student_booklet_access_action(ExamDoc)
 	].
 
+student_booklet_access_action(ExamDoc) ->
+	Id = itf:idval(ExamDoc),
+	case itf:val2(ExamDoc, student_ans_booklet_access) of
+		?YES -> ite:button(
+			student_booklet_access,
+			?LN("Disable Student Booklet Access"),
+			{student_booklet_access, Id, ?NO}, "btn btn-sm btn-danger-outline"
+		);
+		_ -> ite:button(
+			student_booklet_access,
+			?LN("Enable Student Booklet Access"),
+			{student_booklet_access, Id, ?YES},
+			"btn btn-sm btn-success-outline"
+		)
+	end.
 
 
 %
@@ -552,7 +568,7 @@ fetch(D, From, Size, [
 		D#dig {
 			description=itl:render(itf:d2f_doc(ExamDoc, ?OSMEXM(osm_exam_fk))),
 			total=Count,
-			events=get_events(),
+			events=get_events(ExamDoc),
 			actions=[],
 			dcell_headers=Header,
 			config=D#dig.config ++ [
@@ -678,6 +694,20 @@ layout() ->
 event({itx, E}) ->
 	ite:event(E);
 
+event({student_booklet_access, TestId, NewAccess}) ->
+	itl:confirmation(
+		get_access_confirmation_msg(NewAccess),
+		{student_booklet_access, TestId, NewAccess}
+	);
+
+event({confirmation_yes, {student_booklet_access, TestId, NewState}}) ->
+	FsToSave = [
+		fields:build(student_ans_booklet_access, NewState)
+	],
+	{ok, _} = ep_osm_exam_api:save(FsToSave, ep_osm_exam:fs(all), TestId),
+
+	helper:redirect(wf:uri());
+
 event({confirmation_yes, action_submit_results_to_rps}) ->
 	handle_submit_results_to_rps(wf:q(id));
 
@@ -696,6 +726,12 @@ event(export_results_bulk_pdf) ->
 event(export_results_bulk) ->
 	handle_export_results_bulk().
 
+
+
+get_access_confirmation_msg(?NO) ->
+	"Are you sure you want to disable booklet access to students?";
+get_access_confirmation_msg(?YES) ->
+	"Are you sure you want to enable booklet access to students?".
 
 
 %------------------------------------------------------------------------------
