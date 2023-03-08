@@ -47,7 +47,7 @@ layout(TestId, CandidateId) ->
 	Fs = anpcandidates:get(anpcandidates:db(TestId), CandidateId),
 
 	?ASSERT(
-		(itf:val2(TFs, student_ans_booklet_access) == ?YES) or
+		(itf:val(TFs, student_ans_booklet_access) == ?YES) or
 		(itxauth:role() == ?APPOSM_ADMIN),
 		?LN("Can not access booklet. Please contact college admin.")
 	),
