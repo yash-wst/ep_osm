@@ -580,7 +580,7 @@ csv_frp(TestId, "profiletype_" ++ RoleType) ->
 csv_frp_marks([]) ->
 	"ab";
 csv_frp_marks(Str) ->
-	Str.
+	itx:format("~.2f", [helper:s2f_v1(Str)]).
 
 
 
