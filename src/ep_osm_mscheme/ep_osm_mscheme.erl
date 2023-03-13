@@ -407,7 +407,10 @@ handle_convert_widget_to_tuple_calc(
 	%
 	CurrentId = case ParentType of
 		undefined ->
-			?WTYPE_RULE ++ ?WTYPE_GROUP ++ ?A2L(Id);
+			itx:format("~s~s~s_~s~s~s~s", [
+				?WTYPE_RULE, ?WTYPE_GROUP, ?A2L(Id),
+				?WTYPE_RULE, ?WTYPE_GROUP, ?WTYPE_QUESTION, ?A2L(Id)
+			]);	
 		?WTYPE_RULE ->
 			?WTYPE_RULE ++ ?WTYPE_GROUP ++ ?WTYPE_QUESTION ++ ?A2L(Id);
 		?WTYPE_GROUP ->
