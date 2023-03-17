@@ -4,6 +4,25 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 
 
+%------------------------------------------------------------------------------
+% fs
+%------------------------------------------------------------------------------
+
+fs(merge) -> [
+	fields:get(anpcentercode),
+	fields:get(anp_paper_uid),
+	fields:get(anpfullname)
+];
+
+fs({Doc, merge}) ->
+	lists:filter(fun(F) ->
+		itf:val(Doc, F#field.id) == []
+	end, fs(merge));
+
+
+fs(all) ->
+	ep_osm_candidate:fs(all).
+
 
 %------------------------------------------------------------------------------
 % db
@@ -51,27 +70,9 @@ savebulk(LoLofFields) ->
 
 
 		%
-		% get existing candidate docs
+		% merge with existing docs
 		%
-		ExistingCandidateDocs = get_existing_candidate_docs(ExamDoc, DocsToSave),
-		ExistingCandidateDocsDict = get_existing_candidate_docs_dict(ExistingCandidateDocs),
-
-
-		%
-		% filter out existing docs
-		%
-		DocsToSave1 = lists:filter(fun(Doc) ->
-
-			PRN = itf:val(Doc, anp_paper_uid),
-			SNO = itf:val(Doc, anpseatnumber),
-		
-			(
-				(dict:find(PRN, ExistingCandidateDocsDict) == error) and
-				(dict:find(SNO, ExistingCandidateDocsDict) == error)
-			)
-
-
-		end, DocsToSave),
+		DocsToSave1 = handle_merge_with_existing_docs(ExamDoc, DocsToSave),
 
 
 		%
@@ -413,6 +414,57 @@ handle_import_csv_to_fs(List) ->
 
 	end, List).
 
+
+
+%------------------------------------------------------------------------------
+% handle merge with existing docs
+%------------------------------------------------------------------------------
+
+handle_merge_with_existing_docs(ExamDoc, DocsToSave) ->
+
+	%
+	% get existing candidate docs
+	%
+	ExistingCandidateDocs = get_existing_candidate_docs(ExamDoc, DocsToSave),
+	ExistingCandidateDocsDict = get_existing_candidate_docs_dict(ExistingCandidateDocs),
+
+
+	%
+	% merge into existing docs
+	%
+	lists:foldl(fun(Doc, Acc) ->
+
+		SNO = itf:val(Doc, anpseatnumber),
+		case dict:find(SNO, ExistingCandidateDocsDict) of
+			{ok, DocExisting} ->
+				%
+				% merge only if field value is empty in the existing doc
+				%
+				FsDocExisting = itf:d2f(DocExisting, fs(all)),
+				FsDoc = itf:d2f(Doc, fs({FsDocExisting, merge})),
+				FsDocMerged = itf:fs_merge(FsDocExisting, FsDoc),
+
+
+				%
+				% acc only if there are changes
+				%
+				case itf:fs_changelist(FsDocExisting, FsDoc) of
+					[] ->
+						Acc;
+					_ ->
+						Acc ++ [
+							helper_api:fields2doc(FsDocMerged)
+						]
+				end;
+
+			_ ->
+				Acc ++ [
+					Doc
+				]
+		end
+
+
+	end, [], DocsToSave).
 
 
 %------------------------------------------------------------------------------
