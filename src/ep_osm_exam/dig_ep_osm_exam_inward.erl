@@ -448,7 +448,7 @@ fetch(D, From, Size, [
 	%
 	{D#dig {
 		total=ep_osm_bundle_api:get_count_by_osm_exam_fk(OsmExamId),
-		description=io_lib:format("~s / ~s", [
+		description=io_lib:format("~ts / ~ts", [
 			itf:val(ExamDoc, testname), ?LN(?L2A(itf:val(ExamDoc, teststatus)))
 		]),
 		actions=dig_ep_osm_exam_inward_actions:layout_actions_exam(
