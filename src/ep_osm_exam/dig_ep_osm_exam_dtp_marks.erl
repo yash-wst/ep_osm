@@ -32,6 +32,16 @@ heading() ->
 % fs
 %------------------------------------------------------------------------------
 
+fs(table) ->
+	fields:getfields([
+		anp_paper_uid,
+		anpseatnumber,
+		anp_paper_booklet_slno,
+		anpfullname,
+		dtp_marks_manual,
+		dtp_marks_omr
+	]);
+
 fs(import) -> [
 	itf:textbox(?F(id, "Exam Id"))
 ];
@@ -122,7 +132,9 @@ fetch(D, _From, _Size, [
 				{action_layout_type, buttons}
 			]
 		},
-		[]
+		[lists:map(fun(#field {label=Label}) ->
+			#dcell {type=header, val=Label}
+		end, fs(table))]
 	};
 
 
@@ -153,13 +165,14 @@ exports() -> [
 %------------------------------------------------------------------------------
 layout() ->
 	event(dtp_marks_manual_form),
+	handle_focus_textbox(),
 	dig:dig(?MODULE:get()).
 
 
 
 layout_dtp_marks_manual_form() ->
 	Event = ite:get(update_dtp_marks_manual, "Update Marks", update_dtp_marks_manual),
-	itl:get(?UPDATE, fs(dtp_marks_manual), Event, table).
+	itl:get(?UPDATE, fs(dtp_marks_manual), Event, line).
 
 
 layout_dtp_marks_omr_form() ->
@@ -270,6 +283,7 @@ handle_update_dtp_marks_manual([Doc], FsUi, ExamId) ->
 			FComment1 = itf:build_comment(FComment, Changelist), 
 			case ep_osm_candidate_api:update(ExamId, Doc, FsToSave ++ [FComment1]) of
 				{ok, Doc1} ->
+					handle_insert_candidatedoc(Doc1),
 					helper_ui:flash(success, io_lib:format("Saved ~s: ~s vs. ~s", [
 						itf:val(Doc1, anp_paper_uid),
 						itf:val(Doc1, dtp_marks_manual),
@@ -279,7 +293,14 @@ handle_update_dtp_marks_manual([Doc], FsUi, ExamId) ->
 					?D(Error),
 					helper_ui:flash(error, io_lib:format("Error!: ~s", [UId]))
 			end
-	end;
+	end,
+
+
+	%
+	% final
+	%
+	handle_focus_textbox();
+
 
 
 %
@@ -295,6 +316,28 @@ handle_update_dtp_marks_manual([], _FsUi, _ExamDb) ->
 handle_update_dtp_marks_manual(_, _FsUi, _ExamDb) ->
 	helper_ui:flash(error, "Error!").
 
+
+
+%
+% focus
+%
+handle_focus_textbox() ->
+	wf:wire("
+		obj('anp_paper_uid').value = '';
+		obj('dtp_marks_manual').value = '';
+		obj('anp_paper_uid').focus();
+		obj('anp_paper_uid').select();
+	").
+
+
+handle_insert_candidatedoc(CDoc) ->
+	FsInward = fs(table),
+	Row = #tablerow {
+		cells=lists:map(fun(Fi) ->
+			#tablecell {body=itf:val(CDoc, Fi#field.id)}
+		end, FsInward)
+	},
+	wf:insert_top(dig:id(table), Row).
 
 
 %------------------------------------------------------------------------------
