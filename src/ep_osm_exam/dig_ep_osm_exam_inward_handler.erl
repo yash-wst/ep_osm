@@ -1027,14 +1027,7 @@ handle_inward(UId, SNo, _TotalPages) ->
 	%
 	% search for existing docs
 	%
-	FsToSearchCandidate = [
-		itf:build(itf:textbox(?F(anpseatnumber)), SNo1)
-	],
-	#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
-		ExamDb, FsToSearchCandidate, 0, ?INFINITY, [
-			{use_index, ["anpseatnumber"]}
-		]
-	),
+	CandidateDocs = get_existing_candidate_docs(ExamDb, UId, SNo1),
 	handle_inward(ExamId, OsmBundleId, FsInwardUi, CandidateDocs).
 
 
@@ -1084,8 +1077,18 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 	%
 	% init
 	%
-	UId = itf:val2(FsInwardUi, anp_paper_uid),
-	SNo = itf:val2(FsInwardUi, anpseatnumber),
+	UId = case itf:val(Doc, anp_paper_uid) of
+		[] ->
+			itf:val2(FsInwardUi, anp_paper_uid);
+		UId0 ->
+			UId0
+	end,
+	SNo = case itf:val(Doc, anpseatnumber) of
+		[] ->
+			itf:val2(FsInwardUi, anpseatnumber);
+		SNo0 ->
+			SNo0
+	end,
 	ExamDb = anpcandidates:db(ExamId),
 	BundleId = itf:val(Doc, osm_bundle_fk),
 	BundleDoc = get_bundle_doc_from_cache(OsmBundleId),
@@ -1102,7 +1105,10 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 	%
 	% fs to save
 	%
-	FsToSave = FsInwardUi ++ [
+	FsInwardUi1 = itf:fs_delete(FsInwardUi, fields:getfields([
+		anp_paper_uid, anpseatnumber
+	])),
+	FsToSave = FsInwardUi1 ++ [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
 		itf:build(itf:textbox(?F(anpstate)), "anpstate_not_uploaded"),
 		itf:build(itf:textbox(?F(timestamp_inward)), new_timestamp_inward(ExamDb, BundleId)),
@@ -1443,6 +1449,31 @@ handle_validate_inward_fs(Fs) ->
 		end, Validators)
 	end, Fs).
 
+
+
+
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+get_existing_candidate_docs(Db, UId, SeatNumber) ->
+
+	%
+	% get candidates by UID
+	%
+	DocsUId = db2_find:getdocs_by_ids(Db, anp_paper_uid, [UId]),
+
+
+	%
+	% get docs by seat number
+	%
+	DocsSeatNumbers = db2_find:getdocs_by_ids(Db, anpseatnumber, [SeatNumber]),
+
+
+	%
+	% return unique
+	%
+	helper:unique(DocsUId ++ DocsSeatNumbers).
 
 
 %------------------------------------------------------------------------------
