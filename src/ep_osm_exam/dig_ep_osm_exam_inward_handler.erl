@@ -1106,7 +1106,7 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 	% fs to save
 	%
 	FsInwardUi1 = itf:fs_delete(FsInwardUi, fields:getfields([
-		anp_paper_uid, anpseatnumber
+		anpseatnumber
 	])),
 	FsToSave = FsInwardUi1 ++ [
 		itf:build(itf:textbox(?F(osm_bundle_fk)), OsmBundleId),
