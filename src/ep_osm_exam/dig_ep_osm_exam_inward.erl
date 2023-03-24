@@ -280,7 +280,7 @@ fetch(D, _From, _Size, [
 		],
 		description=#link {
 			url=itx:format("/dig_ep_osm_exam_inward?id=~s", [OsmExamId]),
-			text=io_lib:format("~s / ~s / ~s / Bundle: ~s (~s) / Rack:~s / Packet: ~s / PacketCount: ~s", [
+			text=io_lib:format("~ts / ~ts / ~ts / Bundle: ~ts (~ts) / Rack:~ts / Packet: ~ts / PacketCount: ~ts", [
 				itf:val(ExamDoc, anptestcourseid),
 				itf:val(ExamDoc, testname),
 				?LN(?L2A(itf:val(ExamDoc, teststatus))),
