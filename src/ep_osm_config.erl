@@ -45,7 +45,7 @@ can_send_reminders_via_email() ->
 
 
 %------------------------------------------------------------------------------
-% is face recognition enabled
+% evaluator proctoring
 %------------------------------------------------------------------------------
 
 is_evaluation_face_proctored() ->
@@ -53,6 +53,9 @@ is_evaluation_face_proctored() ->
 
 evaluation_face_proctoring_interval_secs() ->
 	itxconfigs_cache:get2(ep_osm_evaluation_face_proctoring_interval_secs, 120).
+
+evaluation_face_proctor_action() ->
+	itxconfigs_cache:get2(ep_osm_evaluation_face_proctor_action, "warn").
 
 
 %------------------------------------------------------------------------------

@@ -89,6 +89,7 @@ handle_verify_face() ->
 	%
 	% init
 	%
+	AnpId = wf:q(anpcandidate:id()),
 	EvaluatorId = myauth:profileid(),
 	"data:image/jpeg;base64," ++ Base64Data = wf:q(my_camera_image),
 	CamPhoto = base64:decode(Base64Data),
@@ -100,16 +101,54 @@ handle_verify_face() ->
 	%
 	% match faces
 	%
+	handle_save_captured_image(AnpId, EvaluatorId, wf:q(my_camera_image)),
 	Res = itxface_awsapi:compare_faces(CamPhoto, ProfilePhoto),
-
-
-	%
-	% assert true
-	%
-	?ASSERT(
-		element(1, Res) == true,
-		"Face recognition failed!"
+	handle_verify_face_res(
+		EvaluatorId, element(1, Res), ep_osm_config:evaluation_face_proctor_action()
 	).
+
+
+
+%..............................................................................
+%
+% handle - verify face res
+%
+%..............................................................................
+
+handle_verify_face_res(EvaluatorId, true, _) ->
+	ok;
+
+handle_verify_face_res(_EvaluatorId, false, "warn") ->
+	helper_ui:flash(error, "Face recognition failed!");
+
+handle_verify_face_res(_EvaluatorId, false, "logout") ->
+	wf:redirect("/itxlogout");
+
+handle_verify_face_res(EvaluatorId, false, "suspend_and_logout") ->
+	{ok, _} = profiles:suspend_profile(EvaluatorId),
+	wf:redirect("/itxlogout").
+
+
+
+
+%..............................................................................
+%
+% handle - save camera image
+%
+%..............................................................................
+
+handle_save_captured_image(AnpId, EvaluatorId, "data:image/jpeg;base64," ++ Base64Data) ->
+
+	%
+	% init
+	%
+	CamPhoto = base64:decode(Base64Data),
+	S3Key = ?FLATTEN(io_lib:format("~s/~s/~s/~s/~s.jpg", [
+		db_domain:host(), "__PROCTORING__", AnpId, EvaluatorId, helper:uidintstr()
+	])),
+	?D(S3Key).
+
+
 
 
 
