@@ -51,6 +51,8 @@ can_send_reminders_via_email() ->
 is_evaluation_face_proctored() ->
 	itxconfigs_cache:get2(ep_osm_evaluation_face_proctored, false).
 
+evaluation_face_proctoring_interval_secs() ->
+	itxconfigs_cache:get2(ep_osm_evaluation_face_proctoring_interval_secs, 120).
 
 
 %------------------------------------------------------------------------------
