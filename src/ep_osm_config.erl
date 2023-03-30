@@ -3,6 +3,10 @@
 -include("records.hrl").
 
 
+%------------------------------------------------------------------------------
+% start
+%------------------------------------------------------------------------------
+
 is_qc_enabled() ->
 	itxconfigs_cache:get2(ep_osm_enable_qc, false).
 
@@ -37,6 +41,16 @@ get_dtp_marks_enabled_states() ->
 
 can_send_reminders_via_email() ->
 	itxconfigs_cache:get2(ep_osm_exam_reminders_via_email, false).
+
+
+
+%------------------------------------------------------------------------------
+% is face recognition enabled
+%------------------------------------------------------------------------------
+
+is_evaluation_face_proctored() ->
+	itxconfigs_cache:get2(ep_osm_evaluation_face_proctored, false).
+
 
 
 %------------------------------------------------------------------------------

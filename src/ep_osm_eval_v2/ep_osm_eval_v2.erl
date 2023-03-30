@@ -53,6 +53,8 @@ layout() ->
 
     	ep_osm_eval_v2_toolbar:layout_toolbar(TestFs),
 
+    	ep_osm_eval_v2_camera:layout_camera(Fs),
+
     	ep_osm_eval_v2_marks_box:layout_marks_box(TestFs, Fs),
 
     	ep_osm_eval_v2_review_area:layout_review_area(TestFs, Fs)
