@@ -82,6 +82,7 @@ layout() ->
 			layout_evaluator_marking(TFs, Fs, RoleFId),
 			layout_page_nos(TFs, Fs, RoleFId)
 		]),
+		layout_proctor_photos(Fs, RoleFId),
 		anpcandidate_answerpaper:layout_answerpaper(TFs, Fs)
 	]}),
 	akit_fullpage:layout(Es, nav()).
@@ -190,6 +191,41 @@ layout_page_nos(TFs, Fs, RoleFId, _) ->
 
 
 
+%
+% layout proctor photos
+%
+layout_proctor_photos(Fs, RoleFId) ->
+	
+	%
+	% init
+	%
+	AnpId = itf:val(Fs, '_id'),
+	EvaluatorFId = ?L2A(itx:format("profileidfk_~p", [RoleFId])),
+	EvaluatorId = itf:val(Fs, EvaluatorFId),
+
+
+	%
+	% urls
+	%
+	ImgUrls = get_proctor_image_urls(AnpId, EvaluatorId),
+	Es = ep_osm_verify_images:layout_answerpaper(undefined, undefined, ImgUrls, 3),
+
+
+	%
+	% return
+	%
+	case ImgUrls of
+		[] -> [
+		];
+		_ -> [
+			#p {class="font-weight-bold", text="Evaluator Images"},
+			Es
+		]
+	end.
+
+
+
+
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
@@ -217,6 +253,48 @@ url(Role) ->
 	]).
 
 
+
+%
+% get proctor image urls
+%
+get_proctor_image_urls(AnpId, EvaluatorId) ->
+
+	%
+	% init
+	%
+	Bucket = helper_s3:aws_s3_bucket(),
+	Region = configs:get(aws_s3_region, "s3.ap-south-1.amazonaws.com"),
+
+	%
+	% get files from s3
+	%
+	ExpectDir = ep_osm_eval_v2_camera:get_proctor_base_url(AnpId, EvaluatorId) ++ "/",
+	Files = helper_s3:list_keys(Bucket, ExpectDir),
+
+	%
+	% create urls from files
+	%
+	ImgUrls = lists:foldl(fun(L, Acc) ->
+		Key = proplists:get_value(key, L),
+		case string:to_lower(filename:extension(Key)) of
+			Ext when Ext == ".jpg"; Ext == ".pdf" ->
+				%
+				% construct image url
+				%
+				ImgUrl = lists:flatten(io_lib:format("https://~s.~s/~s", [
+					Bucket, Region, Key
+				])),
+
+				%
+				% encode url
+				%
+				Acc ++ [anpcandidate:url_encode(ImgUrl)];
+			_ ->
+				Acc
+		end
+	end, [], Files),
+
+	helper:sortasc(ImgUrls).
 
 %------------------------------------------------------------------------------
 % end

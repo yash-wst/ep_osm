@@ -115,7 +115,7 @@ handle_verify_face() ->
 %
 %..............................................................................
 
-handle_verify_face_res(EvaluatorId, true, _) ->
+handle_verify_face_res(_EvaluatorId, true, _) ->
 	ok;
 
 handle_verify_face_res(_EvaluatorId, false, "warn") ->
@@ -143,10 +143,23 @@ handle_save_captured_image(AnpId, EvaluatorId, "data:image/jpeg;base64," ++ Base
 	% init
 	%
 	CamPhoto = base64:decode(Base64Data),
-	S3Key = ?FLATTEN(io_lib:format("~s/~s/~s/~s/~s.jpg", [
-		db_domain:host(), "__PROCTORING__", AnpId, EvaluatorId, helper:uidintstr()
+	S3Key = ?FLATTEN(io_lib:format("~s/~s.jpg", [
+		get_proctor_base_url(AnpId, EvaluatorId), helper:uidintstr()
 	])),
-	?D(S3Key).
+
+
+	%
+	% upload to s3
+	%
+	AmzResponse = erlcloud_s3:put_object(
+		helper_s3:aws_s3_bucket(), S3Key, CamPhoto, [], helper_s3:aws_config()
+	),
+	AmzRequestId = proplists:get_value("x-amz-request-id", AmzResponse),
+	?ASSERT(
+		((AmzRequestId /= []) and (AmzRequestId /= undefined)),
+		"Failed to save photo!"
+	).
+
 
 
 
@@ -156,12 +169,28 @@ handle_save_captured_image(AnpId, EvaluatorId, "data:image/jpeg;base64," ++ Base
 % misc
 %------------------------------------------------------------------------------
 
+
+%
+% schedule proctor
+%
 schedule_proctor() ->
 	IntervalSecs = ep_osm_config:evaluation_face_proctoring_interval_secs(),
 	Timeout = 60 + random:uniform(IntervalSecs),
 	wf:wire(#event{
 		type=timer, delay=Timeout*1000, delegate=?MODULE, postback=proctor
 	}).
+
+
+
+%
+% get proctor base url
+%
+get_proctor_base_url(AnpId, EvaluatorId) ->
+	itx:format("~s/~s/~s/~s", [
+		db_domain:host(), "__PROCTORING__", AnpId, EvaluatorId
+	]).
+
+
 
 %------------------------------------------------------------------------------
 % end
