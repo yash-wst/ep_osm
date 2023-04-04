@@ -234,7 +234,7 @@ get_anptestid_anpid1(_SeasonId, _SubjectId, PRN, [ExamDoc]) ->
 		{error, not_found} ->
 			{error, candidate_not_found};
 		CFs ->
-			{ExamId, itf:val(CFs, '_id')}
+			{ExamId, get_anpid_from_sno_or_uid(ExamId, CFs)}
 	end;
 get_anptestid_anpid1(_SeasonId, _SubjectId, _PRN, Docs) ->
 	{error, Docs}.
@@ -242,6 +242,23 @@ get_anptestid_anpid1(_SeasonId, _SubjectId, _PRN, Docs) ->
 
 
 
+%
+% get anp if from sno or uid
+%
+get_anpid_from_sno_or_uid(ExamId, CFs) ->
+	get_anpid_from_sno_or_uid(ExamId, CFs, itf:val(CFs, anpstate)).
+
+
+get_anpid_from_sno_or_uid(ExamId, CFs, "anpstate_expected") ->
+	PRN = itf:val(CFs, anp_paper_uid),
+	case anpcandidates:get_by_sno(ExamId, PRN) of
+		{error, not_found} ->
+			itf:val(CFs, '_id');
+		CFs1 ->
+			itf:val(CFs1, '_id')
+	end;
+get_anpid_from_sno_or_uid(_, CFs, _) ->
+	itf:val(CFs, '_id').
 
 %------------------------------------------------------------------------------
 % handle
