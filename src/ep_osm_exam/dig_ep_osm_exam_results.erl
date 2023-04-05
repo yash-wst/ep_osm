@@ -1565,6 +1565,11 @@ get_marks_per_question_inpods(Doc, ListOfAllQuestions, EvaluatorRole) ->
 %
 
 get_list_of_questions(TDoc) ->
+	get_list_of_questions(TDoc, itf:val(TDoc, osm_mscheme_fk)).
+
+get_list_of_questions(_TDoc, []) ->
+	[];
+get_list_of_questions(TDoc, _) ->
 	TFs = helper_api:doc2fields({ok, TDoc}),
 	anp_marking:init_marking_rules(TFs),
 	ListofRules = anp_marking:get_marking_rules(),
