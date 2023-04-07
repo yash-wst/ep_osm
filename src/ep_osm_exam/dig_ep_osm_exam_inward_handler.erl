@@ -1456,24 +1456,41 @@ handle_validate_inward_fs(Fs) ->
 % misc
 %------------------------------------------------------------------------------
 
+%
+% get existing candidate docs
+%
 get_existing_candidate_docs(Db, UId, SeatNumber) ->
 
 	%
 	% get candidates by UID
 	%
-	DocsUId = db2_find:getdocs_by_ids(Db, anp_paper_uid, [UId]),
+	DocsUId = getdoc_by_id(Db, anp_paper_uid, UId),
 
 
 	%
 	% get docs by seat number
 	%
-	DocsSeatNumbers = db2_find:getdocs_by_ids(Db, anpseatnumber, [SeatNumber]),
+	DocsSeatNumbers = getdoc_by_id(Db, anpseatnumber, SeatNumber),
 
 
 	%
 	% return unique
 	%
 	helper:unique(DocsUId ++ DocsSeatNumbers).
+
+
+
+%
+% get doc by id
+%
+getdoc_by_id(Db, FId, Val) ->
+	FsFind = [
+		itf:build(itf:textbox(?F(FId)), Val)
+	],
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(Db, FsFind, 0, ?INFINITY, [
+		{use_index, [?A2L(FId)]}
+	]),
+	Docs.
 
 
 %------------------------------------------------------------------------------
