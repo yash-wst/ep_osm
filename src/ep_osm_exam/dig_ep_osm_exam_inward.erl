@@ -164,14 +164,15 @@ get() ->
 	#dig {
 		module=?MODULE,
 		filters=[
-			itf:build(f(osm_exam_fk), OsmExamId),
+			itf:build(itf:hidden(?F(osm_exam_fk)), OsmExamId),
 			itf:build(?OSMBDL({osm_bundle_fk, OsmExamId}), BundleId),
 			?OSMBDL(inwardstate),
 			?OSMBDL(scanningstate),
 			?OSMBDL(uploadstate)
 		],
 		config=[
-			{action_layout_type, buttons}
+			{action_layout_type, buttons},
+			{searchbar_visibility, show}
 		],
 		size=100
 	}.
@@ -321,7 +322,9 @@ fetch(D, From, Size, [
 	% get bundle docs
 	%
 	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
-		ep_osm_bundle_api:db(), Fs, From, Size
+		ep_osm_bundle_api:db(), Fs, From, Size, [
+			{use_index, ["osm_exam_fk"]}
+		]
 	),
 
 
@@ -647,11 +650,11 @@ layout_upload_form(BundleDoc, _) ->
 		helper:uidintstr()
 	])),
 
-	RedirectUrl = ?FLATTEN(io_lib:format("https://~s/~p?id=~s&digx=~s&objectkey=~s", [
+	RedirectUrl = ?FLATTEN(io_lib:format("https://~s/~p?id=~s&bundleid=~s&objectkey=~s", [
 		wf:header(host),
 		?MODULE,
 		wf:q(id),
-		wf:q(digx),
+		itf:idval(BundleDoc),
 		ObjectKey
 	])),
 
@@ -880,7 +883,7 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 
 	case cfg_show_previous_uploads() of
 		true ->
-			redirect_to_bundle( ExamId, OsmBundleId);
+			redirect_to_bundle(ExamId, OsmBundleId);
 		_ ->
 			minijob_status:show_status(Doc)
 	end.
@@ -1089,6 +1092,17 @@ event(create_bundle) ->
 event(create_bundle_form) ->
 	dig_ep_osm_exam_inward_handler:handle_create_bundle_form();
 
+
+event({itx, {textbox_picker, {pick, osm_bundle_fk, BundleId, _Label}}}) ->
+	Url = get_bundle_url(wf:q(id), BundleId),
+	helper:redirect(Url);
+
+
+event({itx, {dig, clear_filters}}) ->
+	Url = get_bundle_url(wf:q(id), undefined),
+	helper:redirect(Url);
+
+
 event({itx, E}) ->
 	ite:event(E).
 
@@ -1283,12 +1297,7 @@ redirect_to_main() ->
 
 
 redirect_to_bundle(OsmExamId, OsmBundleId) ->
-	Url = itx:format("/~p?id=~s&digx=~s", [
-		?MODULE, OsmExamId, base64:encode_to_string(helper:t2l([
-			{osm_exam_fk, OsmExamId},
-			{osm_bundle_fk, OsmBundleId}
-		]))
-	]),
+	Url = get_bundle_url(OsmExamId, OsmBundleId),
 	helper:redirect(Url).
 
 
@@ -1332,6 +1341,10 @@ is_bundle_active(SeasonDoc, ExamDoc) ->
 
 
 
+get_bundle_url(ExamId, undefined) ->
+	itx:format("/dig_ep_osm_exam_inward?id=~s", [
+		ExamId
+	]);
 get_bundle_url(ExamId, BundleId) ->
 	itx:format("/dig_ep_osm_exam_inward?id=~s&bundleid=~s", [
 		ExamId, BundleId

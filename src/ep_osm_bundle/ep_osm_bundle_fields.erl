@@ -43,42 +43,8 @@ f(osm_bundle_fk = I) ->
 	itf:textbox(?F(I, "Bundle Id"));
 
 f({osm_bundle_fk = I, OsmExamId}) ->
-
-
-	%
-	% init
-	%
-	Fs = [
-		itf:build(?OSMBDL(osm_exam_fk), OsmExamId)
-	],
-
-
-	%
-	% get bundles for the specified exam season
-	%
-	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
-		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY, [
-			{use_index, ["osm_exam_fk"]}
-		]
-	),
-
-
-	%
-	% build options
-	%
-	Options = itf:options(lists:map(fun(D) ->
-		{
-			itf:idval(D),
-			io_lib:format("~s - ~s", [itf:val(D, number), itf:val(D, createdby)])
-		}
-	end, Docs)),
-
-
-	%
-	% return dropdown
-	%
-	itf:dropdown(?F(I, "Bundle"), Options);
-
+	F = itf:textbox_picker(?F(I, "Bundle")),
+	F#field {options=options({osm_bundle_fk, OsmExamId})};
 
 
 f(scannedby = I) ->
@@ -165,6 +131,35 @@ validator(O) ->
 % options
 %------------------------------------------------------------------------------
 
+options({osm_bundle_fk, OsmExamId}) ->
+	#search {
+		title=?LN("Select Bundle"),
+		db=ep_osm_bundle:db(),
+		displayfs_picked=[
+			?OSMBDL(number),
+			?OSMBDL(packet_number),
+			?OSMBDL(rack_location)
+		],
+		displayfs=[
+			?OSMBDL(number),
+			?OSMBDL(packet_number),
+			?OSMBDL(packet_count),
+			?OSMBDL(rack_location),
+			?OSMBDL(inwardstate),
+			?OSMBDL(scanningstate),
+			?OSMBDL(uploadstate),
+			?OSMBDL(qcstate)
+		],
+		filterfs=[
+			itf:build(itf:hidden(?F(osm_exam_fk)), OsmExamId),
+			?OSMBDL(number),
+			?OSMBDL(packet_number),
+			?OSMBDL(rack_location)
+		],
+		size=10,
+		searchfn=fun fetch_osm_bundle_fk/5
+	};
+
 options(qcby) ->
 	#search {
 		title=?LN("Select User"),
@@ -218,6 +213,19 @@ options(State) when
 % renderers
 %------------------------------------------------------------------------------
 
+
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+fetch_osm_bundle_fk(Db, FsFind, From, Size, _SortFs) ->
+	FsFind1 = dig:get_nonempty_fs(FsFind),
+	{
+		db:count(Db),
+		ep_osm_bundle_api:fetch(?S2I(From), ?S2I(Size), FsFind1, [
+			{use_index, ["osm_exam_fk"]}
+		])
+	}.
 
 %------------------------------------------------------------------------------
 % end
