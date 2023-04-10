@@ -13,7 +13,8 @@
 	get_bundle_doc_from_cache/1,
 	get_bundle_number_from_cache/1,
 	layout_candidate_edit/2,
-	layout_candidate_remove/2
+	layout_candidate_remove/2,
+	get_bundle_url/2
 ]).
 
 
@@ -1224,12 +1225,8 @@ handle_create_bundle(ExamId, PacketNumber, RackLocation, PacketCount) ->
 	%
 	% save
 	%
-	case ep_osm_bundle_api:create(FsToSave) of
-		{ok, _BundleDoc} ->
-			dig:refresh();
-		_ ->
-			helper_ui:flash(error, "Sorry, could not create bundle!")
-	end.
+	{ok,  {ok, BundleDoc}} = ep_osm_bundle_api:create(FsToSave),
+	helper:redirect(get_bundle_url(ExamId, itf:idval(BundleDoc))).
 
 
 

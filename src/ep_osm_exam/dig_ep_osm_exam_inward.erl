@@ -158,13 +158,14 @@ get() ->
 	% init
 	%
 	OsmExamId = wf:q(id),
+	BundleId = wf:q(bundleid),
 
 
 	#dig {
 		module=?MODULE,
 		filters=[
 			itf:build(f(osm_exam_fk), OsmExamId),
-			?OSMBDL({osm_bundle_fk, OsmExamId}),
+			itf:build(?OSMBDL({osm_bundle_fk, OsmExamId}), BundleId),
 			?OSMBDL(inwardstate),
 			?OSMBDL(scanningstate),
 			?OSMBDL(uploadstate)
@@ -322,7 +323,6 @@ fetch(D, From, Size, [
 	#db2_find_response {docs=BundleDocs} = db2_find:get_by_fs(
 		ep_osm_bundle_api:db(), Fs, From, Size
 	),
-	FBundle = ?OSMBDL({osm_bundle_fk, OsmExamId}),
 
 
 	%
@@ -409,11 +409,11 @@ fetch(D, From, Size, [
 			]
 		end ++ [
 			#dcell {
-				val=#span {
+				val=#link {
 					class="btn btn-sm btn-primary-outline",
-					body="Bundle #" ++ itf:val(BDoc, number)
-				},
-				postback={filter, itf:build(FBundle, itf:idval(BDoc))}
+					body="Bundle #" ++ itf:val(BDoc, number),
+					url=get_bundle_url(OsmExamId, itf:idval(BDoc))
+				}
 			}
 		]
 	end, BundleDocsSorted),
@@ -1329,6 +1329,14 @@ is_bundle_active(SeasonDoc, ExamDoc) ->
 		_ ->
 			false
 	end.
+
+
+
+get_bundle_url(ExamId, BundleId) ->
+	itx:format("/dig_ep_osm_exam_inward?id=~s&bundleid=~s", [
+		ExamId, BundleId
+	]).
+
 
 
 %------------------------------------------------------------------------------
