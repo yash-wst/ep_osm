@@ -2,6 +2,7 @@
 -module(ep_osm_exam_api).
 -compile(export_all).
 -include("records.hrl").
+-define(BATCH_SIZE, 250).
 
 db() ->
 	"anptests".
@@ -518,24 +519,51 @@ states() -> [
 %------------------------------------------------------------------------------
 % csv - frp
 %------------------------------------------------------------------------------
+
+%
+% csv - frp
+%
 csv_frp(TestId, "dtp_" ++ _ = TotalId) ->
 	csv_frp1(TestId, ?L2A(TotalId));
-
 csv_frp(TestId, "profiletype_" ++ RoleType) ->
 	EvaluatorTotalId = ?L2A(?FLATTEN("total_" ++ RoleType)),
 	csv_frp1(TestId, EvaluatorTotalId).	
 
 
 
+%
+% csv frp 1
+%
 csv_frp1(TestId, EvaluatorTotalId) ->
+	Lines = csv_frp_batch(TestId, EvaluatorTotalId, 0),
+	{length(Lines), string:join(Lines, "\n")}.
+
+
+
+%
+% csv frp 1 batch
+%
+csv_frp_batch(TestId, EvaluatorTotalId, From) ->
 
 	%
-	% get candidate docs
+	% fetch docs
 	%
-	TestDb = anpcandidates:db(TestId),
-	CandidateDocs = anpcandidates:getall(TestDb),
+	CandidateDocs = anpcandidates:getdocs_from_to(TestId, From, ?BATCH_SIZE),
+	Lines = csv_frp_marks_lines(CandidateDocs, EvaluatorTotalId),
+	case length(CandidateDocs) < ?BATCH_SIZE of
+		true ->
+			Lines;
+		_ ->
+			Lines ++ csv_frp_batch(TestId, EvaluatorTotalId, From + ?BATCH_SIZE)
+	end.
 
 
+
+
+%
+% csv frp marks lines
+%
+csv_frp_marks_lines(CandidateDocs, EvaluatorTotalId) ->
 	%
 	% filter out unwanted docs
 	%
@@ -548,7 +576,7 @@ csv_frp1(TestId, EvaluatorTotalId) ->
 	% csv
 	% prn, name, marks
 	%
-	Lines = lists:foldl(fun(CDoc, Acc) ->
+	lists:foldl(fun(CDoc, Acc) ->
 
 		%
 		% create string
@@ -574,17 +602,13 @@ csv_frp1(TestId, EvaluatorTotalId) ->
 		end
 
 
-	end, [], CandidateDocs1),
-
-
-	%
-	% return
-	%
-	{length(Lines), string:join(Lines, "\n")}.
+	end, [], CandidateDocs1).
 
 
 
-
+%
+% csv frp marks
+%
 csv_frp_marks([]) ->
 	"ab";
 csv_frp_marks(Str) ->
