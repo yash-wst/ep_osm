@@ -57,7 +57,9 @@ f({osm_bundle_fk = I, OsmExamId}) ->
 	% get bundles for the specified exam season
 	%
 	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
-		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY
+		ep_osm_bundle_api:db(), Fs, 0, ?INFINITY, [
+			{use_index, ["osm_exam_fk"]}
+		]
 	),
 
 
