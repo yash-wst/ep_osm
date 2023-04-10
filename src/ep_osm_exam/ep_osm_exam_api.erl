@@ -518,14 +518,22 @@ states() -> [
 %------------------------------------------------------------------------------
 % csv - frp
 %------------------------------------------------------------------------------
+csv_frp(TestId, "dtp_" ++ _ = TotalId) ->
+	csv_frp1(TestId, ?L2A(TotalId));
+
 csv_frp(TestId, "profiletype_" ++ RoleType) ->
+	EvaluatorTotalId = ?L2A(?FLATTEN("total_" ++ RoleType)),
+	csv_frp1(TestId, EvaluatorTotalId).	
+
+
+
+csv_frp1(TestId, EvaluatorTotalId) ->
 
 	%
 	% get candidate docs
 	%
 	TestDb = anpcandidates:db(TestId),
 	CandidateDocs = anpcandidates:getall(TestDb),
-	EvaluatorTotalId = ?L2A(?FLATTEN("total_" ++ RoleType)),
 
 
 	%

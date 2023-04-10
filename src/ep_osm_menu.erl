@@ -36,7 +36,8 @@ menu(?APPOSM_ADMIN) ->
 			{dig_ep_osm_exam_capcentre_stats, ?VIEW, ?LN("CAP Centre Status")}
 		]},
 		{?LN("Results"), [
-			{dig_ep_osm_exam_results, ?VIEW, ?LN("OSM Results")}
+			{dig_ep_osm_exam_results, ?VIEW, ?LN("OSM Results")},
+			{dig_ep_osm_exam_upload_to_result_processing_system, ?VIEW, ?LN("Upload to RPS")}
 		]},
 		{?LN("Reports"), [
 			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")},

@@ -3,6 +3,9 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
+-import(dig_mm_ep_osm_exam_from_frp, [
+	rpc_call/4
+]).
 
 
 %------------------------------------------------------------------------------
@@ -28,6 +31,18 @@ heading() ->
 % fields
 %------------------------------------------------------------------------------
 
+
+f(osm_profiletype) ->
+	itf:dropdown(?F(osm_profiletype, "Upload Marks Of"), itf:options([
+		?F(profiletype_anpevaluator, "Evaluator"),
+		?F(profiletype_anpmoderator, "Moderator"),
+		?F(profiletype_anprevaluator, "Revaluator"),
+		?F(profiletype_anpmoderator_reval, "Moderator-Reval"),
+		?F(dtp_marks_manual, "DTP - Manual"),
+		?F(dtp_marks_omr, "DTP - OMR")
+	]));
+
+
 f(frp_season_fk = I) ->
 	F = ?COREXS(season_fk),
 	F#field {
@@ -42,7 +57,7 @@ f(frp_mark_type = I) ->
 
 
 options(frp_mark_type) ->
-	Docs = rpc:call(
+	Docs = rpc_call(
 		itxnode:frp(),
 		up_core_mark_type_api,
 		get_marktype_docs,
@@ -51,6 +66,24 @@ options(frp_mark_type) ->
 	?ASSERT(Docs =/= undefined, "Mark types not created!"),
 	L = [?F(itf:val2(Doc, mtype_id), itf:val2(Doc, lable)) || Doc <- Docs],
 	itf:options(L).
+
+
+
+%
+% fs
+%
+
+fs(search) ->
+	fields:getfields(fids(search));
+
+
+fs(minijob) -> [
+	f(frp_season_fk),
+	f(osm_profiletype),
+	f(frp_mark_type)
+].
+
+
 %------------------------------------------------------------------------------
 % access
 %------------------------------------------------------------------------------
@@ -74,7 +107,8 @@ fids(search) -> [
 	faculty_code_fk,
 	program_code_fk,
 	subject_code_fk,
-	anptestcourseid
+	anptestcourseid,
+	startdate
 ].
 
 %------------------------------------------------------------------------------
@@ -150,13 +184,19 @@ fetch(D, _From, _Size, Fs) ->
 	Results = lists:map(fun(Doc) ->
 		lists:map(fun(F) ->
 			#dcell {val=itl:render(F)}
-		end, itf:d2f(Doc, FsDisplay))
+		end, itf:d2f(Doc, FsDisplay)) ++ [
+			#dcell {
+				val=helper_ui:layout_slinks(anptest, itf:d2f(Doc, anptest:fs(index)))
+			}
+		]
 	end, Docs),
 
 
 	Header = lists:map(fun(F) ->
 		#dcell {type=header, val=F#field.label}
-	end, FsDisplay),
+	end, FsDisplay) ++ [
+		#dcell {type=header, val="View"}
+	],
 
 
 	%
@@ -164,6 +204,7 @@ fetch(D, _From, _Size, Fs) ->
 	%
 	{
 		D#dig {
+			description="Completed exams; result upload pending.",
 			total=length(Docs),
 			actions=[
 				{action_upload_to_frp, "Upload Results", "Upload Results"}
@@ -240,7 +281,7 @@ handle_action_upload_to_frp() ->
 	%
 	% build form
 	%
-	FEvaluatorType = fields:get(osm_profiletype),
+	FEvaluatorType = f(osm_profiletype),
 	FsUpload = [
 		f(frp_season_fk),
 		f(frp_mark_type),
@@ -273,19 +314,40 @@ handle_upload() ->
 	%
 	% init
 	%
-	Context = wf_context:context(),
 	OsmSeasonFk = wf:q(season_fk),
 	FrpSeasonFk = wf:q(frp_season_fk),
 	FrpMarkType = wf:q(frp_mark_type),
 	OsmEvaluatorType = wf:q(osm_profiletype),
 
 
+	case configs:getbool(process_via_minijob, false) of
+		false ->
+			handle_upload_via_taskqueue(
+				OsmSeasonFk, FrpSeasonFk, FrpMarkType, OsmEvaluatorType
+			);
+		true ->
+			handle_upload_via_minijob()
+	end.
+
+
+%
+% handle upload - taskqueue
+%
+handle_upload_via_taskqueue(OsmSeasonFk, FrpSeasonFk, FrpMarkType, OsmEvaluatorType) ->
+
+	%
+	% init
+	%
+	Context = wf_context:context(),
+	Dig = helper:state(dig),
+	FsFilters = dig:get_nonempty_fs(Dig#dig.filters),
+
 	%
 	% function
 	%
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType)
+		handle_upload_actual(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType, FsFilters)
 	end,
 
 
@@ -297,14 +359,30 @@ handle_upload() ->
 
 
 
-handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType) ->
+
+%
+% handle upload - minijob
+%
+handle_upload_via_minijob() ->
+	{ok, Doc} = minijob_upload_to_rps:create_and_run(
+		itf:uivalue(fs(search) ++ fs(minijob))
+	),
+	minijob_status:show_status(Doc).
+
+
+
+
+%
+% handle uplaod 
+%
+handle_upload_actual(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType, FsFilters) ->
 
 
 	%
 	% ensure seasons have same name
 	%
 	{ok, OsmSeasonDoc} = ep_core_exam_season_api:get(OsmSeasonFk),
-	{ok, FrpSeasonDoc} = rpc:call(
+	{ok, FrpSeasonDoc} = rpc_call(
 		itxnode:frp(),
 		ep_core_exam_season_api,
 		get,
@@ -319,7 +397,7 @@ handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType) ->
 	FrpSeasonDoc1 = case FrpSeasonType of
 		"revaluation" ->
 			RegularSeasonId = itf:val(FrpSeasonDoc, revaluation_for_exam_season),
-			{ok, FrpSeasonDocRegular} = rpc:call(
+			{ok, FrpSeasonDocRegular} = rpc_call(
 				itxnode:frp(),
 				ep_core_exam_season_api,
 				get,
@@ -349,9 +427,6 @@ handle_upload(OsmSeasonFk, FrpSeasonFk, OsmEvaluatorType, FrpMarkType) ->
 	%
 	% get all completed but not uploaded exams
 	%
-
-	Dig = helper:state(dig),
-	FsFilters = dig:get_nonempty_fs(Dig#dig.filters),
 	FsFind = FsFilters ++ [
 		fields:build(teststatus, "completed"),
 		db2es_find:get_field_cond("$in", result_upload_status, ["", "pending"])
@@ -388,7 +463,7 @@ handle_upload(_OsmSeasonFk, FrpSeasonDoc, OsmEvaluatorType, Doc, FrpMarkType) ->
 	% find matching subject code and pattern on result processing system
 	%
 
-	SubjectDocs = rpc:call(
+	SubjectDocs = rpc_call(
 		itxnode:frp(),
 		ep_core_subject_api,
 		getdocs_by_subject_codes,
@@ -468,7 +543,7 @@ handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectD
 	%
 	% post it on result processing system
 	%
-	RpcRes = rpc:call(
+	RpcRes = rpc_call(
 		itxnode:frp(),
 		up_core_marks_upload_queue_api,
 		create_rpc,
