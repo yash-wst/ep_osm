@@ -36,6 +36,7 @@ heading() ->
 	mschemedoc,
 	doc,
 	rdsdoc,
+	studentdoc,
 	listofquestions=[],
 	evaluatorrole,
 	testtotalmarks
@@ -105,7 +106,11 @@ exportids() -> [
 	"marks_per_question_inpods",
 	"anp_paper_booklet_slno",
 	"dtp_marks_manual",
-	"dtp_marks_omr"
+	"dtp_marks_omr",
+	"student_prn",
+	"student_fullname",
+	"student_univ_roll_number",
+	"student_seat_number"
 ].
 
 
@@ -239,6 +244,9 @@ f("testname") ->
 
 f("frequency_number") ->
 	itf:textbox(?F(frequency_number, "Frequency Number"));
+
+f("student_" ++ _ = Id) ->
+	itf:textbox(?F(?L2A(Id), Id));
 
 
 f(Id) ->
@@ -423,6 +431,7 @@ fetch(D, From, Size, [
 	SeatNumberMappingId = itxconfigs_cache:get2(osm_images_folder_id, booklet_number),
 	ListOfAllQuestions = get_list_of_questions(ExamDoc),
 	TestTotalMarks = anptests:testtotalmarks(ExamDoc),
+	SeatNumberIdInRpsStudent = ep_osm_id:get(anpseatnumber, in, profile_student),
 
 
 	%
@@ -472,6 +481,14 @@ fetch(D, From, Size, [
 
 
 	%
+	% get corresponding rps student docs
+	%
+	RpsStudentDocs = get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent),
+	RpsStudentDocsDict = helper:get_dict_from_docs(RpsStudentDocs, SeatNumberIdInRpsStudent),
+
+
+
+	%
 	% layout results
 	%
 	Results = lists:map(fun(Doc) ->
@@ -493,6 +510,7 @@ fetch(D, From, Size, [
 			mschemedoc=MSchemeDoc,
 			doc=Doc,
 			rdsdoc=dict:find(SeatNumber, RdsDocsDict),
+			studentdoc=dict:find(SeatNumber, RpsStudentDocsDict),
 			listofquestions=ListOfAllQuestions,
 			evaluatorrole=get_evaluator_role(Doc),
 			testtotalmarks=TestTotalMarks
@@ -1467,6 +1485,11 @@ val(#docs {
 	Id == "testname" ->
 	itf:val(ExamDoc, f(Id));
 
+val(#docs {
+	studentdoc={ok, StudentDoc}
+}, "student_" ++ Id) ->
+	itf:val(StudentDoc, ?L2A(Id));
+
 
 val(#docs {
 	doc=Doc
@@ -1627,7 +1650,7 @@ get_question_headers("marks_per_question_inpods", _, ListOfAllQuestions) ->
 	end, [], ListOfAllQuestions);
 
 
-get_question_headers("marks_per_question" ++ _ = Id, _, ListOfAllQuestions) ->
+get_question_headers("marks_per_question" ++ _, _, ListOfAllQuestions) ->
 	lists:map(fun({_MarkingId, QuestionId, MaxMarks}) ->
 		#dcell {
 			type=header,
@@ -1694,6 +1717,27 @@ get_ipaddress_from_username(Username, Comments) ->
 		end
 	end, [], Comments).
 
+
+
+
+get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent) ->
+	get_rps_student_docs(
+		SeatNumbers, SeatNumberIdInRpsStudent,
+		itxconfigs_cache:get2(ep_osm_exam_results_set_studentdoc, false)
+	).
+
+get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent, true) ->
+	FsFind = [
+		db2es_find:get_field_cond("$in", SeatNumberIdInRpsStudent, SeatNumbers)
+	],
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		itxprofiles:db(), FsFind, 0, ?INFINITY, [
+			{use_index, [?A2L(SeatNumberIdInRpsStudent)]}
+		]
+	),
+	Docs;
+get_rps_student_docs(_SeatNumbers, _SeatNumberIdInRpsStudent, _) ->
+	[].
 
 
 
