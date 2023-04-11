@@ -13,25 +13,40 @@ photocopy_url(ExamSeasonId, SubjectCode, SubjectPattern, PRN, ForceRegenerate) -
 	Bucket = helper_s3:aws_s3_bucket(),
 	Region = configs:get(aws_s3_region, "s3.ap-south-1.amazonaws.com"),
 
-	TestDoc = get_test(ExamSeasonId, SubjectCode, SubjectPattern),
-	S3Dir = itf:val(TestDoc, aws_s3_dir),
-	ExpectDir = lists:flatten(S3Dir ++ "/" ++ PRN ++ "/"),
+	TestDocs = get_tests(ExamSeasonId, SubjectCode, SubjectPattern),
 
-	TId = itf:idval(TestDoc),
-	AnpId = get_anpid(PRN, TId),
+	DownloadUrl = lists:foldl(fun
+		(TestDoc, undefined) ->
+			try
+				S3Dir = itf:val(TestDoc, aws_s3_dir),
+				ExpectDir = lists:flatten(S3Dir ++ "/" ++ PRN ++ "/"),
 
-	Key = build_reval_file_s3_key(ExpectDir, AnpId),
+				TId = itf:idval(TestDoc),
+				AnpId = get_anpid(PRN, TId),
 
-	case {is_exist(Bucket, ExpectDir, AnpId), ForceRegenerate} of
-		{true, false} ->
-			skip;
-		{_, _} ->
-			anpcandidate:create_anp_pdf(TId, AnpId, PRN, anpevaluator),
-			FPath = "/tmp/" ++ AnpId ++ ".pdf",
-			upload_to_s3(FPath, Key, Bucket)
-	end,
-	download_url(Bucket, Region, Key).
+				Key = build_reval_file_s3_key(ExpectDir, AnpId),
 
+				case {is_exist(Bucket, ExpectDir, AnpId), ForceRegenerate} of
+					{true, false} ->
+						skip;
+					{_, _} ->
+						anpcandidate:create_anp_pdf(TId, AnpId, PRN, anpevaluator),
+						FPath = "/tmp/" ++ AnpId ++ ".pdf",
+						upload_to_s3(FPath, Key, Bucket)
+				end,
+				download_url(Bucket, Region, Key)
+			catch
+				_E:_M -> undefined
+			end;
+
+		(_, Url) ->
+			Url
+
+	end, undefined, TestDocs),
+
+	?ASSERT(DownloadUrl =/= undefined, "ANP candidate not/multiple found for PRN:" ++PRN),
+
+	DownloadUrl.
 
 
 upload_to_s3(FilePath, Key, BucketName) ->
@@ -65,7 +80,7 @@ get_anpid(PRN, OsmExamId) ->
 	itf:idval(AnpCandidate).
 
 
-get_test(ExamSeasonId, SubjectCode, _SubjectPattern) ->
+get_tests(ExamSeasonId, SubjectCode, _SubjectPattern) ->
 
 	FsFind = [
 		fields:build(season_fk, ExamSeasonId),
@@ -74,13 +89,9 @@ get_test(ExamSeasonId, SubjectCode, _SubjectPattern) ->
 
 	#db2_find_response {docs=OsmExamDocs0} = db2_find:get_by_fs(anptests:getdb(), FsFind, 0, ?INFINITY),
 
-	OsmExamDocs = lists:filter(fun (TDoc) ->
+	lists:filter(fun (TDoc) ->
 		itf:val(TDoc, teststatus) == ?COMPLETED
-	end, OsmExamDocs0),
-
-	?ASSERT(length(OsmExamDocs) == 1, "No or multiple tests found."),
-	[TDoc] = OsmExamDocs,
-	TDoc.
+	end, OsmExamDocs0).
 
 
 is_exist(Bucket, ExpectDir, AnpId) ->
