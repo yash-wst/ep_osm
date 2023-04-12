@@ -416,9 +416,11 @@ fetch(D, From, Size, [
 	% init
 	%
 	DefaultExportIds = string:join(exportids(), ","),
-	ExportIds = string:tokens(
-		itxconfigs:get2(ep_osm_result_exportids, DefaultExportIds), ","
+	ExportIdsConfig = itxconfigs:get2(ep_osm_result_exportids, DefaultExportIds),
+	ExportIdsConfig1 = proplists:get_value(
+		ep_osm_result_exportids, D#dig.config, ExportIdsConfig
 	),
+	ExportIds = string:tokens(ExportIdsConfig1 , ","),
 	ExportIds1 = lists:map(fun(Id) ->
 		helper:trim(Id)
 	end, ExportIds),

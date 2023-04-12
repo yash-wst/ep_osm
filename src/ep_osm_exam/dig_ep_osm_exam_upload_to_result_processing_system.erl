@@ -537,7 +537,7 @@ handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectD
 	%
 	% get results data
 	%
-	{CsvDataSize, CsvData} = ep_osm_exam_api:csv_frp(ExamId, OsmEvaluatorType),
+	{CsvDataSize, CsvData} = csv_frp(ExamId, OsmEvaluatorType),
 
 
 	%
@@ -572,6 +572,48 @@ handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectD
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
+
+%
+% csv frp
+%
+csv_frp(ExamId, OsmEvaluatorType) ->
+	csv_frp(ExamId, OsmEvaluatorType, itxconfigs:get2(ep_osm_result_csv_frp_ids, undefined)).
+
+csv_frp(ExamId, OsmEvaluatorType, undefined) ->
+	ep_osm_exam_api:csv_frp(ExamId, OsmEvaluatorType);
+csv_frp(ExamId, OsmEvaluatorType, Ids) ->
+
+	%
+	% create dig for export
+	%
+	D = #dig {
+		module=dig_ep_osm_exam_results,
+		size=200,
+		filters=[
+			itf:build(itf:hidden(osm_exam_fk), ExamId),
+			fields:build(anpstate, "anpstate_completed")
+		],
+		config=[
+			{ep_osm_result_exportids, string:join(Ids, ",")}
+		]
+	},
+
+
+	%
+	% create file
+	%
+	{ok, Doc} = ep_osm_exam_api:get(ExamId),
+	{_Name, FilePath} = dig_ep_osm_exam_results:handle_export_results_bulk_create_file(Doc, D),
+	ListOfList = helper_csv_parser:parse(FilePath),
+
+
+	%
+	% return csvdata
+	%
+	Lines = lists:map(fun(List) ->
+		string:join(List, ",")
+	end, ListOfList),
+	{length(Lines), string:join(Lines, "\n")}.
 
 
 
