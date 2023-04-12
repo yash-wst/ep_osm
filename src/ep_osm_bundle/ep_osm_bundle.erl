@@ -135,6 +135,26 @@ fs(pendingbundles) -> [
 	?OSMBDL(qcstate)
 ];
 
+fs(displayfs) -> [
+	?OSMBDL(number),
+	?OSMBDL(packet_number),
+	?OSMBDL(packet_count),
+	?OSMBDL(rack_location),
+	?OSMBDL(inwardstate),
+	?OSMBDL(scanningstate),
+	?OSMBDL(uploadstate),
+	?OSMBDL(qcstate)
+];
+
+
+fs(displayfs_picked) -> [
+	?OSMBDL(number),
+	?OSMBDL(packet_number),
+	?OSMBDL(rack_location)
+];
+
+
+
 fs(view) ->
 	fs(basic);
 

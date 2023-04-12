@@ -40,7 +40,9 @@ f(createdon = I) ->
 
 
 f(osm_bundle_fk = I) ->
-	itf:textbox(?F(I, "Bundle Id"));
+	F = itf:textbox_picker(?F(I, "Bundle Id", scanning_details)),
+	F#field {options=options(osm_bundle_fk)};
+
 
 f({osm_bundle_fk = I, OsmExamId}) ->
 	F = itf:textbox_picker(?F(I, "Bundle")),
@@ -131,25 +133,24 @@ validator(O) ->
 % options
 %------------------------------------------------------------------------------
 
+options(osm_bundle_fk) ->
+	#search {
+		title=?LN("Select Bundle"),
+		db=ep_osm_bundle:db(),
+		displayfs_picked=ep_osm_bundle:fs(displayfs_picked),
+		displayfs=ep_osm_bundle:fs(displayfs),
+		filterfs=[
+		],
+		size=10,
+		searchfn=fun fetch_osm_bundle_fk/5
+	};
+
 options({osm_bundle_fk, OsmExamId}) ->
 	#search {
 		title=?LN("Select Bundle"),
 		db=ep_osm_bundle:db(),
-		displayfs_picked=[
-			?OSMBDL(number),
-			?OSMBDL(packet_number),
-			?OSMBDL(rack_location)
-		],
-		displayfs=[
-			?OSMBDL(number),
-			?OSMBDL(packet_number),
-			?OSMBDL(packet_count),
-			?OSMBDL(rack_location),
-			?OSMBDL(inwardstate),
-			?OSMBDL(scanningstate),
-			?OSMBDL(uploadstate),
-			?OSMBDL(qcstate)
-		],
+		displayfs_picked=ep_osm_bundle:fs(displayfs_picked),
+		displayfs=ep_osm_bundle:fs(displayfs),
 		filterfs=[
 			itf:build(itf:hidden(?F(osm_exam_fk)), OsmExamId),
 			?OSMBDL(number),
