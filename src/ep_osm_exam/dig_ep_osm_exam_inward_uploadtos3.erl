@@ -3,7 +3,6 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
--define(UPLOAD_TO_S3, "upload_to_s3").
 
 
 %------------------------------------------------------------------------------
@@ -59,8 +58,7 @@ upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
 	%
 	% create a working directory and unzip the zip file
 	%
-	{ok, Cwd} = file:get_cwd(),
-	WorkDir = itx:format("~s/scratch/~s/~s", [Cwd, ?UPLOAD_TO_S3, helper:uidintstr()]),
+	WorkDir = itx:format("~s/~s", [get_workdir_root(), helper:uidintstr()]),
 	helper:cmd("mkdir -p ~s", [WorkDir]),
 
 
@@ -70,11 +68,8 @@ upload2(Context, S3Dir, DirNamesToUpload, Filename, Filepath0, BundleId) ->
 	try
 		upload3(S3Dir, DirNamesToUpload, Filename, Filepath, BundleId, WorkDir)
 	catch Error:Message ->
-		%
-		% do not remove from s3 in case of error because 
-		% it migbt be needed for retry and debugging.
-		%
 		handle_cleanup(WorkDir, Filepath),
+		handle_remove_from_s3(Filename),
 		throw({Error, Message})
 	end.
 
@@ -379,7 +374,7 @@ handle_download_from_s3(ObjectKey) ->
 
 
 	{ok, Cwd} = file:get_cwd(),
-	Fileloc = ?FLATTEN(io_lib:format("~s/scratch/~s/~s", [Cwd, ?UPLOAD_TO_S3, ObjectKey])),
+	Fileloc = ?FLATTEN(io_lib:format("~s/~s", [get_workdir_root(), ObjectKey])),
 
 	CmdRes = helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 cp --only-show-errors s3://~s/~s/~s ~s", [
 		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
@@ -520,7 +515,14 @@ handle_upload_seatnumber_zip_upload_dir(ExamId, _CandidateId, SeatNumber, _Filen
 
 
 
-
+get_workdir_root() ->
+	case itxconfigs_cache:get2(ep_osm_exam_inward_upload_workdir, "scratch") of
+		"scratch" ->
+			{ok, Cwd} = file:get_cwd(),
+			itx:format("~s/scratch/upload_to_s3", [Cwd]);
+		_ ->
+			"/tmp/upload_to_s3"
+	end.
 
 
 %------------------------------------------------------------------------------
