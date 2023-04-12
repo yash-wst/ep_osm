@@ -28,6 +28,50 @@
 % handler
 %------------------------------------------------------------------------------
 
+%..............................................................................
+%
+% handle - release bundle
+%
+%..............................................................................
+
+handle_release_bundle({UserType, StateType, Id}) ->
+
+	%
+	% init
+	%
+	{ok, BundleDoc} = ep_osm_bundle_api:get(Id),
+
+
+	%
+	% assert
+	%
+	?ASSERT(
+		itf:val(BundleDoc, UserType) == wf:user(),
+		"Failed, this bundle is not assigned to you!"
+	),
+
+
+
+	%
+	% fs to save
+	%
+	FsToSave = [
+		itf:build(?OSMBDL(UserType), ""),
+		itf:build(?OSMBDL(StateType), "")
+	],
+
+
+	%
+	% save
+	%
+	case ep_osm_bundle_api:save(FsToSave, ep_osm_bundle:fs(all), Id) of
+		{ok, _} ->
+			wf:redirect(wf:uri());
+		_ ->
+			helper_ui:flash(error, "Sorry, could not save!")
+	end.
+
+
 
 %..............................................................................
 %

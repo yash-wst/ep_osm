@@ -763,9 +763,17 @@ layout_dtp_by(?APPOSM_SCANUPLOADER, scannedby, BundleDoc, ProfileDocsDict, User,
 	[
 		layout_user_info(dict:find(User, ProfileDocsDict)),
 		case itf:val(BundleDoc, scannedby) =:= itxauth:user() of
-			true ->
+			true -> [
 				ite:button(
-					scanning_completed, "Mark Scanning Completed", {scanning_completed, BundleDoc});
+					scanning_completed, "Mark Scanning Completed",
+					{scanning_completed, BundleDoc}
+				),
+				ite:button(
+					release_bundle, "Release Bundle",
+					{release_bundle, {scannedby, scanningstate, itf:idval(BundleDoc)}},
+					"btn btn-sm btn-outline-danger mt-1"
+				)
+			];
 			_ -> []
 		end
 	];
@@ -897,6 +905,19 @@ event(create) ->
 	event(textbox_enterkey);	
 
 
+event({confirmation_yes, {release_bundle, ReleaseInfo}}) ->
+	dig_ep_osm_exam_inward_handler:handle_release_bundle(ReleaseInfo);
+
+event({release_bundle, ReleaseInfo}) ->
+	itl:confirmation(
+		#panel {class="border border-danger text-center p-5", body=[
+			#p {text="Are you sure you want to release this bundle?"},
+			#p {text="This bundle will be assigned to another user."}
+		]},
+		{release_bundle, ReleaseInfo}
+	);
+
+	
 event({confirmation_yes, discard_bundle}) ->
 	dig_ep_osm_exam_inward_handler:handle_discard_bundle();
 	
