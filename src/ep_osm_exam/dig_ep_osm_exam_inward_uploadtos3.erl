@@ -516,7 +516,7 @@ handle_upload_seatnumber_zip_upload_dir(ExamId, _CandidateId, SeatNumber, _Filen
 
 
 get_workdir_root() ->
-	case itxconfigs_cache:get2(ep_osm_exam_inward_upload_workdir, "scratch") of
+	case itxconfigs_cache:get2(ep_osm_exam_inward_upload_workdir, "tmp") of
 		"scratch" ->
 			{ok, Cwd} = file:get_cwd(),
 			itx:format("~s/scratch/upload_to_s3", [Cwd]);
