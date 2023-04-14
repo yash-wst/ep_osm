@@ -558,9 +558,10 @@ handle_upload_marks(FrpSeasonDoc, OsmEvaluatorType, OsmExamDoc, MatchingSubjectD
 			% update state
 			%
 			FsToSave = [
-				fields:build(result_upload_status, io_lib:format("uploaded ~s, ~p", [
-					OsmEvaluatorType, MarkTypeId
-				]))
+				fields:build(
+					result_upload_status,
+					get_result_upload_status(OsmEvaluatorType, MarkTypeId)
+				)
 			],
 			{ok, _} = ep_osm_exam_api:save(
 				FsToSave, ep_osm_exam:fs(all), ExamId
@@ -581,7 +582,7 @@ csv_frp(ExamId, OsmEvaluatorType) ->
 
 csv_frp(ExamId, OsmEvaluatorType, undefined) ->
 	ep_osm_exam_api:csv_frp(ExamId, OsmEvaluatorType);
-csv_frp(ExamId, OsmEvaluatorType, Ids) ->
+csv_frp(ExamId, _OsmEvaluatorType, Ids) ->
 
 	%
 	% create dig for export
@@ -614,6 +615,25 @@ csv_frp(ExamId, OsmEvaluatorType, Ids) ->
 		string:join(List, ",")
 	end, ListOfList),
 	{length(Lines), string:join(Lines, "\n")}.
+
+
+
+
+%
+% get result upload status
+%
+get_result_upload_status("profiletype_anpmoderator", _) ->
+	"uploaded_moderation";
+get_result_upload_status("profiletype_anprevaluator", _) ->
+	"uploaded_revaluation";
+get_result_upload_status("profiletype_anpmoderator_reval", _) ->
+	"uploaded_moderation_reval";
+get_result_upload_status("dtp_marks_manual", _) ->
+	"uploaded_dtp_marks_manual";
+get_result_upload_status("dtp_marks_omr", _) ->
+	"uploaded_dtp_marks_omr";
+get_result_upload_status(_OsmEvaluatorType, _MarkTypeId) ->
+	"uploaded".
 
 
 
