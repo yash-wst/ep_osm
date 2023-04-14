@@ -232,7 +232,7 @@ widget_evaluation_stats() ->
 	Es4 = widget_evaluation_stats("Unevaluated Status", Stats, [
 		anpstate_evaluation_rejected,
 		anpstate_on_hold,
-		anpstate_discarded
+		anpstate_quality_check
 	]),
 
 
@@ -248,7 +248,7 @@ widget_evaluation_stats(Title, Stats, States) ->
 
 	Data = lists:map(fun(State) ->
 		{
-			?LN(State),
+			ln(State),
 			proplists:get_value(?A2L(State), Stats, 0),
 			color(State)
 		}
@@ -283,6 +283,19 @@ color(anpstate_on_hold) ->
 	'#fcb92c';
 color(_) ->
 	''.
+
+
+%------------------------------------------------------------------------------
+% misc
+%------------------------------------------------------------------------------
+
+
+ln(anpstate_evaluation_rejected) ->
+	"Skipped";
+ln(anpstate_quality_check) ->
+	"QC";
+ln(State) ->
+	?LN(State).
 
 %------------------------------------------------------------------------------
 % end
