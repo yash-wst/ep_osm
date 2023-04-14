@@ -1729,21 +1729,7 @@ get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent) ->
 	).
 
 get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent, true) ->
-	FsFind = [
-		db2es_find:get_field_cond("$in", SeatNumberIdInRpsStudent, SeatNumbers)
-	],
-	#db2_find_response {docs=Docs} = db2_find:get_by_fs(itxprofiles:db(), FsFind, 0, length(SeatNumbers), [
-		{use_index, [
-			?A2L(SeatNumberIdInRpsStudent)
-		]},
-		{fields, [
-			itf:textbox(?F(fullname)),
-			itf:textbox(?F(prn)),
-			itf:textbox(?F(seat_number)),
-			itf:textbox(?F(univ_roll_number))
-		]}
-	]),
-	Docs;
+	db:get_docs_by_ids(itxprofiles:db(), ?A2L(SeatNumberIdInRpsStudent), SeatNumbers);
 get_rps_student_docs(_SeatNumbers, _SeatNumberIdInRpsStudent, _) ->
 	[].
 
