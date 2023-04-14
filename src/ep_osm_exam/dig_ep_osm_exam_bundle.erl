@@ -91,10 +91,9 @@ fetch(D, From, Size, Fs) ->
 	%
 	% fetch documents from db
 	%
-	Rec = db2_find:getrecord_by_fs(anptests:getdb(), Fs, From, Size),
-	#db2_find_response {docs=ExamDocs}  = db2_find:find(
-		Rec#db2_find {sort=anptest:fs(search)}
-	),
+	#db2_find_response {docs=ExamDocs}  = db2_find:get_by_fs(
+		anptests:getdb(), Fs, From, Size, [
+	]),
 
 	%
 	% layout results
