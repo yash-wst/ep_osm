@@ -285,7 +285,7 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 	%
 	% reset candidate
 	%
-	anpcandidate:handle_anpcandidate_reset(ExamId, CandidateId),
+	anpcandidate:handle_anpcandidate_reset(ExamId, CandidateId, "anpevaluator"),
 
 
 	%
