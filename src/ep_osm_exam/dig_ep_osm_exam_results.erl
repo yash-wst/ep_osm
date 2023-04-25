@@ -489,6 +489,14 @@ fetch(D, From, Size, [
 	RpsStudentDocsDict = helper:get_dict_from_docs(RpsStudentDocs, SeatNumberIdInRpsStudent),
 
 
+	%
+	% get corresponding rps course docs
+	%
+	RpsCourseDocs = get_rps_course_docs(RpsStudentDocs),
+	RpsCourseDocsDict = helper:get_dict_from_docs(RpsCourseDocs),
+
+
+
 
 	%
 	% layout results
@@ -499,6 +507,7 @@ fetch(D, From, Size, [
 		% init
 		%
 		SeatNumber = itf:val(Doc, anpseatnumber),
+		StudentDocFind = dict:find(SeatNumber, RpsStudentDocsDict),
 
 		%
 		% build docs record
@@ -512,7 +521,8 @@ fetch(D, From, Size, [
 			mschemedoc=MSchemeDoc,
 			doc=Doc,
 			rdsdoc=dict:find(SeatNumber, RdsDocsDict),
-			studentdoc=dict:find(SeatNumber, RpsStudentDocsDict),
+			studentdoc=StudentDocFind,
+			coursedoc=get_rps_course_doc(StudentDocFind, RpsCourseDocsDict),
 			listofquestions=ListOfAllQuestions,
 			evaluatorrole=get_evaluator_role(Doc),
 			testtotalmarks=TestTotalMarks
@@ -1331,6 +1341,14 @@ val(#docs {
 	itf:val(SubjectDoc, f(Id));
 
 
+val(#docs {
+	coursedoc=CourseDoc
+}, Id) when
+	Id == "course_name";
+	Id == "course_code" ->
+	itf:val(CourseDoc, f(Id));
+
+
 
 val(#docs {
 	doc=Doc
@@ -1708,6 +1726,9 @@ get_ipaddress(Role, Doc) ->
 	end.
 
 
+%
+% get ip address from username
+%
 get_ipaddress_from_username(Username, Comments) ->
 	lists:foldl(fun({Key, _Val}, Acc) ->
 		[_Date, _Time, IP, User] = string:tokens(Key, " "),
@@ -1721,7 +1742,9 @@ get_ipaddress_from_username(Username, Comments) ->
 
 
 
-
+%
+% get rps student docs
+%
 get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent) ->
 	get_rps_student_docs(
 		SeatNumbers, SeatNumberIdInRpsStudent,
@@ -1733,6 +1756,37 @@ get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent, true) ->
 get_rps_student_docs(_SeatNumbers, _SeatNumberIdInRpsStudent, _) ->
 	[].
 
+
+
+%
+% get rps course docs
+%
+get_rps_course_docs(RpsStudentDocs) ->
+
+	%
+	% init
+	%
+	CourseIds = lists:map(fun(SDoc) ->
+		itf:val(SDoc, course_code_fk)
+	end, RpsStudentDocs),
+	CourseIdsUnique = helper:unique(CourseIds),
+
+
+	%
+	% get course docs
+	%
+	up_core_course_api:getdocs_by_ids(CourseIdsUnique).
+
+
+
+%
+% get course doc
+%
+get_rps_course_doc({ok, SDoc}, RpsCourseDocsDict) ->
+	{ok, CourseDoc} = dict:find(itf:val(SDoc, course_code_fk), RpsCourseDocsDict),
+	CourseDoc;
+get_rps_course_doc(_, _) ->
+	{[]}.
 
 
 %------------------------------------------------------------------------------
