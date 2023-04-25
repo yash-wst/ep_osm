@@ -289,7 +289,7 @@ fetch(D, From, Size, Fs) ->
 			total=?INFINITY,
 			dcell_headers=Header
 		},
-		dig:append_total_cells(ResultsSorted)
+		dig:append_total_cells_rows(ResultsSorted)
 	}.
 
 
