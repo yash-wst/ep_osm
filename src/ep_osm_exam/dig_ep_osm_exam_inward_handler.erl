@@ -87,6 +87,7 @@ handle_discard_bundle() ->
 	ExamId = wf:q(osm_exam_fk),
 	BundleId = wf:q(osm_bundle_fk),
 	ExamDb = anpcandidates:db(ExamId),
+	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
 
 
 	%
@@ -122,8 +123,10 @@ handle_discard_bundle() ->
 	%
 	% change bundle number to discarded
 	%
+	FComment = itf:d2f(BundleDoc, ?OSMBDL(comments)),
 	FsToSaveBundle = [
-		itf:build(?OSMBDL(inwardstate), "discarded")
+		itf:build(?OSMBDL(inwardstate), "discarded"),
+		itf:build_comment(FComment, "Discarded")
 	],
 	{ok, _} = ep_osm_bundle_api:save(FsToSaveBundle, ep_osm_bundle:fs(all), BundleId),
 
