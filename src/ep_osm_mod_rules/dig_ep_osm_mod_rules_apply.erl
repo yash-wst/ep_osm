@@ -294,7 +294,7 @@ handle_apply_yes_test_doc(_Type, _RunningMode, _Rules, Doc, TestDocsCount, MinRe
 	%
 	% init
 	%
-	Testname = io_lib:format("~s ~s", [
+	Testname = io_lib:format("~ts ~ts", [
 		itf:val(Doc, anptestcourseid),
 		itf:val(Doc, testname)
 	]),
@@ -309,11 +309,11 @@ handle_apply_yes_test_doc(Type, RunningMode, Rules, Doc, _TestDocsCount, _MinReq
 	%
 	% init
 	%
-	Testname = io_lib:format("~s ~s", [
+	Testname = io_lib:format("~ts ~ts", [
 		itf:val(Doc, anptestcourseid),
 		itf:val(Doc, testname)
 	]),
-	dig:log(warning, io_lib:format("Processing ~s", [Testname])),
+	dig:log(warning, io_lib:format("Processing ~ts", [Testname])),
 
 
 	%
@@ -389,9 +389,10 @@ handle_apply_yes_test_save_result("difference", RunningMode, Doc, ApplyResDict, 
 
 		case RunningMode of
 			"live_mode" ->
-				{ok, SaveRes} = anpcandidates:updateall(ExamDb, LoLFs),
-				{Oks, Errors} = db_helper:bulksave_summary(SaveRes),
-				dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [Oks, Errors]));
+				{Oks, Errors} = anpcandidates:updateall(ExamDb, LoLFs, 100),
+				dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [
+					length(Oks), length(Errors)
+				]));
 			"test_mode" ->
 				dig:log(danger, "Save skipped in test mode")
 		end
@@ -456,9 +457,10 @@ handle_apply_yes_test_save_result(_Type, RunningMode, Doc, ApplyResDict, Rules) 
 
 		case RunningMode of
 			"live_mode" ->
-				{ok, SaveRes} = anpcandidates:updateall(ExamDb, LoLFs),
-				{Oks, Errors} = db_helper:bulksave_summary(SaveRes),
-				dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [Oks, Errors]));
+				{Oks, Errors} = anpcandidates:updateall(ExamDb, LoLFs, 100),
+				dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [
+					length(Oks), length(Errors)
+				]));
 			"test_mode" ->
 				dig:log(danger, "Save skipped in test mode")
 		end
