@@ -296,8 +296,9 @@ handle_createzip(Id) ->
 	BundleDir = itx:format("~s/~s", [WordDir, BundleDirName]),
 	helper:cmd("mkdir -p ~s", [BundleDir]),
 	lists:foreach(fun(SeatNumber) ->
-		helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s
-			aws s3 sync --only-show-errors s3://~s/~s/~s ~s/~s --delete", [
+		Comment = itx:format("Downloading ... ~s", [SeatNumber]),
+		minijob_api:add_comment(Comment),
+		helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 sync --only-show-errors s3://~s/~s/~s ~s/~s --delete", [
 			configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
 			helper_s3:aws_s3_bucket(), S3Dir, SeatNumber,
 			BundleDir, SeatNumber
@@ -312,8 +313,7 @@ handle_createzip(Id) ->
 	helper:cmd("cd ~s; zip -r ~s.zip ~s", [
 		WordDir, BundleDirName, BundleDirName
 	]),
-	helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s
-		aws s3 cp ~s.zip s3://~s/download_from_s3/~s.zip", [
+	helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 cp ~s.zip s3://~s/download_from_s3/~s.zip", [
 		configs:get(aws_s3_access_key), configs:get(aws_s3_secret), configs:get(aws_s3_default_region),
 		BundleDir, helper_s3:aws_s3_bucket(), BundleDirName
 	]),
