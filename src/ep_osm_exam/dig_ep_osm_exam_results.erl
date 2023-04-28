@@ -262,7 +262,10 @@ access(_, Role) when
 	Role == ?APPOSM_MODERATOR;
 	Role == ?APPOSM_REVALUATOR;
 	Role == ?APPOSM_MODERATOR_REVAL ->
-		itxcontext:q(id) /= undefined;
+		(
+			(itxcontext:q(id) /= undefined) and 
+			(itxconfigs_cache:get2(index_anpevaluator_show_results, false) == true)
+		);
 access(_, _) -> false.
 
 
