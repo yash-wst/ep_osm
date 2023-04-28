@@ -41,7 +41,14 @@ heading() ->
 
 f(reset_beyond_days = I) ->
 	itf:dropdown(?F(I, "Inactive Days"), itf:options([
+		?F('2'),
+		?F('3'),
+		?F('4'),
 		?F('5'),
+		?F('6'),
+		?F('7'),
+		?F('8'),
+		?F('9'),
 		?F('10')
 	]));
 
