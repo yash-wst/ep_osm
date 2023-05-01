@@ -609,11 +609,19 @@ csv_frp(ExamId, _OsmEvaluatorType, Ids) ->
 
 
 	%
+	% filter out entries where prn is empty
+	%
+	ListOfList1 = lists:filter(fun([PRN |_]) ->
+		PRN /= []
+	end, ListOfList),
+
+
+	%
 	% return csvdata
 	%
 	Lines = lists:map(fun(List) ->
 		string:join(List, ",")
-	end, ListOfList),
+	end, ListOfList1),
 	{length(Lines), string:join(Lines, "\n")}.
 
 
