@@ -1512,9 +1512,6 @@ val(#docs {
 	studentdoc={ok, StudentDoc}
 }, "student_" ++ Id) ->
 	itf:val(StudentDoc, ?L2A(Id));
-val(#docs {
-}, "student_" ++ Id) ->
-	"notfound";
 
 
 val(#docs {
