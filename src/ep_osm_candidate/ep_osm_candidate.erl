@@ -121,3 +121,24 @@ links(Id) ->
 import(List) ->
 	?D(List).
 
+
+
+%
+% get profile ids for state
+%
+get_profileid_for_state("anpstate_active") ->
+	profileidfk_anpevaluator;
+get_profileid_for_state("anpstate_moderation") ->
+	profileidfk_anpmoderator;
+get_profileid_for_state("anpstate_revaluation") ->
+	profileidfk_anprevaluator;
+get_profileid_for_state("anpstate_moderation_reval") ->
+	profileidfk_anpmoderator_reval;
+get_profileid_for_state(_AnpState) ->
+	undefined.
+
+%------------------------------------------------------------------------------
+% end
+%------------------------------------------------------------------------------
+
+

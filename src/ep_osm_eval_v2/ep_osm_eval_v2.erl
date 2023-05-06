@@ -45,6 +45,13 @@ layout() ->
 	TestFs = anptests:get(TestId),
 	Fs = anpcandidates:get(anpcandidate:db(), wf:q(anpcandidate:id())),
 
+
+	%
+	% asserts
+	%
+	ep_osm_eval_asserts:evaluator_authorised(TestFs, Fs),
+
+
 	%
 	% layout elements
 	%

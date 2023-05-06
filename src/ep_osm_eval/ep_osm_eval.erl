@@ -61,6 +61,13 @@ layout() ->
 	TFs = anptests:get(TId),
 	Fs = anpcandidates:get(anpcandidate:db(), wf:q(anpcandidate:id())),
 
+	%
+	% asserts
+	%
+	ep_osm_eval_asserts:evaluator_authorised(TFs, Fs),
+
+
+
 	Elements = [
 		#panel {
 			style="margin: 0px;",

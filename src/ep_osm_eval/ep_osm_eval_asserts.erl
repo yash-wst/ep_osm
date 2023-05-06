@@ -50,6 +50,47 @@ check_all_images_are_loaded(CanvasData) ->
 	).
 
 
+
+%------------------------------------------------------------------------------
+% evaluator authorised
+% we need to ensure that evaluator is assigned this paper and the assessment 
+% state is valid
+%------------------------------------------------------------------------------
+
+evaluator_authorised(_TFs, Fs) ->
+
+	%
+	% init
+	%
+	ProfileId = myauth:profileid(),
+	AnpState = itf:val(Fs, anpstate),
+	ProfileIdForState = ep_osm_candidate:get_profileid_for_state(AnpState),
+	EvalStats = [
+		"anpstate_active",
+		"anpstate_moderation",
+		"anpstate_revaluation",
+		"anpstate_moderation_reval"
+	],
+
+
+	?ASSERT(
+		lists:member(AnpState, EvalStats),
+		itx:format("Error! Document state: ~s", [?LN(?L2A(AnpState))])
+	),
+
+
+	?ASSERT(
+		itf:val(Fs, ProfileIdForState) == ProfileId,
+		"This document is not assigned to you!"
+	).
+
+
+
+
+
+
+
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
