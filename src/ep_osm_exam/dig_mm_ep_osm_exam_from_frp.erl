@@ -523,7 +523,7 @@ handle_import_from_frp_examdoc_ensure_examdoc_exists(DateOfExam, OsmSeasonDoc, F
 	OsmExamDocs = lists:filter(fun(EDoc) ->
 		(?A2L(get_mark_type(EDoc)) == MarkType) or
 		(itf:val2(EDoc, marktype) == MarkType) or
-		("end_exam_marks" == [])
+		((itf:val2(EDoc, marktype) == "end_exam_marks") and (MarkType == []))
 	end, OsmExamDocs0),
 
 	%
