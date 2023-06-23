@@ -457,7 +457,12 @@ handle_convert_widget_to_tuple_calc(
 				?WTYPE_RULE, ?WTYPE_GROUP, Id, ?WTYPE_GROUP, Id
 			])
 	end,
-	ParentIdNext = get_parentid_next(ParentId, CurrentId),
+	ParentIdNext = case ParentType of
+		"group" ->
+			CurrentId;
+		_ ->
+			get_parentid_next(ParentId, CurrentId)
+	end,
 
 
 
