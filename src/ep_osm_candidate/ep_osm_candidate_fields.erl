@@ -34,8 +34,11 @@ anpcandidate_onhold_reasons_options() ->
 		?F(pages_cut, locale:get(pages_cut)),
 		?F(page_sequence_wrong, locale:get(page_sequence_wrong)),
 		?F(page_missing, locale:get(page_missing)),
-		?F(masking_missing, locale:get(masking_missing))
+		?F(masking_missing, locale:get(masking_missing)),
+		?F(external_object, "External Object")
 	].
+
+
 %------------------------------------------------------------------------------
 % renderers
 %------------------------------------------------------------------------------

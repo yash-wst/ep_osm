@@ -128,10 +128,30 @@ layout_answerpaper(_TFs, _Fs, ImgUrls) ->
 	layout_answerpaper(_TFs, _Fs, ImgUrls, ColSize).
 
 
-layout_answerpaper(_TFs, _Fs, ImgUrls, ColSize) ->
+layout_answerpaper(TFs, Fs, ImgUrls, ColSize) ->
+
+
+	%
+	% init
+	%
+	AnpState = ?L2A(itf:val(Fs, anpstate)),
+	IsReasonForOnHold = lists:member(AnpState, get_state_for_onhold()),
+
+
 	Es = lists:map(fun(ImageUrl) ->
 
+		%
+		% init
+		%
 		AName = anpcandidate:get_aname_from_imgurl(ImageUrl),
+		SourceKey = itx:format("~s/~s/~s", [
+			itf:val(TFs, aws_s3_dir), itf:val(Fs, anpseatnumber), AName
+		]),
+
+
+		% 
+		% set width
+		%
 		EsUrl = case filename:extension(AName) of
 			".pdf" ->
 				#iframe {
@@ -149,6 +169,10 @@ layout_answerpaper(_TFs, _Fs, ImgUrls, ColSize) ->
 		end,
 
 
+
+		%
+		% return section
+		%
 		layout:g(ColSize, [
 			lists:flatten(io_lib:format("
 				<a id='~s' href='#'></a>", [AName]
@@ -157,12 +181,39 @@ layout_answerpaper(_TFs, _Fs, ImgUrls, ColSize) ->
 				class="bg-info p-2 mt-3",
 				text=AName
 			},
-			EsUrl
+			EsUrl,
+			layout_reason(SourceKey, AName, IsReasonForOnHold)
 		])
 
 
 	end, ImgUrls),
 	layout:grow(Es).
+
+
+
+
+%
+% layout reason
+%
+layout_reason(SourceKey, AName, true) ->
+	[
+		#p {class="mt-1 p-2 badge bg-primary", text=AName},
+		lists:map(fun({Id, Name}) ->
+			BtnId = helper:uidintstr(),
+			[
+				#button {
+					html_id=BtnId,
+					class="mx-2 btn btn-secondary",
+					text=Name,
+					postback={classify, SourceKey, AName, Id, BtnId}
+				}
+			]
+		end, ep_osm_candidate_fields:anpcandidate_onhold_reasons_options()),
+		#p {class="mb-5"}
+	];
+layout_reason(_ImageUrl, _AName, false) ->
+	[].
+
 
 
 
@@ -244,6 +295,10 @@ event(move_to_on_hold) ->
 event(comment_dtp) ->
 	handle_add_DTP_comment();
 
+
+event({classify, SourceKey, AName, Type, BtnId}) ->
+	handle_classify(SourceKey, AName, Type, BtnId);
+
 event(Event) ->
 	?D(Event).
 
@@ -279,6 +334,114 @@ finish_upload_event(
 %------------------------------------------------------------------------------
 % handle
 %------------------------------------------------------------------------------
+
+
+%
+% handle classify
+%
+handle_classify(SourceKey, AName, Type, BtnId) ->
+
+	%
+	% init
+	%
+	Dict = case helper:state(classified_data) of
+		undefined ->
+			dict:new();
+		Dict0 ->
+			Dict0
+	end,
+
+
+	%
+	% find key 
+	%
+	Key = {AName, Type},
+	Dict1 = case dict:find(Key, Dict) of
+		{ok, _} ->
+			handle_classify_remove(SourceKey, AName, Type),
+			Script = itx:format("
+				$('#~s').removeClass('btn-danger');$('#~s').addClass('btn-secondary');
+			", [BtnId, BtnId]),
+			wf:wire(Script),
+			dict:erase(Key, Dict);
+		_ ->
+			handle_classify_add(SourceKey, AName, Type),
+			Script = itx:format("
+				$('#~s').removeClass('btn-secondary');$('#~s').addClass('btn-danger');
+			", [BtnId, BtnId]),
+			wf:wire(Script),
+			dict:store(Key, selected, Dict)
+	end,
+
+
+
+	%
+	% update comment
+	%
+	List = lists:map(fun({{ANamex, Typex}, selected}) ->
+		string:join([ANamex, ?LN(Typex)], " :")
+	end, dict:to_list(Dict1)),
+	Comment = string:join(List, "\n"),
+	wf:update(comment2, Comment),
+
+
+
+	%
+	% save
+	%
+	helper:state(classified_data, Dict1).
+
+
+
+%
+% handle classify remove
+%
+handle_classify_remove(_SourceKey, AName, Type) when
+	Type == pages_blur;
+	Type == pages_cut;
+	Type == external_object ->
+
+
+	%
+	% init
+	%
+	Key = itx:format("~p/~s/~s/~s", [
+		Type, wf:q(anptestid), wf:q(anpid), AName
+	]),
+
+
+	%
+	% delete
+	%
+	helper_s3:delete_object("osm-training-data", Key);
+handle_classify_remove(_, _, _) ->
+	ok.
+
+
+
+%
+% handle classify add
+%
+handle_classify_add(SourceKey, AName, Type) when 
+	Type == pages_blur;
+	Type == pages_cut;
+	Type == external_object ->
+
+	%
+	% init
+	%
+	Key = itx:format("~p/~s/~s/~s", [
+		Type, wf:q(anptestid), wf:q(anpid), AName
+	]),
+	helper_s3:copy_object(
+		"osm-training-data", Key,
+		helper_s3:aws_s3_bucket(), SourceKey
+	);
+handle_classify_add(_, _, _) ->
+	ok.
+
+
+
 
 handle_move_to_yet_to_start(ExamId, CandidateId) ->
 
