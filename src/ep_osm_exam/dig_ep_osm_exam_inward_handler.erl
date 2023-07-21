@@ -1171,7 +1171,11 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 			]), 5);
 		_ ->
 			helper_ui:flash(error, io_lib:format("Error!: ~s, ~s", [UId, SNo]))
-	end.
+	end;
+
+
+handle_inward(_ExamId, _OsmBundleId, _FsInwardUi, _Docs) ->
+	helper_ui:flash(error, "Multiple documents were found!").	
 
 
 
