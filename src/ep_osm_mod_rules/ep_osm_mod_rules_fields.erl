@@ -102,7 +102,7 @@ f({rules = I, Doc}) ->
 f(osm_mod_rules_fk = I) ->
 	F = itf:textbox_picker(?F(I, "Moderation Rule")),
 	F#field {
-		module=ep_core_subject,
+		module=ep_osm_mod_rules,
 		options=options(I)
 	};
 

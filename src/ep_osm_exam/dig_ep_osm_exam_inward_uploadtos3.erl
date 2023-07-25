@@ -244,6 +244,16 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 
 
 	%
+	% detect bad images
+	%
+	handle_detect_bad_images(
+		WorkDir, ZipDir0, DirNamesToUpload,
+		itxconfigs_cache:get2(ep_osm_detect_bad_images, false)
+	),
+
+
+
+	%
 	% for each directory, check if exists and upload to s3
 	%
 	dig:log("Uploading to S3"),
@@ -267,6 +277,123 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 
 
 	dig:log("Uploading to S3 ... ok").
+
+
+
+%------------------------------------------------------------------------------
+% handle - detect bad images
+%------------------------------------------------------------------------------
+
+handle_detect_bad_images(WorkDir, ZipDir, DirNamesToUpload, _DetectBadImages = true) ->
+
+
+	dig:log("Detecting bad images"),
+
+
+	%
+	% create a file with list of all image paths
+	%
+	Filepaths = handle_detect_bad_images_get_filepaths(WorkDir, ZipDir, DirNamesToUpload),
+	FilepathsFile = itx:format("~s/filepaths.txt", [WorkDir]),
+	ok = file:write_file(FilepathsFile, string:join(Filepaths, "\n")),
+	
+
+	%
+	% run bad image detection model and create output file
+	%
+
+
+
+	%
+	% parse output file
+	%
+	Outfile = itx:format("~s/filepaths.out", [WorkDir]),
+	BadFiles = handle_detect_bad_images_parse_output(Outfile),
+	dig:log(error, itx:format("~p", [BadFiles])),
+
+
+	dig:log("Detecting bad images ... ok.");
+
+
+
+handle_detect_bad_images(_WorkDir, _ZipDir, _DirNamesToUpload, _DetectBadImages = false) ->
+	dig:log("Detecting bad images ... skipped.").
+
+
+
+
+handle_detect_bad_images_parse_output(Outfile) ->
+
+	{ok, FileBin} = file:read_file(Outfile),
+	FileRes = string:tokens(?B2L(FileBin), "\n"),
+
+
+
+	%
+	% identify bad files
+	%
+	lists:foldl(fun(Line, Acc) ->
+
+		%
+		% get the image goodness value
+		%
+		[Path | Res] = string:tokens(Line, "#"),
+		Vals = jsx:decode(?L2B(?FLATTEN(Res))),
+		GoodVal = helper:s2n(?B2L(proplists:get_value(<<"good">>, Vals))),
+
+		case GoodVal < 0.5 of
+			true ->
+				Acc ++ [Line];
+			_ ->
+				Acc
+		end
+
+	end, [], FileRes).
+
+
+
+
+
+%
+% handle_detect_bad_images_get_filepaths
+%
+handle_detect_bad_images_get_filepaths(WorkDir, ZipDir, DirNamesToUpload) ->
+
+	lists:foldl(fun(Dir, Acc) ->
+
+		%
+		% get all files in dir
+		%
+		DirFullPath = itx:format("~s/~s/~s", [WorkDir, ZipDir, Dir]),
+		{ok, Files} = file:list_dir(DirFullPath),
+		
+
+		%
+		% filter our jpg files
+		%
+		Files1 = lists:filter(fun(File) ->
+			string:to_lower(filename:extension(File)) == ".jpg"
+		end, Files),
+
+
+
+		%
+		% get full paths
+		%
+		Filepaths = lists:map(fun(File) ->
+			itx:format("~s/~s", [DirFullPath, File])
+		end, Files1),
+
+
+
+		%
+		% return
+		%
+		Acc ++ Filepaths
+
+
+	end, [], DirNamesToUpload).
+
 
 
 
@@ -373,7 +500,6 @@ handle_download_from_s3(ObjectKey) ->
 	dig:log("Downloading zip from S3."),
 
 
-	{ok, Cwd} = file:get_cwd(),
 	Fileloc = ?FLATTEN(io_lib:format("~s/~s", [get_workdir_root(), ObjectKey])),
 
 	CmdRes = helper:cmd("AWS_ACCESS_KEY_ID=~s AWS_SECRET_ACCESS_KEY=~s AWS_DEFAULT_REGION=~s aws s3 cp --only-show-errors s3://~s/~s/~s ~s", [
