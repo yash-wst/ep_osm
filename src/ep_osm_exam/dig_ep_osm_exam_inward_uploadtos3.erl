@@ -287,7 +287,7 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 handle_detect_bad_images(WorkDir, ZipDir, DirNamesToUpload, _DetectBadImages = true) ->
 
 
-	dig:log("Detecting bad images"),
+	dig:log("Detecting bad images ..."),
 
 
 	%
@@ -296,23 +296,27 @@ handle_detect_bad_images(WorkDir, ZipDir, DirNamesToUpload, _DetectBadImages = t
 	Filepaths = handle_detect_bad_images_get_filepaths(WorkDir, ZipDir, DirNamesToUpload),
 	FilepathsFile = itx:format("~s/filepaths.txt", [WorkDir]),
 	ok = file:write_file(FilepathsFile, string:join(Filepaths, "\n")),
+	Outfile = itx:format("~s/filepaths.out", [WorkDir]),
 	
 
 	%
 	% run bad image detection model and create output file
 	%
+	helper:cmd("classify -f ~s -o ~s", [
+		FilepathsFile, Outfile
+	]),
 
 
 
 	%
 	% parse output file
 	%
-	Outfile = itx:format("~s/filepaths.out", [WorkDir]),
 	BadFiles = handle_detect_bad_images_parse_output(Outfile),
-	dig:log(error, itx:format("~p", [BadFiles])),
+	BadFiles1 = string:join(BadFiles, " "),
+	dig:log(error, itx:format("~s", [BadFiles1])),
 
 
-	dig:log("Detecting bad images ... ok.");
+	dig:log("Detecting bad images ... end.");
 
 
 
@@ -337,13 +341,18 @@ handle_detect_bad_images_parse_output(Outfile) ->
 		%
 		% get the image goodness value
 		%
-		[Path | Res] = string:tokens(Line, "#"),
-		Vals = jsx:decode(?L2B(?FLATTEN(Res))),
-		GoodVal = helper:s2n(?B2L(proplists:get_value(<<"good">>, Vals))),
+		Line1 = helper:trim(Line, "\""),
+		Vals = jsx:decode(?L2B(Line1)),
+		BadVal = proplists:get_value(<<"bad">>, Vals, 0),
 
-		case GoodVal < 0.5 of
+		case BadVal > 0.5 of
 			true ->
-				Acc ++ [Line];
+				Path = proplists:get_value(<<"Image">>, Vals),
+				PathTokens = string:tokens(?B2L(Path), "/"),
+				PathLen = length(PathTokens),
+				PathTokens1 = lists:sublist(PathTokens, PathLen - 1, PathLen),
+				PathX = string:join(PathTokens1, "/"),
+				Acc ++ [PathX];
 			_ ->
 				Acc
 		end
