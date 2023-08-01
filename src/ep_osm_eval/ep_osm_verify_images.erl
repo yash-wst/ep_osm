@@ -134,8 +134,13 @@ layout_answerpaper(TFs, Fs, ImgUrls, ColSize) ->
 	%
 	% init
 	%
-	AnpState = ?L2A(itf:val(Fs, anpstate)),
-	IsReasonForOnHold = lists:member(AnpState, get_state_for_onhold()),
+	IsReasonForOnHold = case Fs of
+		undefined ->
+			false;
+		_ ->
+			AnpState = ?L2A(itf:val(Fs, anpstate)),
+			lists:member(AnpState, get_state_for_onhold())
+	end,
 
 
 	Es = lists:map(fun(ImageUrl) ->
