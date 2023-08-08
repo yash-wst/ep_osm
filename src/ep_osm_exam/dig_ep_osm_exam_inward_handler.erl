@@ -1531,6 +1531,8 @@ get_existing_candidate_docs(Db, UId, SeatNumber) ->
 %
 % get doc by id
 %
+getdoc_by_id(_Db, _FId, []) ->
+	[];
 getdoc_by_id(Db, FId, Val) ->
 	FsFind = [
 		itf:build(itf:textbox(?F(FId)), Val)
