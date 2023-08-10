@@ -213,6 +213,9 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 	% init
 	%
 	dig:log("Unzipping file"),
+	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
+	ExamId = itf:val(BundleDoc, osm_exam_fk),
+	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
 
 
 	%
@@ -232,7 +235,7 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 	% handle verify uploaded folder name
 	%
 	dig:log("Verifying folder name"),
-	handle_verify_uploaded_folder_name(ZipDir0, BundleId),
+	handle_verify_uploaded_folder_name(ZipDir0, ExamDoc, BundleDoc),
 
 
 
@@ -246,9 +249,19 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 	%
 	% detect bad images
 	%
-	handle_detect_bad_images(
+	BadFiles = handle_detect_bad_images(
 		WorkDir, ZipDir0, DirNamesToUpload,
 		itxconfigs_cache:get2(ep_osm_detect_bad_images, false)
+	),
+
+
+
+	%
+	% record bad files in candidate docs
+	%
+	handle_record_bad_images_in_candidate_docs(
+		itxconfigs_cache:get2(ep_osm_detect_bad_images, false),
+		BadFiles, ExamId
 	),
 
 
@@ -316,7 +329,8 @@ handle_detect_bad_images(WorkDir, ZipDir, DirNamesToUpload, _DetectBadImages = t
 	dig:log(error, itx:format("~s", [BadFiles1])),
 
 
-	dig:log("Detecting bad images ... end.");
+	dig:log("Detecting bad images ... end."),
+	BadFiles;
 
 
 
@@ -405,15 +419,73 @@ handle_detect_bad_images_get_filepaths(WorkDir, ZipDir, DirNamesToUpload) ->
 
 
 
+%------------------------------------------------------------------------------
+% handle - record bad images in candidate docs
+%------------------------------------------------------------------------------
+
+handle_record_bad_images_in_candidate_docs(_DetectBadImages = true, BadFiles, ExamId) ->
+
+	%
+	% init
+	%
+	dig:log("Updating bad images list in candidate doc ..."),
+	ExamDb = anpcandidates:db(ExamId),
+
+
+	%
+	% create dict
+	%
+	Dict = lists:foldl(fun(BadFile, AccDict) ->
+		[SeatNumber, Filename] = string:tokens(BadFile, "/"),
+		dict:append(SeatNumber, Filename, AccDict)
+	end, dict:new(), BadFiles),
+
+
+	%
+	% get candidate docs
+	%
+	SeatNumbers = dict:fetch_keys(Dict),
+	Docs = anpcandidates:getdocs_by_snos(ExamId, SeatNumbers),
+
+
+	%
+	% save bad images list
+	%
+	ListOfFsDoc = lists:map(fun(CDoc) ->
+		%
+		% init
+		%
+		FsDoc = helper_api:doc2fields({ok, CDoc}),
+		SeatNumber = itf:val(CDoc, anpseatnumber),
+		CandidateBadFiles = case dict:find(SeatNumber, Dict) of
+			{ok, List} ->
+				List;
+			_ ->
+				[]
+		end,
+
+
+		%
+		% merge fs
+		%
+		itf:fs_merge(FsDoc, [
+			fields:build(autiqc_images, CandidateBadFiles)
+		])
+
+
+	end, Docs),
+	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
+	dig:log("Updating bad images list in candidate doc ... ok");
+
+handle_record_bad_images_in_candidate_docs(_, _, _) ->
+	ok.
+
 
 %------------------------------------------------------------------------------
 % handle - verify uploaded folder name
 %------------------------------------------------------------------------------
 
-handle_verify_uploaded_folder_name(ZipDir0, BundleId) ->
-	{ok, BundleDoc} = ep_osm_bundle_api:get(BundleId),
-	ExamId = itf:val(BundleDoc, osm_exam_fk),
-	{ok, ExamDoc} = ep_osm_exam_api:get(ExamId),
+handle_verify_uploaded_folder_name(ZipDir0, ExamDoc, BundleDoc) ->
 	BundleDirName = dig_ep_osm_exam_inward:get_bundle_dir_name(ExamDoc, BundleDoc),
 	?ASSERT(
 		ZipDir0 == BundleDirName,

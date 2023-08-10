@@ -78,7 +78,14 @@ layout_student_info(_TFs, Fs) ->
 	Es = layout:get(?VIEW, fields:getfields(Fs, [
 		anpseatnumber,
 		anpfullname,
-		anpstate,
+		anpstate
+	] ++ case itxconfigs_cache:get2(ep_osm_detect_bad_images, false) of
+		true -> [
+			autiqc_images
+		];
+		_ -> [
+		]
+	end ++ [
 		comments_dtp
 	]), [], table),
 	CommentButton = ite:get(add_comment, "Add comment", comment_dtp),
@@ -93,11 +100,26 @@ layout_student_info(_TFs, Fs) ->
 % layout - page numbers
 %
 
-layout_page_nos(_TFs, _Fs, ImgUrls) ->
+layout_page_nos(_TFs, Fs, ImgUrls) ->
+
+	%
+	% init
+	%
+	BadImages = fields:getuivalue(Fs, autiqc_images),
+
+
 	{Es, _} = lists:foldl(fun(ImgUrl, {Acc, Index}) ->
+
 		AName = anpcandidate:get_aname_from_imgurl(ImgUrl),
+		BtnHighlight = case lists:member(AName, BadImages) of
+			true ->
+				 "btn-danger";
+			_ ->
+				 "btn-primary-outline"
+		end,
+
 		Link = #link {
-			class="btn btn-primary-outline m-1",
+			class="m-1 btn " ++ BtnHighlight,
 			text=itx:format("~p (~s)", [Index, AName]),
 			url="#" ++ AName
 		},
