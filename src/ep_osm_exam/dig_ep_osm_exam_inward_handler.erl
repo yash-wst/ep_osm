@@ -1112,7 +1112,7 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, []) ->
 		{ok, CandidateDoc} ->
 			handle_inward_focus_textbox(),
 			handle_insert_candidatedoc(BundleDoc, CandidateDoc),
-			helper_ui:flash(success, io_lib:format("Created: ~s, ~s but could not find in master-data.", [UId, SNo]), 5);
+			helper_ui:flash(warning, io_lib:format("Created: ~s, ~s but could not find in master-data.", [UId, SNo]), 5);
 		_ ->
 			helper_ui:flash(error, io_lib:format("Error!: ~s, ~s", [UId, SNo]))
 	end;
