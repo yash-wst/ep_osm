@@ -172,7 +172,8 @@ get() ->
 		],
 		config=[
 			{action_layout_type, buttons},
-			{searchbar_visibility, show}
+			{searchbar_visibility, show},
+			{responsive_type, scroll}
 		],
 		size=100
 	}.
@@ -243,7 +244,7 @@ fetch(D, _From, _Size, [
 	Results = lists:map(fun(CDoc) ->
 		
 		lists:map(fun(Fi) ->
-			#dcell {val=itf:val(CDoc, Fi#field.id)}
+			#dcell {val=layout_table_field(CDoc, Fi)}
 		end, FsInward) ++
 		[
 			#dcell {val=helper:epochstrtotime(itf:val(CDoc, timestamp_inward))},
@@ -484,6 +485,29 @@ layout() ->
 	[
 		dig:dig(?MODULE:get())
 	].
+
+
+
+%..............................................................................
+%
+% layout - table field
+%
+%..............................................................................
+
+layout_table_field(CDoc, Fi) ->
+	?D(Fi#field.id),
+	layout_table_field(CDoc, Fi, Fi#field.id).
+
+layout_table_field(CDoc, Fi, FId) when 
+	FId == autoqc_barcodes;
+	FId == autoqc_images ->
+	itf:val(CDoc, Fi);
+
+layout_table_field(CDoc, Fi, autoqc_images_count) ->
+	itl:render(itf:d2f(CDoc, Fi));
+
+layout_table_field(CDoc, _Fi, FId) ->
+	itf:val(CDoc, FId).
 
 
 %..............................................................................

@@ -469,7 +469,7 @@ handle_record_bad_images_in_candidate_docs(_DetectBadImages = true, BadFiles, Ex
 		% merge fs
 		%
 		itf:fs_merge(FsDoc, [
-			fields:build(autiqc_images, CandidateBadFiles)
+			fields:build(autoqc_images, CandidateBadFiles)
 		])
 
 

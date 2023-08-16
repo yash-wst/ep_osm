@@ -81,7 +81,7 @@ layout_student_info(_TFs, Fs) ->
 		anpstate
 	] ++ case itxconfigs_cache:get2(ep_osm_detect_bad_images, false) of
 		true -> [
-			autiqc_images
+			autoqc_images
 		];
 		_ -> [
 		]
@@ -105,7 +105,7 @@ layout_page_nos(_TFs, Fs, ImgUrls) ->
 	%
 	% init
 	%
-	BadImages = fields:getuivalue(Fs, autiqc_images),
+	BadImages = fields:getuivalue(Fs, autoqc_images),
 
 
 	{Es, _} = lists:foldl(fun(ImgUrl, {Acc, Index}) ->
