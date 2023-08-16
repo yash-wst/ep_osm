@@ -247,6 +247,24 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 
 
 	%
+	% detect bad barcodes
+	%
+	Barcodes = handle_detect_barcodes(
+		WorkDir, ZipDir0, DirNamesToUpload,
+		itxconfigs_cache:get2(ep_osm_detect_barcodes, false)
+	),
+
+
+	%
+	% record barcodes in candidate docs
+	%
+	handle_record_barcodes_in_candidate_docs(
+		itxconfigs_cache:get2(ep_osm_detect_barcodes, false),
+		Barcodes, ExamId
+	),
+
+
+	%
 	% detect bad images
 	%
 	BadFiles = handle_detect_bad_images(
@@ -291,6 +309,90 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 
 	dig:log("Uploading to S3 ... ok").
 
+
+
+%------------------------------------------------------------------------------
+% handle - detect barcodes
+%------------------------------------------------------------------------------
+
+handle_detect_barcodes(WorkDir, ZipDir, DirNamesToUpload, _DetectBarcodes = true) ->
+
+
+	dig:log("Detecting barcodes ..."),
+
+
+	Barcodes = lists:map(fun(Dir) ->
+		%
+		% find files
+		%
+		DirFullPath = itx:format("~s/~s/~s", [WorkDir, ZipDir, Dir]),
+		{ok, Files} = file:list_dir(DirFullPath),
+
+
+		%
+		% filter out .jpg files
+		%
+		Files1 = lists:filter(fun(File) ->
+			string:to_lower(filename:extension(File)) == ".jpg"
+		end, Files),
+
+
+		%
+		% sort files
+		%
+		Files2 = lists:sort(fun(A, B) ->
+			A < B
+		end, Files1),
+
+
+		%
+		% barcode file
+		%
+		handle_detect_barcode(Dir, DirFullPath, Files2)
+
+
+	end, DirNamesToUpload),
+
+
+	dig:log("Detecting barcodes ... ok"),
+	Barcodes;
+
+
+handle_detect_barcodes(_WorkDir, _ZipDir, _DirNamesToUpload, _DetectBarcodes = false) ->
+	dig:log("Detecting barcodes ... skipped").
+
+
+
+%
+% detect barcode
+%
+handle_detect_barcode(Dir, DirFullPath, []) ->
+	{Dir, []};
+handle_detect_barcode(Dir, DirFullPath, [Filename | _]) ->
+	%
+	% run command
+	%
+	Res = helper:cmd("cd ~s; zbarimg -q ~s", [DirFullPath, Filename]),
+	Lines = string:tokens(Res, "\n"),
+
+
+	%
+	% read all barcodes
+	%
+	Barcodes = lists:foldl(fun(Line, Acc) ->
+		case string:tokens(Line, ":") of
+			[_, Barcode] ->
+				Acc ++ [Barcode];
+			_ ->
+				Acc
+		end
+	end, [], Lines),
+
+
+	%
+	% return list
+	%
+	{Dir, Barcodes}.
 
 
 %------------------------------------------------------------------------------
@@ -479,6 +581,67 @@ handle_record_bad_images_in_candidate_docs(_DetectBadImages = true, BadFiles, Ex
 
 handle_record_bad_images_in_candidate_docs(_, _, _) ->
 	ok.
+
+
+
+%------------------------------------------------------------------------------
+% handle - record barcodes in candidate docs
+%------------------------------------------------------------------------------
+
+handle_record_barcodes_in_candidate_docs(_DetectBarcodes = true, Barcodes, ExamId) ->
+
+	%
+	% init
+	%
+	dig:log("Updating barcodes list in candidate doc ..."),
+	ExamDb = anpcandidates:db(ExamId),
+
+
+	%
+	% create dict
+	%
+	Dict = dict:from_list(Barcodes),
+
+
+	%
+	% get candidate docs
+	%
+	SeatNumbers = dict:fetch_keys(Dict),
+	Docs = anpcandidates:getdocs_by_snos(ExamId, SeatNumbers),
+
+
+	%
+	% save bad images list
+	%
+	ListOfFsDoc = lists:map(fun(CDoc) ->
+		%
+		% init
+		%
+		FsDoc = helper_api:doc2fields({ok, CDoc}),
+		SeatNumber = itf:val(CDoc, anpseatnumber),
+		CandidateBarcodes = case dict:find(SeatNumber, Dict) of
+			{ok, List} ->
+				List;
+			_ ->
+				[]
+		end,
+
+
+		%
+		% merge fs
+		%
+		itf:fs_merge(FsDoc, [
+			fields:build(autoqc_barcodes, CandidateBarcodes)
+		])
+
+
+	end, Docs),
+	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
+	dig:log("Updating barcode list in candidate doc ... ok");
+
+handle_record_barcodes_in_candidate_docs(_, _, _) ->
+	ok.
+
 
 
 %------------------------------------------------------------------------------
