@@ -495,7 +495,6 @@ layout() ->
 %..............................................................................
 
 layout_table_field(CDoc, Fi) ->
-	?D(Fi#field.id),
 	layout_table_field(CDoc, Fi, Fi#field.id).
 
 layout_table_field(CDoc, Fi, FId) when 

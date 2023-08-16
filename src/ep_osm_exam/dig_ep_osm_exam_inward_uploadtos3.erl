@@ -318,7 +318,12 @@ handle_upload_to_s3(WorkDir, S3Dir, DirNamesToUpload, _Filename, Filepath, Bundl
 handle_detect_barcodes(WorkDir, ZipDir, DirNamesToUpload, _DetectBarcodes = true) ->
 
 
+	%
+	% init
+	%
 	dig:log("Detecting barcodes ..."),
+	{ok, Cwd} = file:get_cwd(),
+	ScriptDir = itx:format("~s/lib/image-barcode", [Cwd]),
 
 
 	Barcodes = lists:map(fun(Dir) ->
@@ -348,7 +353,7 @@ handle_detect_barcodes(WorkDir, ZipDir, DirNamesToUpload, _DetectBarcodes = true
 		%
 		% barcode file
 		%
-		handle_detect_barcode(Dir, DirFullPath, Files2)
+		handle_detect_barcode(ScriptDir, Dir, DirFullPath, Files2)
 
 
 	end, DirNamesToUpload),
@@ -366,13 +371,17 @@ handle_detect_barcodes(_WorkDir, _ZipDir, _DirNamesToUpload, _DetectBarcodes = f
 %
 % detect barcode
 %
-handle_detect_barcode(Dir, DirFullPath, []) ->
+handle_detect_barcode(_ScriptDir, Dir, _DirFullPath, []) ->
 	{Dir, []};
-handle_detect_barcode(Dir, DirFullPath, [Filename | _]) ->
+handle_detect_barcode(ScriptDir, Dir, DirFullPath, [Filename | _]) ->
 	%
 	% run command
 	%
-	Res = helper:cmd("cd ~s; zbarimg -q ~s", [DirFullPath, Filename]),
+	Res = helper:cmd("cd ~s; python3 barcode_detect_and_decode.py -i ~s/~s", [
+		ScriptDir, DirFullPath, Filename
+	]),
+
+
 	Lines = string:tokens(Res, "\n"),
 
 
