@@ -172,8 +172,7 @@ get() ->
 		],
 		config=[
 			{action_layout_type, buttons},
-			{searchbar_visibility, show},
-			{responsive_type, scroll}
+			{searchbar_visibility, show}
 		],
 		size=100
 	}.
