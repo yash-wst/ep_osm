@@ -208,8 +208,28 @@ layout_proctor_photos(Fs, RoleFId) ->
 	% urls
 	%
 	ImgUrls = get_proctor_image_urls(AnpId, EvaluatorId),
-	Es = ep_osm_verify_images:layout_answerpaper(undefined, undefined, ImgUrls, 3),
+	Es = lists:map(fun(ImageUrl) ->
 
+		%
+		% init
+		%
+		AName = anpcandidate:get_aname_from_imgurl(ImageUrl),
+		EsUrl = #image {
+			class="border border-2 border-primary",
+			style="width: 100%",
+			image=ImageUrl
+		},
+
+		%
+		% section
+		%
+		layout:g(3, [
+			itx:format("<a id='~s' href='#'></a>", [AName]),
+			#p {class="bg-info p-2 mt-3", text=AName },
+			EsUrl
+		])
+
+	end, ImgUrls),
 
 	%
 	% return
@@ -219,7 +239,7 @@ layout_proctor_photos(Fs, RoleFId) ->
 		];
 		_ -> [
 			#p {class="font-weight-bold", text="Evaluator Images"},
-			Es
+			layout:grow(Es)
 		]
 	end.
 
