@@ -426,8 +426,10 @@ handle_detect_bad_images(WorkDir, ZipDir, DirNamesToUpload, _DetectBadImages = t
 	%
 	% run bad image detection model and create output file
 	%
-	helper:cmd("classify -f ~s -o ~s", [
-		FilepathsFile, Outfile
+	{ok, Cwd} = file:get_cwd(),
+	ScriptDir = itx:format("~s/lib/image-classifier", [Cwd]),
+	helper:cmd("cd ~s; python3 classify.py -f ~s -o ~s", [
+		ScriptDir, FilepathsFile, Outfile
 	]),
 
 
