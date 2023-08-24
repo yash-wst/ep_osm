@@ -837,7 +837,7 @@ handle_submit_results_to_rps(TestId) ->
 	% submit
 	%
 	{CsvDataSize, CsvData} = ep_osm_exam_api:csv_frp(TestId, OsmEvaluatorType),
-	RpcRes = rpc:call(
+	RpcRes = dig_mm_ep_osm_exam_from_frp:rpc_call(
 		itxnode:uni(),
 		up_core_marks_upload_queue_api,
 		create_rpc,
