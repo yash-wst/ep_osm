@@ -33,6 +33,12 @@ access(_, _) -> false.
 % fields
 %------------------------------------------------------------------------------
 
+f(auto_create_bundles = I) ->
+	itf:dropdown(?F(I, "Auto Create Bundles?"), itf:options([
+		?F(yes, "Yes"),
+		?F(no, "No")
+	]));
+
 f(date_of_test) ->
 	itf:date(?F(date_of_test, "Date of Test")).
 
@@ -50,7 +56,8 @@ fs(_Doc) ->
 %
 fs() ->
 	[
-		f(date_of_test)
+		f(date_of_test),
+		f(auto_create_bundles)
 	].
 
 
@@ -128,7 +135,8 @@ do(Doc) ->
 	% start processing
 	%
 	DateOfExam = itf:val(Doc, date_of_test),
-	dig_mm_ep_osm_exam_from_frp:handle_import_from_frp(DateOfExam).
+	AutoCreateBundles = itf:val(Doc, auto_create_bundles),
+	dig_mm_ep_osm_exam_from_frp:handle_import_from_frp(DateOfExam, AutoCreateBundles).
 
 
 

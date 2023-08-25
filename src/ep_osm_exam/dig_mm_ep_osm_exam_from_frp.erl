@@ -3,6 +3,7 @@
 -compile(export_all).
 -include("records.hrl").
 -include_lib("nitrogen_core/include/wf.hrl").
+-import(minijob_import_from_rps, [f/1]).
 
 
 %------------------------------------------------------------------------------
@@ -44,7 +45,8 @@ module(import) ->
 %------------------------------------------------------------------------------
 
 fs(import) -> [
-	itf:date(?F(date_of_test, "Date of Test"))
+	f(date_of_test),
+	itf:build(f(auto_create_bundles), ?NO)
 ];
 
 fs(form) ->
@@ -191,10 +193,8 @@ handle_import_from_frp() ->
 
 
 handle_import_from_frp_via_minijob() ->
-	FDate = minijob_import_from_rps:f(date_of_test),
-	{ok, Doc} = minijob_import_from_rps:create_and_run([
-		itf:build(FDate, wf:q(date_of_test))
-	]),
+	Fs = itf:uivalue(fs(import)),
+	{ok, Doc} = minijob_import_from_rps:create_and_run(Fs),
 	minijob_status:show_status(Doc).
 
 
@@ -204,6 +204,7 @@ handle_import_from_frp_via_taskqueue() ->
 	%
 	Context = wf_context:context(),
 	DateOfExam = wf:q(date_of_test),
+	AutoCreateBundles = wf:q(auto_create_bundles),
 	Email = myauth:email(),
 
 	%
@@ -211,7 +212,7 @@ handle_import_from_frp_via_taskqueue() ->
 	%
 	Fun = fun([]) ->
 		wf_context:context(Context),
-		handle_import_from_frp(DateOfExam),
+		handle_import_from_frp(DateOfExam, AutoCreateBundles),
 		email:send(
 			[Email],
 			"Create exams from RPS",
@@ -227,7 +228,7 @@ handle_import_from_frp_via_taskqueue() ->
 	helper_ui:flash(warning, "Added to queue.", 5).
 
 
-handle_import_from_frp(DateOfExam) ->
+handle_import_from_frp(DateOfExam, AutoCreateBundles) ->
 
 	%
 	% init
@@ -256,7 +257,7 @@ handle_import_from_frp(DateOfExam) ->
 	% for each doc
 	%
 	lists:foreach(fun(FrpExamDoc) ->
-		handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc)
+		handle_import_from_frp_examdoc(DateOfExam, AutoCreateBundles, FrpExamDoc)
 	end, ActiveFrpExamDocs),
 
 
@@ -274,7 +275,7 @@ handle_import_from_frp(DateOfExam) ->
 %
 %..............................................................................
 
-handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
+handle_import_from_frp_examdoc(DateOfExam, AutoCreateBundles, FrpExamDoc) ->
 
 	%
 	% init
@@ -331,7 +332,7 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 	% upload or update student list
 	%
 	handle_import_from_frp_examdoc_upload_student_list(
-		FrpExamDoc, ResOsmExamDoc
+		FrpExamDoc, AutoCreateBundles, ResOsmExamDoc
 	).
 
 
@@ -342,7 +343,7 @@ handle_import_from_frp_examdoc(DateOfExam, FrpExamDoc) ->
 %
 %..............................................................................
 
-handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc}) ->
+handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, AutoCreateBundles, {ok, OsmExamDoc}) ->
 
 
 	%
@@ -373,7 +374,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 	%
 	lists:foreach(fun(FrpStudentListBatch) ->
 		handle_import_from_frp_examdoc_upload_student_list_batch(
-			FrpExamDoc, OsmExamDoc, FrpStudentListBatch
+			FrpExamDoc, OsmExamDoc, FrpStudentListBatch, AutoCreateBundles
 		)
 	end, LoLFrpStudentList),
 
@@ -383,7 +384,7 @@ handle_import_from_frp_examdoc_upload_student_list(FrpExamDoc, {ok, OsmExamDoc})
 
 
 
-handle_import_from_frp_examdoc_upload_student_list(_, _) ->
+handle_import_from_frp_examdoc_upload_student_list(_, _, _) ->
 	skip.
 
 
@@ -394,7 +395,7 @@ handle_import_from_frp_examdoc_upload_student_list(_, _) ->
 %..............................................................................
 
 handle_import_from_frp_examdoc_upload_student_list_batch(
-	FrpExamDoc, OsmExamDoc, FrpStudentList
+	FrpExamDoc, OsmExamDoc, FrpStudentList, AutoCreateBundles
 ) ->
 
 
@@ -408,6 +409,8 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 	FrpSubjectId = itf:val(FrpExamDoc, subject_code_fk),
 	PRNs = get_prns_from_frp_list(FrpStudentList),
 	SeatNumberId = ep_osm_id:get(anpseatnumber, in, profile_student),
+	BundleId = create_bundle(AutoCreateBundles, FrpSeasonId, OsmExamId),
+	EpochTime = helper:epochtime(),
 
 
 	%
@@ -459,9 +462,9 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 
 
 
-	ListOfFsToSave = lists:map(fun([PRN, Name | _] = Row) ->
+	{ListOfFsToSave, _} = lists:foldl(fun([PRN, Name | _] = Row, {FsAcc, EpochTimeAcc}) ->
 		Name1 = helper:replace_this_with_that(Name, "\"", ""),
-		[
+		Fs = [
 			itf:build(
 				itf:textbox(?F(anpseatnumber)),
 				import_anpseatnumber(
@@ -470,9 +473,12 @@ handle_import_from_frp_examdoc_upload_student_list_batch(
 			),
 			itf:build(itf:textbox(?F(anpfullname)), Name1),
 			itf:build(itf:textbox(?F(anpcentercode)), "0"),
-			itf:build(itf:textbox(?F(anpstate)), import_anpstate(Row))
-		]
-	end, FrpStudentListMissing),
+			itf:build(itf:textbox(?F(anpstate)), import_anpstate(Row, BundleId)),
+			itf:build(itf:textbox(?F(osm_bundle_fk)), import_bundleid(Row, BundleId)),
+			itf:build(itf:textbox(?F(timestamp_inward)), ?I2S(EpochTimeAcc))
+		],
+		{FsAcc ++ [Fs], EpochTimeAcc +1}
+	end, {[], EpochTime}, FrpStudentListMissing),
 	{ok, Res} = anpcandidates:savebulk(ExamDb, ListOfFsToSave),
 
 
@@ -850,15 +856,73 @@ import_anpseatnumber(PRN, _, _) ->
 %
 % import anpstate
 %
-import_anpstate(Row) ->
+import_anpstate(Row, BundleId) ->
+	LastColumn = lists:last(Row),
+	LastColumn1 = helper:replace_this_with_that(LastColumn, "\"", ""),
+	case  {string:to_lower(LastColumn1), BundleId} of
+		{"ab", _} ->
+			"anpstate_absent";
+		{_, BundleId} when is_list(BundleId) ->
+			"anpstate_not_uploaded";
+		_ ->
+			"anpstate_expected"
+	end.
+
+
+%
+% import bundleid
+%
+import_bundleid(Row, BundleId) ->
 	LastColumn = lists:last(Row),
 	LastColumn1 = helper:replace_this_with_that(LastColumn, "\"", ""),
 	case  string:to_lower(LastColumn1) of
 		"ab" ->
-			"anpstate_absent";
+			"";
 		_ ->
-			"anpstate_expected"
+			BundleId
 	end.
+
+
+
+%------------------------------------------------------------------------------
+% create 
+%------------------------------------------------------------------------------
+
+create_bundle(?YES, SeasonId, ExamId) ->
+
+	%
+	% fields to save
+	%
+	FsToSave = [
+		itf:build(?COREXS(season_fk), SeasonId),
+		itf:build(?OSMBDL(osm_exam_fk), ExamId),
+		itf:build(?OSMBDL(inward_date), helper:date_today_str()),
+		itf:build(?OSMBDL(scanned_date), ""),
+		itf:build(?OSMBDL(uploaded_date), ""),
+		itf:build(?OSMBDL(qc_date), ""),
+		itf:build(?OSMBDL(inwardstate), "completed"),
+		itf:build(?OSMBDL(scanningstate), ""),
+		itf:build(?OSMBDL(uploadstate), ""),
+		itf:build(?OSMBDL(qcstate), ""),
+		itf:build(?OSMBDL(packet_number), ""),
+		itf:build(?OSMBDL(packet_count), ""),
+		itf:build(?OSMBDL(rack_location), ""),
+		itf:build(?OSMBDL(receivedby), ""),
+		itf:build(?OSMBDL(receivedon), ""),
+		itf:build(?OSMBDL(createdby), itxauth:user()),
+		itf:build(?OSMBDL(createdon), helper:epochtimestr())
+	],
+
+
+	%
+	% save
+	%
+	{ok,  {ok, BundleDoc}} = ep_osm_bundle_api:create(FsToSave),
+	itf:idval(BundleDoc);
+create_bundle(_, _, _) ->
+	undefined.
+
+
 
 %------------------------------------------------------------------------------
 % end
