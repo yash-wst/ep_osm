@@ -420,13 +420,17 @@ handle_import_csv_to_fs(List) ->
 % handle merge with existing docs
 %------------------------------------------------------------------------------
 
-handle_merge_with_existing_docs(ExamDoc, DocsToSave) ->
 
+handle_merge_with_existing_docs(ExamDoc, DocsToSave) ->
+	handle_merge_with_existing_docs(ExamDoc, DocsToSave, undefined).
+
+
+handle_merge_with_existing_docs(ExamDoc, DocsToSave, KeyToFind) ->
 	%
 	% get existing candidate docs
 	%
 	ExistingCandidateDocs = get_existing_candidate_docs(ExamDoc, DocsToSave),
-	ExistingCandidateDocsDict = get_existing_candidate_docs_dict(ExistingCandidateDocs),
+	ExistingCandidateDocsDict = get_existing_candidate_docs_dict(ExistingCandidateDocs, KeyToFind),
 
 
 	%
@@ -435,7 +439,7 @@ handle_merge_with_existing_docs(ExamDoc, DocsToSave) ->
 	lists:foldl(fun(Doc, Acc) ->
 
 		SNO = itf:val(Doc, anpseatnumber),
-		case dict:find(SNO, ExistingCandidateDocsDict) of
+		case dict:find(get_dict_key(SNO, Doc, KeyToFind), ExistingCandidateDocsDict) of
 			{ok, DocExisting} ->
 				%
 				% merge only if field value is empty in the existing doc
@@ -524,7 +528,7 @@ get_existing_candidate_docs(ExamDoc, DocsToSave) ->
 	helper:unique(DocsPRNs ++ DocsSeatNumbers).
 
 
-get_existing_candidate_docs_dict(CandidateDocs) ->
+get_existing_candidate_docs_dict(CandidateDocs, Key) ->
 
 	lists:foldl(fun(Doc, Acc) ->
 		PRN = itf:val(Doc, anp_paper_uid),
@@ -534,14 +538,14 @@ get_existing_candidate_docs_dict(CandidateDocs) ->
 			[] ->
 				Acc;
 			_ ->
-				dict:store(PRN, Doc, Acc)
+				dict:store(get_dict_key(PRN, Doc, Key), Doc, Acc)
 		end,
 
 		Acc2 = case SNO of
 			[] ->
 				Acc1;
 			_ ->
-				dict:store(SNO, Doc, Acc1)
+				dict:store(get_dict_key(SNO, Doc, Key), Doc, Acc1)
 		end,
 
 		Acc2
@@ -549,6 +553,9 @@ get_existing_candidate_docs_dict(CandidateDocs) ->
 
 	end, dict:new(), CandidateDocs).
 
+
+get_dict_key(Val, _, undefined) -> Val;
+get_dict_key(Val, Doc, Key) -> {itf:val(Doc, Key), Val}.
 
 %------------------------------------------------------------------------------
 % end

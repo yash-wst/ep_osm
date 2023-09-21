@@ -54,6 +54,7 @@ get() ->
 			{export_exam_folders, "Export Exam Folders", "Export Exam Folders"},
 			{action_import_from_rps, "Import - Create exams from RPS", "Import - Create exams from RPS"},
 			{action_import, "Import - Create exams from CSV", "Import - Create exams from CSV"},
+			{action_import_student_preassign_evaluator_data, "Import - Assign Evaluators to Students", "Import - Assign Evaluators to Students"},
 			{action_import_student_data, "Import Student Data", "Import Student Data"},
 			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."},
 			{action_change_state, "Change State", "Change State"}
@@ -238,6 +239,13 @@ layout_import_student_data() ->
 	itl:get(?EDIT, ep_osm_exam:fs(import_student_data), noevent, table).
 
 
+layout_import_student_preassign_data() ->
+	itl:get(?EDIT, [
+		?COREXS(season_fk, #field {id=import_season_fk}),
+		itf:attachment(?F(file_import_student_preassing_data, "CSV file"))
+	], noevent, table).
+
+
 %..............................................................................
 %
 % layout - upload form
@@ -309,6 +317,9 @@ event(change_state) ->
 event(action_change_state) ->
 	layout_change_state();
 
+event(action_import_student_preassign_evaluator_data) ->
+	dig_mm:handle_show_action("Import Student Data", layout_import_student_preassign_data());
+
 event(action_import_student_data) ->
 	dig_mm:handle_show_action("Import Student Data", layout_import_student_data());
 
@@ -326,6 +337,17 @@ event(E) ->
 
 start_upload_event(Event) ->
 	dig_mm:start_upload_event(Event).
+
+finish_upload_event({_, file_import_student_preassing_data}, AttachmentName, LocalFileData, _Node) ->
+	SeasonId = wf:q(import_season_fk),
+	?ASSERT(
+		((SeasonId /= []) and (SeasonId /= undefined)),
+		"ERROR: Please select a season under which file is to be uploaded"
+	),
+	dig_mm_import:handle_finish_upload_event(
+		?MODULE, ep_osm_candidate, ep_osm_candidate_api, ep_osm_candidate_evaluator_import,
+		{file, AttachmentName, LocalFileData}
+	);
 
 finish_upload_event({_,file_import_student_data}, AttachmentName, LocalFileData, _Node) ->
 	SeasonId = wf:q(import_season_fk),
