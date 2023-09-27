@@ -572,7 +572,7 @@ calc("any" ++ Length, List, Type) ->
 	%
 	% return sum
 	%
-	lists:sum(List3);
+	get_sum(List3);
 
 
 calc("sum", List, Type) ->
@@ -594,7 +594,7 @@ calc("sum", List, Type) ->
 	%
 	% return sum
 	%
-	lists:sum(List1);
+	get_sum(List1);
 
 
 
@@ -603,6 +603,17 @@ calc(Rule, List, Type) ->
 	throw({Rule, List}).
 
 
+% 
+% get sum
+% 
+get_sum(Markslist) ->
+	lists:foldl(fun(M, Acc) ->
+		case M of
+			"na" -> Acc;
+			M0 -> Acc + M0
+		end
+	end, 0.0, Markslist).
+
 
 %
 % get dict val
@@ -610,7 +621,7 @@ calc(Rule, List, Type) ->
 getval(QuestionId, MDict) ->
 	case dict:find(QuestionId, MDict) of
 		{ok, Val} ->
-			helper:s2f_v1(Val);
+			anpcandidate:convert_marks_to_float(Val);
 		_ ->
 			0
 	end.

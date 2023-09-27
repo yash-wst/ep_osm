@@ -1567,8 +1567,7 @@ get_marks_per_question(Doc, ListOfAllQuestions, EvaluatorRole) ->
 	lists:foldl(fun({MarkingId, _QuestionId, _MaxMarks}, Acc) ->
 		Val = case dict:find(MarkingId, MarkingValuesDict) of
 			{ok, ObtainedMarksFloatStr} ->
-				ObtainedMarks = helper:s2f_v1(ObtainedMarksFloatStr),
-				lists:flatten(io_lib:format("~.2f", [ObtainedMarks]));
+				fmt_obtained_marks_floatStr(ObtainedMarksFloatStr);
 			error ->
 				[]
 		end,
@@ -1593,10 +1592,8 @@ get_marks_per_question_inpods(Doc, ListOfAllQuestions, EvaluatorRole) ->
 	lists:foldl(fun({MarkingId, _QuestionId, _MaxMarks}, Acc) ->
 		case dict:find(MarkingId, MarkingValuesDict) of
 			{ok, ObtainedMarksFloatStr} ->
-				ObtainedMarks = helper:s2f_v1(ObtainedMarksFloatStr),
-				ObtainedMarksFmt = lists:flatten(io_lib:format("~.2f", [ObtainedMarks])),
 				Acc ++ [
-					"Descriptive", "", ObtainedMarksFmt
+					"Descriptive", "", fmt_obtained_marks_floatStr(ObtainedMarksFloatStr)
 				];
 			error ->
 				Acc ++ [
@@ -1604,6 +1601,13 @@ get_marks_per_question_inpods(Doc, ListOfAllQuestions, EvaluatorRole) ->
 				]
 		end
 	end, [], ListOfAllQuestions).
+
+
+
+fmt_obtained_marks_floatStr("na") -> "na";
+fmt_obtained_marks_floatStr(ObtainedMarksFloatStr) -> 
+	ObtainedMarks = anpcandidate:convert_marks_to_float(ObtainedMarksFloatStr),
+	lists:flatten(io_lib:format("~.2f", [ObtainedMarks])).
 
 
 %
