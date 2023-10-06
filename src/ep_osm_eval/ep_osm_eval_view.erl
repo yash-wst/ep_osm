@@ -104,6 +104,7 @@ layout_student_info(_TFs, Fs) ->
 	MarkingId = ?L2A("anpcanvas_" ++ wf:q(role)),
 	Es = itl:get(?VIEW, fields:getfields(Fs, [
 		anpseatnumber,
+		anp_paper_uid,
 		anpfullname,
 		anpstate,
 		ProfileId,

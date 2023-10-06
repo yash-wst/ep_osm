@@ -77,6 +77,7 @@ layout() ->
 layout_student_info(_TFs, Fs) ->
 	Es = layout:get(?VIEW, fields:getfields(Fs, [
 		anpseatnumber,
+		anp_paper_uid,
 		anpfullname,
 		anpstate
 	] ++ case itxconfigs_cache:get2(ep_osm_detect_bad_images, false) of
