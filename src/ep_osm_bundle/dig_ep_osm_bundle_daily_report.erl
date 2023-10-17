@@ -129,6 +129,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Exam Name"},
 			#dcell {type=header, val="PRN"},
 			#dcell {type=header, val="Seat Number"},
+			#dcell {type=header, val="Pages Count"},
 			#dcell {type=header, val="Corrected Seat Number"},
 			#dcell {type=header, val="Evaluation State"},
 			#dcell {type=header, val="Inward Timestamp"},
@@ -239,6 +240,7 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 	FIds = [
 		anp_paper_uid,
 		anpseatnumber,
+		pages_per_booklet,
 		anpseatnumber_corrected,
 		anpstate,
 		timestamp_inward,
@@ -256,6 +258,8 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 				Tokens= string:tokens(List, ","),
 				ListOnUI = string:join(Tokens, "\n"),
 				#dcell {val=ListOnUI};
+			pages_per_booklet ->
+				#dcell {val=itf:val(_ExamDoc, pages_per_booklet)};
 			_ ->
 				#dcell {val=itf:val(CandidateDoc, FId)}
 		end
