@@ -154,7 +154,7 @@ handle_import_csv_to_fs(List) ->
 			fields:build(anp_paper_uid, lists:nth(IndexPRN, Csv)),
 			fields:build(anpseatnumber, lists:nth(IndexAnpSeatnumber, Csv)),
 			fields:build(anpfullname, lists:nth(IndexFullName, Csv)),
-			fields:build(anpstate, "anpstate_yettostart")
+			fields:build(anpstate, "anpstate_active")
 		],
 
 		{itf:idval(SubjectDoc), itf:idval(EvaluatorDoc), FsToSave}
