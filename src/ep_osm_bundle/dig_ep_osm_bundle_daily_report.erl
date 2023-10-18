@@ -240,7 +240,7 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 	FIds = [
 		anp_paper_uid,
 		anpseatnumber,
-		pages_per_booklet,
+		total_pages,
 		anpseatnumber_corrected,
 		anpstate,
 		timestamp_inward,
@@ -258,8 +258,8 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 				Tokens= string:tokens(List, ","),
 				ListOnUI = string:join(Tokens, "\n"),
 				#dcell {val=ListOnUI};
-			pages_per_booklet ->
-				#dcell {val=itf:val(_ExamDoc, pages_per_booklet)};
+			total_pages ->
+				#dcell {val=itf:val(CandidateDoc, total_pages)};
 			_ ->
 				#dcell {val=itf:val(CandidateDoc, FId)}
 		end
