@@ -99,7 +99,7 @@ fetch(D, From, Size, Fs) ->
 	% get bundles from filters
 	%
 	BundleDocs = ep_osm_bundle_api:fetch(From, Size, Fs),
-	
+
 
 	%
 	% layout bundles
@@ -129,6 +129,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Exam Name"},
 			#dcell {type=header, val="PRN"},
 			#dcell {type=header, val="Seat Number"},
+			#dcell {type=header, val="Pages Count"},
 			#dcell {type=header, val="Corrected Seat Number"},
 			#dcell {type=header, val="Evaluation State"},
 			#dcell {type=header, val="Inward Timestamp"},
@@ -241,6 +242,7 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 		anpseatnumber,
 		anpseatnumber_corrected,
 		anpstate,
+		total_pages,
 		timestamp_inward,
 		master_data_status,
 		anpcandidate_onhold_reasons
