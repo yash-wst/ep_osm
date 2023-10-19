@@ -99,7 +99,7 @@ fetch(D, From, Size, Fs) ->
 	% get bundles from filters
 	%
 	BundleDocs = ep_osm_bundle_api:fetch(From, Size, Fs),
-	
+
 
 	%
 	% layout bundles
@@ -240,9 +240,9 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 	FIds = [
 		anp_paper_uid,
 		anpseatnumber,
-		total_pages,
 		anpseatnumber_corrected,
 		anpstate,
+		total_pages,
 		timestamp_inward,
 		master_data_status,
 		anpcandidate_onhold_reasons
@@ -258,8 +258,6 @@ layout_candidate_doc(_ExamDoc, _BundleDoc, CandidateDoc) ->
 				Tokens= string:tokens(List, ","),
 				ListOnUI = string:join(Tokens, "\n"),
 				#dcell {val=ListOnUI};
-			total_pages ->
-				#dcell {val=itf:val(CandidateDoc, total_pages)};
 			_ ->
 				#dcell {val=itf:val(CandidateDoc, FId)}
 		end
