@@ -132,6 +132,7 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Pages Count"},
 			#dcell {type=header, val="Corrected Seat Number"},
 			#dcell {type=header, val="Evaluation State"},
+			#dcell {type=header, val="Pages Count"},
 			#dcell {type=header, val="Inward Timestamp"},
 			#dcell {type=header, val="Master Data Status"},
 			#dcell {type=header, val="On Hold Reasons"},
