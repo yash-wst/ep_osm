@@ -129,7 +129,6 @@ fetch(D, From, Size, Fs) ->
 			#dcell {type=header, val="Exam Name"},
 			#dcell {type=header, val="PRN"},
 			#dcell {type=header, val="Seat Number"},
-			#dcell {type=header, val="Pages Count"},
 			#dcell {type=header, val="Corrected Seat Number"},
 			#dcell {type=header, val="Evaluation State"},
 			#dcell {type=header, val="Pages Count"},
