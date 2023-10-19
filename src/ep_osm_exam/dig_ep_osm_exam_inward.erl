@@ -1262,6 +1262,7 @@ get_bundle_docs(ExamId, OsmBundleId) ->
 		fields=[
 			itf:textbox(?F(anp_paper_uid)),
 			itf:textbox(?F(anpseatnumber)),
+			itf:textbox(?F(total_pages)),
 			itf:textbox(?F(anpseatnumber_corrected)),
 			itf:textbox(?F(anpstate)),
 			itf:textbox(?F(timestamp_inward)),
