@@ -42,7 +42,8 @@ menu(?APPOSM_ADMIN) ->
 		{?LN("Reports"), [
 			{dig_ep_osm_exam_evaluator_report, ?VIEW, ?LN("Evaluator Report")},
 			{dig_ep_osm_bundle_daily_report, ?VIEW, ?LN("Daily Status Report")},
-			{dig_mm_ep_osm_bundle, ?VIEW, ?LN("Bundle Status Report")}
+			{dig_mm_ep_osm_bundle, ?VIEW, ?LN("Bundle Status Report")},
+			{dig_mm_ep_osm_exam_assets, ?VIEW, ?LN("Exam Assets")}
 		]}
 	];
 
