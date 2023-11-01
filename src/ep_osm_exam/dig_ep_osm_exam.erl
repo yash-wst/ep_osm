@@ -55,6 +55,7 @@ get() ->
 			{action_import_from_rps, "Import - Create exams from RPS", "Import - Create exams from RPS"},
 			{action_import, "Import - Create exams from CSV", "Import - Create exams from CSV"},
 			{action_import_student_preassign_evaluator_data, "Import - Assign Evaluators to Students", "Import - Assign Evaluators to Students"},
+			{action_import_absent_student_data, "Import - Absent Student Data", "Import: Absent Student Data"},
 			{action_import_student_data, "Import Student Data", "Import Student Data"},
 			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."},
 			{action_change_state, "Change State", "Change State"}
@@ -152,7 +153,7 @@ fetch(D, From, Size, Fs) ->
 	%
 	% header
 	%
-	Header = ep_core_dig_helper:get_sfps_cells_header() ++ 
+	Header = ep_core_dig_helper:get_sfps_cells_header() ++
 	lists:map(fun(#field {label=Label}) ->
 		#dcell {type=header, val=Label}
 	end, anptest:fs(form)) ++ [
@@ -240,7 +241,21 @@ layout_import_student_data() ->
 
 
 layout_import_student_preassign_data() ->
+	Vals = [
+		["subject_code", "Subject must exist"],
+		["subject_name", ""],
+		["subject_pattern", ""],
+		["anpcentercode", "College code"],
+		["anp_paper_uid", "PRN/UID"],
+		["anpseatnumber", "Seat number"],
+		["anpfullname", "Student's full name"],
+		["anpevaluator", "Evaluator (Username)"]
+	],
+
+	Es = dig:layout_vals(#dig{}, Vals, ["Field", "Description"]),
+
 	itl:get(?EDIT, [
+		?ITXF({sep, Es}),
 		?COREXS(season_fk, #field {id=import_season_fk}),
 		itf:attachment(?F(file_import_student_preassing_data, "CSV file"))
 	], noevent, table).
@@ -311,6 +326,12 @@ event({confirmation_yes, change_state}) ->
 	itl:modal_close(),
 	handle_change_state_confirmed();
 
+event(action_import_absent_student_data) ->
+	dig_mm:handle_show_action(
+		"Import - Absent Student Data",
+		ep_osm_absent_candidate_import:layout_absent_student_data()
+	);
+
 event(change_state) ->
 	handle_change_state();
 
@@ -337,6 +358,19 @@ event(E) ->
 
 start_upload_event(Event) ->
 	dig_mm:start_upload_event(Event).
+
+
+finish_upload_event({_, file_import_absent_student_data}, AttachmentName, LocalFileData, _Node) ->
+	SeasonId = wf:q(import_season_fk),
+	?ASSERT(
+		((SeasonId /= []) and (SeasonId /= undefined)),
+		"ERROR: Please select a season under which file is to be uploaded"
+	),
+	dig_mm_import:handle_finish_upload_event(
+		?MODULE, ep_osm_candidate, ep_osm_candidate_api, ep_osm_absent_candidate_import,
+		{file, AttachmentName, LocalFileData}
+	);
+
 
 finish_upload_event({_, file_import_student_preassing_data}, AttachmentName, LocalFileData, _Node) ->
 	SeasonId = wf:q(import_season_fk),

@@ -155,7 +155,7 @@ handle_import_validate_csv_non_empty(List) ->
 	% find out errors
 	%
 	{_Oks, Errors} = lists:foldl(fun(Csv, {AccOKs, AccErrors}) ->
-		
+
 		%
 		% subject name and pattern are optional
 		%
@@ -207,10 +207,10 @@ handle_import_validate_duplicates(List) ->
 			PRN,
 			SeatNumber | _
 		] = Csv,
-		
+
 		Acc1 = dict:update_counter({anp_paper_uid, SubjectCode, PRN}, 1, Acc),
 		dict:update_counter({anpseatnumber, SubjectCode, SeatNumber}, 1, Acc1)
-	
+
 	end, dict:new(), List),
 
 
@@ -445,7 +445,7 @@ handle_merge_with_existing_docs(ExamDoc, DocsToSave, KeyToFind) ->
 				% merge only if field value is empty in the existing doc
 				%
 				FsDocExisting = itf:d2f(DocExisting, fs(all)),
-				FsDoc = itf:d2f(Doc, fs({FsDocExisting, merge})),
+				FsDoc = itf:d2f(Doc, fs({FsDocExisting, merge}) ++ get_anp_state_fs(Doc)),
 				FsDocMerged = itf:fs_merge(FsDocExisting, FsDoc),
 
 
@@ -470,6 +470,19 @@ handle_merge_with_existing_docs(ExamDoc, DocsToSave, KeyToFind) ->
 
 	end, [], DocsToSave).
 
+
+
+get_anp_state_fs(Doc) ->
+	%
+	% build anpstate field
+	%
+	case itf:val(Doc, anpstate) of
+		"anpstate_absent" -> [
+			fields:build(anpstate, itf:val(Doc, anpstate))
+		];
+		_ ->
+			[]
+	end.
 
 %------------------------------------------------------------------------------
 % misc
