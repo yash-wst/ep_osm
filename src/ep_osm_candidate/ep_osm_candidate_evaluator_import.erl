@@ -61,7 +61,7 @@ fs(all) ->
 
 handle_import_validate(List) ->
 	ok = dig_mm_import_validator:handle_import_validate_csv_length(List, ?MAX_CSV_COL_SIZE),
-	ok = dig_mm_import_validator:handle_import_validate_csv_non_empty(List),
+	ok = ep_osm_candidate_import:handle_import_validate_csv_non_empty(List),
 	ok = ep_osm_candidate_import:handle_import_validate_subjects_exist(List),
 	ok = ep_osm_candidate_import:handle_import_validate_exams_exist(List),
 	ok = validate_evaluator_exists(List),
