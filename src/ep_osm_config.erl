@@ -58,6 +58,14 @@ evaluation_face_proctor_action() ->
 	itxconfigs_cache:get2(ep_osm_evaluation_face_proctor_action, "warn").
 
 
+
+%------------------------------------------------------------------------------
+% anpstate after qc completed
+%------------------------------------------------------------------------------
+
+anp_state_after_qc_completed() ->
+	itxconfigs_cache:get2(anpstate_after_qc_completed, "anpstate_yettostart").
+
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------

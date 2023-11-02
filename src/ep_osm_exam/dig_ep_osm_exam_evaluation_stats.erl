@@ -124,7 +124,7 @@ get() ->
 %
 get_role_type() ->
 	case itxauth:role() of
-		Role when 
+		Role when
 			Role == ?APPOSM_ADMIN;
 			Role == ?APPOSM_ANPADMIN;
 			Role == ?APPOSM_CONTROLLER ->
@@ -904,6 +904,8 @@ get_class(State, Number) when Number > 0 ->
 			"table-danger";
 		"anpstate_discarded" ->
 			"table-info";
+		"anpstate_prototype" ->
+			"table-info";
 		_ ->
 			""
 	end;
@@ -1008,7 +1010,7 @@ get_fs_to_reset(_) ->
 %
 % number of reminders sent today
 %
-number_of_reminders_sent_today() -> 
+number_of_reminders_sent_today() ->
 
 	%
 	% init

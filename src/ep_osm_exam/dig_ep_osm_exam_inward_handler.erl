@@ -284,7 +284,7 @@ handle_edit_candidate_dialog(CId) ->
 
 
 	%
-	% layout 
+	% layout
 	%
 	FIdsInward = dig_ep_osm_exam_inward:fids(inward),
 	FsEditReceiver = itf:d2f(CandidateDoc, anpcandidate:fs(edit_receiver)),
@@ -346,7 +346,7 @@ handle_edit_candidate(CId) ->
 			helper_ui:flash(warning, "No changes.");
 		_ ->
 			FComment = itf:d2f(CandidateDoc, fields:get(comments)),
-			FComment1 = itf:build_comment(FComment, Changelist), 
+			FComment1 = itf:build_comment(FComment, Changelist),
 			case ep_osm_candidate_api:update(ExamId, CandidateDoc, Fs3 ++ [FComment1]) of
 				{ok, CandidateDoc1} ->
 					helper:redirect(wf:uri()),
@@ -631,8 +631,9 @@ handle_qc_completed(ExamId, BundleId) ->
 	%
 	ListOfFsDoc = lists:map(fun(CDoc) ->
 		FsDoc = helper_api:doc2fields({ok, CDoc}),
+		AnpState = ep_osm_config:anp_state_after_qc_completed(),
 		itf:fs_merge(FsDoc, [
-			fields:build(anpstate, "anpstate_yettostart")
+			fields:build(anpstate, AnpState)
 		])
 	end, CandidateDocs),
 	{ok, _} = anpcandidates:savebulk(ExamDb, ListOfFsDoc),
@@ -1175,7 +1176,7 @@ handle_inward(ExamId, OsmBundleId, FsInwardUi, [Doc]) ->
 
 
 handle_inward(_ExamId, _OsmBundleId, _FsInwardUi, _Docs) ->
-	helper_ui:flash(error, "Multiple documents were found!").	
+	helper_ui:flash(error, "Multiple documents were found!").
 
 
 
@@ -1209,7 +1210,7 @@ handle_insert_candidatedoc(BundleDoc, CDoc) ->
 	FsInward = fs(table),
 	Row = #tablerow {cells=[
 		#tablecell {body=[]}
-	] ++ 
+	] ++
 	lists:map(fun(Fi) ->
 		#tablecell {body=itf:val(CDoc, Fi#field.id)}
 	end, FsInward)
