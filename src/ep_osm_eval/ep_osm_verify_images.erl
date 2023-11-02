@@ -157,6 +157,7 @@ layout_answerpaper(TFs, Fs, ImgUrls, ColSize) ->
 	%
 	% init
 	%
+	BadImages = fields:getuivalue(Fs, autoqc_images),
 	IsReasonForOnHold = case Fs of
 		undefined ->
 			false;
@@ -210,7 +211,7 @@ layout_answerpaper(TFs, Fs, ImgUrls, ColSize) ->
 				text=AName
 			},
 			EsUrl,
-			layout_reason(SourceKey, AName, IsReasonForOnHold)
+			layout_reason(SourceKey, AName, IsReasonForOnHold, BadImages)
 		])
 
 
@@ -223,7 +224,17 @@ layout_answerpaper(TFs, Fs, ImgUrls, ColSize) ->
 %
 % layout reason
 %
-layout_reason(SourceKey, AName, true) ->
+layout_reason(SourceKey, AName, true, BadImages) ->
+
+	OnHoldReasonOptions = case lists:member(AName, BadImages) of 
+		true ->
+			ep_osm_candidate_fields:anpcandidate_onhold_reasons_options() ++ [
+				?F(marked_good, "Good Image")
+			];
+		_ ->
+			ep_osm_candidate_fields:anpcandidate_onhold_reasons_options()
+	end,
+
 	[
 		#p {class="mt-1 p-2 badge bg-primary", text=AName},
 		lists:map(fun({Id, Name}) ->
@@ -236,10 +247,10 @@ layout_reason(SourceKey, AName, true) ->
 					postback={classify, SourceKey, AName, Id, BtnId}
 				}
 			]
-		end, ep_osm_candidate_fields:anpcandidate_onhold_reasons_options()),
+		end, OnHoldReasonOptions),
 		#p {class="mb-5"}
 	];
-layout_reason(_ImageUrl, _AName, false) ->
+layout_reason(_ImageUrl, _AName, false, _) ->
 	[].
 
 
@@ -427,7 +438,8 @@ handle_classify(SourceKey, AName, Type, BtnId) ->
 handle_classify_remove(_SourceKey, AName, Type) when
 	Type == pages_blur;
 	Type == pages_cut;
-	Type == external_object ->
+	Type == external_object;
+	Type == marked_good ->
 
 
 	%
@@ -453,7 +465,8 @@ handle_classify_remove(_, _, _) ->
 handle_classify_add(SourceKey, AName, Type) when 
 	Type == pages_blur;
 	Type == pages_cut;
-	Type == external_object ->
+	Type == external_object;
+	Type == marked_good ->
 
 	%
 	% init
