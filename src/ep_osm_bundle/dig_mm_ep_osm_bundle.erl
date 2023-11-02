@@ -143,8 +143,14 @@ layout() ->
 %------------------------------------------------------------------------------
 % events
 %------------------------------------------------------------------------------
+event({itx, {dig_mm, export} = E}) ->
+	dig_ep_osm_bundle_daily_report:assert_export_time(),
+	dig_ep_osm_bundle_daily_report:assert_season_required(),
+	ite:event(E);
+
 event(action_new) ->
 	helper_ui:flash(error, "Cannot create bundle here. Please use DTP login.", 5);
+
 event(E) ->
 	dig_mm:event(E).
 

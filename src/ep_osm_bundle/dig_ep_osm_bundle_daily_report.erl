@@ -322,6 +322,7 @@ event({itx, {dig, export} = E}) ->
 	% assert
 	%
 	assert_export_time(),
+	assert_season_required(),
 	ite:event(E);
 
 event({itx, E}) ->
@@ -359,6 +360,15 @@ assert_export_time() ->
 		"Report can be exported only between 6pm and 6am"
 	).
 
+
+
+assert_season_required() ->
+	Dig = helper:state(dig),
+	Fs = dig:get_nonempty_fs(Dig#dig.filters),
+	?ASSERT(
+		itf:find(Fs, season_fk) /= undefined,
+		"Please select exam season. It cannot be empty"
+	).
 
 
 
