@@ -144,7 +144,6 @@ layout() ->
 % events
 %------------------------------------------------------------------------------
 event({itx, {dig_mm, export} = E}) ->
-	dig_ep_osm_bundle_daily_report:assert_export_time(),
 	dig_ep_osm_bundle_daily_report:assert_season_required(),
 	ite:event(E);
 
