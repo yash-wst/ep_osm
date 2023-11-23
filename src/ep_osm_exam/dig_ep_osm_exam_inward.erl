@@ -80,13 +80,13 @@ fs(table) ->
 % fs - inward
 %
 fs(inward) -> [
-	itf:textbox(?F(anp_paper_uid, "Barcode / UID"), 
+	itf:textbox(?F(anp_paper_uid, "Barcode / UID"),
 		validators(anp_paper_uid, []), textbox_enterkey),
-	itf:textbox(?F(anpseatnumber, "Student Seat No."), 
+	itf:textbox(?F(anpseatnumber, "Student Seat No."),
 		validators(anpseatnumber, []), textbox_enterkey),
-	itf:textbox(?F(total_pages, "Total Pages"), 
+	itf:textbox(?F(total_pages, "Total Pages"),
 		validators(total_pages, ["integer_or_empty"]), textbox_enterkey),
-	itf:textbox(?F(anp_paper_booklet_slno, "Booklet Sl. No."), 
+	itf:textbox(?F(anp_paper_booklet_slno, "Booklet Sl. No."),
 		validators(anp_paper_booklet_slno, []), textbox_enterkey)
 ];
 
@@ -241,7 +241,7 @@ fetch(D, _From, _Size, [
 	FsInward = fs(table),
 
 	Results = lists:map(fun(CDoc) ->
-		
+
 		lists:map(fun(Fi) ->
 			#dcell {val=layout_table_field(CDoc, Fi)}
 		end, FsInward) ++
@@ -314,7 +314,7 @@ fetch(D, From, Size, [
 	%
 	{ok, ExamDoc} = ep_osm_exam_api:get(OsmExamId),
 	SeasonId = itf:val(ExamDoc, season_fk),
-	{ok, SeasonDoc} = ep_core_exam_season_api:get(SeasonId),	
+	{ok, SeasonDoc} = ep_core_exam_season_api:get(SeasonId),
 	IsBundleActive = is_bundle_active(SeasonDoc, ExamDoc),
 
 
@@ -496,7 +496,7 @@ layout() ->
 layout_table_field(CDoc, Fi) ->
 	layout_table_field(CDoc, Fi, Fi#field.id).
 
-layout_table_field(CDoc, Fi, FId) when 
+layout_table_field(CDoc, Fi, FId) when
 	FId == autoqc_barcodes;
 	FId == autoqc_images ->
 	itf:val(CDoc, Fi);
@@ -699,7 +699,7 @@ layout_upload_form(BundleDoc, _) ->
 			minijob_ep_osm_exam_uploadtos3:layout_previous_uploads(BundleDoc);
 		_ ->
 			[]
-	end,	
+	end,
 
 
 	[
@@ -752,7 +752,7 @@ layout_dtp_by(Type, BundleDoc, ProfileDocsDict, BundleStates) ->
 %
 % receiver
 %
-layout_dtp_by(?APPOSM_RECEIVER, scannedby = Type, BundleDoc, _ProfileDocsDict, [], 
+layout_dtp_by(?APPOSM_RECEIVER, scannedby = Type, BundleDoc, _ProfileDocsDict, [],
 	{InwardState, _, _, _}) when
 		InwardState == ?COMPLETED ->
 	ite:button(
@@ -801,14 +801,14 @@ layout_dtp_by(?APPOSM_SCANUPLOADER, scannedby, BundleDoc, ProfileDocsDict, User,
 	];
 
 layout_dtp_by(?APPOSM_SCANUPLOADER, scannedby = Type, BundleDoc, _ProfileDocsDict, [],
-	{InwardState, ScanningState, _, _}) when 
+	{InwardState, ScanningState, _, _}) when
 		InwardState == ?COMPLETED, ScanningState /= ?COMPLETED ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
 	);
 
 layout_dtp_by(?APPOSM_SCANUPLOADER, qualityby = Type, BundleDoc, _ProfileDocsDict, [],
-	{_, ScanningState, UploadState, _}) when 
+	{_, ScanningState, UploadState, _}) when
 		ScanningState == ?COMPLETED, UploadState /= ?COMPLETED ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
@@ -820,7 +820,7 @@ layout_dtp_by(?APPOSM_SCANUPLOADER, qualityby = Type, BundleDoc, _ProfileDocsDic
 % qc
 %
 layout_dtp_by(?APPOSM_QC, qcby = Type, BundleDoc, _ProfileDocsDict, [],
-	{_, _, UploadState, QCState}) when 
+	{_, _, UploadState, QCState}) when
 		UploadState == ?COMPLETED, QCState /= ?COMPLETED ->
 	ite:button(
 		assign_bundle, "Assign", {assign_bundle, Type, BundleDoc}, "btn btn-info"
@@ -924,7 +924,7 @@ finish_upload_event_inward_minijob(ObjectKey) ->
 % events
 %------------------------------------------------------------------------------
 event(create) ->
-	event(textbox_enterkey);	
+	event(textbox_enterkey);
 
 
 event({confirmation_yes, {release_bundle, ReleaseInfo}}) ->
@@ -939,10 +939,10 @@ event({release_bundle, ReleaseInfo}) ->
 		{release_bundle, ReleaseInfo}
 	);
 
-	
+
 event({confirmation_yes, discard_bundle}) ->
 	dig_ep_osm_exam_inward_handler:handle_discard_bundle();
-	
+
 event(discard_bundle = E) ->
 	itl:confirmation(
 		[
@@ -1394,6 +1394,18 @@ get_bundle_url(ExamId, BundleId) ->
 		ExamId, BundleId
 	]).
 
+%
+% get candidate state to move
+% base on multi evaluation enabled or not
+%
+get_anpcandidate_state_after_qc_completed(ExamId) ->
+	{ok, EDoc} = ep_osm_exam_api:get(ExamId),
+	case itf:val(EDoc, enable_multi_evaluation) of
+		?YES ->
+			"anpstate_prototype";
+		_ ->
+			"anpstate_yettostart"
+	end.
 
 
 %------------------------------------------------------------------------------

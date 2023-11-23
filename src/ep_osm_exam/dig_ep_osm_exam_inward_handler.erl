@@ -629,9 +629,9 @@ handle_qc_completed(ExamId, BundleId) ->
 	%
 	% 2. change candidate state from expected to not uploaded
 	%
+	AnpState = dig_ep_osm_exam_inward:get_anpcandidate_state_after_qc_completed(ExamId),
 	ListOfFsDoc = lists:map(fun(CDoc) ->
 		FsDoc = helper_api:doc2fields({ok, CDoc}),
-		AnpState = ep_osm_config:anp_state_after_qc_completed(),
 		itf:fs_merge(FsDoc, [
 			fields:build(anpstate, AnpState)
 		])

@@ -178,7 +178,7 @@ layout_answerpaper(TFs, Fs, ImgUrls, ColSize) ->
 		]),
 
 
-		% 
+		%
 		% set width
 		%
 		EsUrl = case filename:extension(AName) of
@@ -226,7 +226,7 @@ layout_answerpaper(TFs, Fs, ImgUrls, ColSize) ->
 %
 layout_reason(SourceKey, AName, true, BadImages) ->
 
-	OnHoldReasonOptions = case lists:member(AName, BadImages) of 
+	OnHoldReasonOptions = case lists:member(AName, BadImages) of
 		true ->
 			ep_osm_candidate_fields:anpcandidate_onhold_reasons_options() ++ [
 				?F(marked_good, "Good Image")
@@ -392,7 +392,7 @@ handle_classify(SourceKey, AName, Type, BtnId) ->
 
 
 	%
-	% find key 
+	% find key
 	%
 	Key = {AName, Type},
 	Dict1 = case dict:find(Key, Dict) of
@@ -462,7 +462,7 @@ handle_classify_remove(_, _, _) ->
 %
 % handle classify add
 %
-handle_classify_add(SourceKey, AName, Type) when 
+handle_classify_add(SourceKey, AName, Type) when
 	Type == pages_blur;
 	Type == pages_cut;
 	Type == external_object;
@@ -502,8 +502,9 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 	%
 	% fs to save
 	%
+	AnpState = dig_ep_osm_exam_inward:get_anpcandidate_state_after_qc_completed(ExamId),
 	FsToSave = [
-		fields:build(anpstate, "anpstate_yettostart"),
+		fields:build(anpstate, AnpState),
 		itf:build(fields:get(anpcandidate_onhold_reasons), [])
 	],
 	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
@@ -570,7 +571,7 @@ handle_move_to_on_hold(ExamId, CandidateId, OnHoldReasons) ->
 	Changelist = itf:fs_changelist(CandidateDoc, FsToSave),
 	NewComment = string:join([Changelist, wf:q(comment)], "\n"),
 	FCommentDtp = itf:d2f(CandidateDoc, fields:get(comments_dtp)),
-	FCommentDtp1 = itf:build_comment(FCommentDtp, NewComment), 
+	FCommentDtp1 = itf:build_comment(FCommentDtp, NewComment),
 
 
 	%
