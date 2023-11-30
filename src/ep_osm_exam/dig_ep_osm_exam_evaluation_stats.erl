@@ -638,6 +638,17 @@ handle_send_reminder_confirmed(anpmoderator_reval) ->
 	handle_send_reminder_confirmed(anpmoderator_reval, "anpstate_moderation_reval").
 
 
+
+%
+% get appropriate state by checking
+% multievaluation enabled or disabled
+%
+get_anpcheckstate(_AnpCheckState, anpevaluator, ?YES) ->
+	"anpstate_active";
+get_anpcheckstate(AnpCheckState, _, _) ->
+	AnpCheckState.
+
+
 handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 
 	%
@@ -663,6 +674,10 @@ handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 	%
 	lists:foreach(fun(Doc) ->
 
+		AnpCheckState0 = get_anpcheckstate(
+			AnpCheckState, RoleId, itf:val(Doc, enable_multi_evaluation)
+		),
+
 		%
 		% init
 		%
@@ -677,7 +692,7 @@ handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 			anpcandidates:db(itf:idval(Doc)),
 			[fields:build(anpstate, AnpCheckState)]
 		),
-		handle_send_reminder_confirmed(RoleId, Doc, CandidateDocs, AnpCheckState)
+		handle_send_reminder_confirmed(RoleId, Doc, CandidateDocs, AnpCheckState0)
 	end, Docs).
 
 
