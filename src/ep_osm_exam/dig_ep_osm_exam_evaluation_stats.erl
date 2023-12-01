@@ -690,7 +690,7 @@ handle_send_reminder_confirmed(RoleId, AnpCheckState) ->
 
 		#db2_find_response {docs=CandidateDocs} = db2_find:get_by_fs(
 			anpcandidates:db(itf:idval(Doc)),
-			[fields:build(anpstate, AnpCheckState)]
+			[fields:build(anpstate, AnpCheckState0)]
 		),
 		handle_send_reminder_confirmed(RoleId, Doc, CandidateDocs, AnpCheckState0)
 	end, Docs).
