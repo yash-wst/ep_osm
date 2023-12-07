@@ -470,10 +470,9 @@ handle_detect_bad_images_parse_output(Outfile) ->
 		%
 		Line1 = helper:trim(Line, "\""),
 		Vals = jsx:decode(?L2B(Line1)),
-		BadVal = proplists:get_value(<<"bad">>, Vals, 0),
-
-		case BadVal > 0.5 of
-			true ->
+		Decision = ?B2L(proplists:get_value(<<"decision">>, Vals, "good")),
+		case Decision of
+			"bad" ->
 				Path = proplists:get_value(<<"Image">>, Vals),
 				PathTokens = string:tokens(?B2L(Path), "/"),
 				PathLen = length(PathTokens),
@@ -485,9 +484,6 @@ handle_detect_bad_images_parse_output(Outfile) ->
 		end
 
 	end, [], FileRes).
-
-
-
 
 
 %
@@ -502,7 +498,7 @@ handle_detect_bad_images_get_filepaths(WorkDir, ZipDir, DirNamesToUpload) ->
 		%
 		DirFullPath = itx:format("~s/~s/~s", [WorkDir, ZipDir, Dir]),
 		{ok, Files} = file:list_dir(DirFullPath),
-		
+
 
 		%
 		% filter our jpg files
