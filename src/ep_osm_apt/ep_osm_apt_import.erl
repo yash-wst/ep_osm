@@ -20,14 +20,14 @@
 
 handle_import_validate(List) ->
 	ok = ep_osm_exam_import:handle_import_validate_seasonid(),
-	ok = dig_mm_import_validator:handle_import_validate_csv_length(List, 8),
+	ok = dig_mm_import_validator:handle_import_validate_csv_length(List, 9),
 	ok = dig_mm_import_validator:handle_import_validate_csv_non_empty(List),
 	ok = handle_import_validate_duplicates(List),
 	ok = dig_mm_import_validator:handle_import_validate_mobile(List, 3),
 	ok = dig_mm_import_validator:handle_import_validate_email(List, 4),
 	ok = dig_mm_import_validator:handle_import_validate_faculties_exist(List, 6),
 	ok = dig_mm_import_validator:handle_import_validate_programs_exist(List, 7),
-	ok = dig_mm_import_validator:handle_import_validate_subjects_exist(List, 8),
+	ok = dig_mm_import_validator:handle_import_validate_subjects_patterns_exist(List, 8, 9),
 	ok = handle_import_validate_profiles_exist(List),
 	ok.
 
@@ -44,7 +44,7 @@ handle_import_validate_duplicates(List) ->
 	% find out errors
 	%
 	Dict = lists:foldl(fun(Csv, Acc) ->
-		Key = {lists:nth(1, Csv), lists:last(Csv)},
+		Key = {lists:nth(1, Csv), lists:nth(8, Csv), lists:last(Csv)},
 		dict:update_counter(Key, 1, Acc)
 	end, dict:new(), List),
 
@@ -151,11 +151,7 @@ handle_import_csv_to_fs(List) ->
 	%
 	FacultyDocsDict = dig_mm_import_helper:get_facultydocs_dict(List, 6),
 	ProgramDocsDict = dig_mm_import_helper:get_programdocs_dict(List, 7),
-	SubjectDocsDict = dig_mm_import_helper:get_subjectdocs_dict(List, 8),
-
-
-
-
+	SubjectDocsDict = dig_mm_import_helper:get_subject_docs_dict_by_pattern(List, 8),
 
 	%
 	% update fields
@@ -169,7 +165,8 @@ handle_import_csv_to_fs(List) ->
 		_IP,
 		FacultyCode,
 		ProgramCode,
-		SubjectCode
+		SubjectCode,
+		SubjectPattern
 	], {Acc, AptCountAcc}) ->
 
 		%
@@ -178,7 +175,15 @@ handle_import_csv_to_fs(List) ->
 		{ok, ProfileDoc} = dict:find(Username, ProfileDocsDict),
 		{ok, FacultyDoc} = dict:find(FacultyCode, FacultyDocsDict),
 		{ok, ProgramDoc} = dict:find(ProgramCode, ProgramDocsDict),
-		{ok, SubjectDoc} = dict:find(SubjectCode, SubjectDocsDict),
+
+		SubjectToFind = case string:to_upper(SubjectPattern) of
+			"NA" ->
+				{SubjectCode, []};
+			_ ->
+				{SubjectCode, SubjectPattern}
+		end,
+
+		{ok, SubjectDoc} = dict:find(SubjectToFind, SubjectDocsDict),
 
 
 

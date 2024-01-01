@@ -75,7 +75,7 @@ fs(grid) ->
 
 fs(import) ->
 	[
-		?ITXF({sep, #pre {text="username,fullname,mobile,email,ip,faculty_code,program_code,subject_code"}}),
+		?ITXF({sep, #pre {text="username,fullname,mobile,email,ip,faculty_code,program_code,subject_code,pattern(If no pattern in subject ,use NA)"}}),
 		?COREXS(season_fk, #field {id=import_season_fk}),
 		itf:attachment()
 	];
@@ -166,4 +166,3 @@ links(Id) ->
 %------------------------------------------------------------------------------
 import(List) ->
 	?D(List).
-

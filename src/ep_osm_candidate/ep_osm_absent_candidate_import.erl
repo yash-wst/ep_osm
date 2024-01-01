@@ -165,7 +165,7 @@ get_exam_wise_candidate_dict(List) ->
 	%
 	% get subject dict
 	%
-	SubjectDict = dig_mm_import_helper:get_subject_doct_dict_by_pattern(List, 1),
+	SubjectDict = dig_mm_import_helper:get_subject_docs_dict_by_pattern(List, 1),
 
 	%
 	% get csv[{subDocId, [csv]}, ....] with subjectcode
