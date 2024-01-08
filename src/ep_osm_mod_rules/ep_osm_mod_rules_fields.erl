@@ -67,7 +67,9 @@ f({rules = I, Doc}) ->
 	% subfield ids
 	%
 	SubfieldIds = case itf:val(Doc, type) of
-		"difference" -> [
+		Type when
+		Type == "multi_evaluation_difference";
+		Type == "difference" -> [
 			evaluator_role_1, evaluator_role_2, diffpercentage, evaluator_role_3
 		];
 		_ ->  [
@@ -152,7 +154,8 @@ options(type) ->
 		?F(evaluation, "Apply to evaluators"),
 		?F(moderation, "Apply to moderators"),
 		?F(revaluation, "Apply to revaluators"),
-		?F(difference, "Difference")
+		?F(difference, "Difference"),
+		?F(multi_evaluation_difference, "Difference (Multiple Evalution)")
 	]).
 
 %------------------------------------------------------------------------------
@@ -163,4 +166,3 @@ options(type) ->
 %------------------------------------------------------------------------------
 % end
 %------------------------------------------------------------------------------
-

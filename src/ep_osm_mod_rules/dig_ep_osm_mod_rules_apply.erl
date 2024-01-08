@@ -340,6 +340,60 @@ handle_apply_yes_test_save_result(_Type, _RunningMode, _Doc, [], _) ->
 	dig:log("Result of apply rule is empty");
 
 
+handle_apply_yes_test_save_result("multi_evaluation_difference", RunningMode, Doc, ApplyResDict, _Rules) ->
+	TId = itf:idval(Doc),
+	ExamDb = anpcandidates:db(TId),
+
+	%
+	% save
+	%
+	lists:foreach(fun({MoveToRole, CandidatePTDocs}) ->
+
+		CandidateList = lists:map(fun(PTDoc) ->
+			itf:val(PTDoc, anpseatnumber)
+		end, CandidatePTDocs),
+
+		%
+		% get documents to move
+		%
+		dig:log(info, io_lib:format("[Moved to: ~s, Moved: ~p", [
+			MoveToRole, length(CandidatePTDocs)
+		])),
+		dig:log(info, io_lib:format("Moved: ~p", [CandidateList])),
+
+
+		%
+		% new state
+		%
+		NewCandidateState = case MoveToRole of
+			"anprevaluator" ->
+				"anpstate_revaluation";
+			"anpmoderator" ->
+				"anpstate_moderation";
+			"anpmoderator_reval" ->
+				"anpstate_moderation_reval"
+		end,
+
+		%
+		% save
+		%
+		NewCandidatesDocsToSave = lists:map(fun(CandidatePTDoc) ->
+			Fs = handle_create_candidate_doc_for_multiple_evaluation_rule(CandidatePTDoc, NewCandidateState),
+			helper_api:fields2doc(Fs)
+		end, CandidatePTDocs),
+
+		case RunningMode of
+			"live_mode" ->
+				{Oks, Errors} = db:savebulk(ExamDb, NewCandidatesDocsToSave, 100),
+				dig:log(success, io_lib:format("Oks: ~p, Errors: ~p", [
+					length(Oks), length(Errors)
+				]));
+			"test_mode" ->
+				dig:log(danger, "Save skipped in test mode")
+		end
+
+	end, dict:to_list(ApplyResDict));
+
 %
 % difference
 %
@@ -554,6 +608,61 @@ handle_apply_yes_test_doc_batch("difference" = Type, ApplyAcc, Rules, ExamDoc, F
 	);
 
 
+
+%
+% difference (Multiple Evaluation)
+%
+handle_apply_yes_test_doc_batch("multi_evaluation_difference" = Type, ApplyAcc, Rules, ExamDoc, From, CandidateDocs) ->
+
+	%
+	% seatnumber of prototype docs
+	%
+	AnpSeatnumbers = lists:map(fun(CDoc) ->
+		itf:val(CDoc, anpseatnumber)
+	end, CandidateDocs),
+
+	%
+	% get all docs by sno
+	%
+	CandidateDocs1 = anpcandidates:getdocs_by_snos(itf:idval(ExamDoc), AnpSeatnumbers),
+	CandidateDocsDict = helper:get_list_dict_from_docs(CandidateDocs1, anpseatnumber),
+
+
+	%
+	% init
+	%
+	dig:log(info, io_lib:format("Batch: ~p", [From])),
+	dig:log(info, io_lib:format("Candidate docs: ~p", [length(CandidateDocs)])),
+
+	%
+	% apply rule and get updated student docs
+	%
+	ApplyAcc1 = lists:foldl(fun(Rule, Acc) ->
+
+		lists:foldl(fun(CandidateDoc, Acc1) ->
+			Docs = get_docs_to_compare_for_multiple_evaluation_difference(
+				itf:val(CandidateDoc, anpseatnumber), CandidateDocsDict
+			),
+
+			%
+			% handle apply
+			%
+			handle_apply_multi_evaluation_difference(Docs, CandidateDoc, Rule, Acc1)
+
+		end, Acc, CandidateDocs)
+
+	end, ApplyAcc, Rules),
+
+	%
+	% apply rules
+	%
+	From1 = From + ?BATCH_SIZE,
+
+	handle_apply_yes_test_doc_batch(
+		Type, ApplyAcc1, Rules, ExamDoc, From1, get_candidate_docs(Type, ExamDoc, From1, ?BATCH_SIZE)
+	);
+
+
 %
 % default
 %
@@ -672,6 +781,18 @@ get_test_docs(Fs, From, Size) ->
 
 
 
+get_candidate_docs("multi_evaluation_difference", ExamDoc, From, Size) ->
+	%
+	% init
+	%
+	ExamId = itf:idval(ExamDoc),
+
+	%
+	% exec
+	%
+	anpcandidates:getdocs_by_state(ExamId, "anpstate_prototype", From, Size);
+
+
 
 get_candidate_docs("difference", ExamDoc, From, Size) ->
 
@@ -714,7 +835,9 @@ get_moderation_rules(ModDoc) ->
 	get_moderation_rules(ModDoc, itf:val(ModDoc, type)).
 
 
-get_moderation_rules(ModDoc, "difference") ->
+get_moderation_rules(ModDoc, Type) when
+	Type == "difference";
+	Type == "multi_evaluation_difference" ->
 
 	%
 	% init
@@ -812,6 +935,92 @@ get_total_fid_for_role("dtp_marks_" ++ _ = Role) ->
 	?L2A(?FLATTEN(Role));
 get_total_fid_for_role(Role) ->
 	?L2A(?FLATTEN("total_" ++ Role)).
+
+
+
+%------------------------------------------------------------------------------
+% handle apply rule difference (multiple evaluation mode)
+%------------------------------------------------------------------------------
+
+
+handle_apply_multi_evaluation_difference([], _CandidateDoc, _Rule, Acc) ->
+	Acc;
+handle_apply_multi_evaluation_difference([Doc1, Doc2], CandidateDoc, {DiffPercentage, Role1, Role2, Role3}, Acc) ->
+
+	%
+	% init
+	%
+
+	Role1Id = get_total_fid_for_role(Role1),
+	Role2Id = get_total_fid_for_role(Role2),
+
+	%
+	% assert
+	%
+	?ASSERT(
+		(Role1Id == total_anpevaluator) and
+		(Role2Id == total_anpevaluator),
+		"For multievaluation, rule can be applied to compare anpevaluator marks."
+	),
+
+
+	DiffPercentageInt = ?S2I(DiffPercentage),
+
+	Total1 = itf:val(Doc1, Role1Id),
+	Total2 = itf:val(Doc2, Role2Id),
+	Total1Float = helper:s2f_v1(Total1),
+	Total2Float = helper:s2f_v1(Total2),
+	%
+	% check difference
+	%
+	case {Total1Float, Total2Float} of
+		{error, _} ->
+			Acc;
+		{_, error} ->
+			Acc;
+		_ ->
+			case abs(Total1Float - Total2Float) > DiffPercentageInt of
+				false ->
+					Acc;
+				_ ->
+					dict:append(Role3, CandidateDoc, Acc)
+			end
+	end;
+
+handle_apply_multi_evaluation_difference(_, _CandidateDoc, _Rule, Acc) ->
+	Acc.
+
+
+
+%
+% get candidate docs to compare
+% for multiple evaluation
+%
+get_docs_to_compare_for_multiple_evaluation_difference(SeatNo, CandidateDocsDict) ->
+	Docs = case dict:find(SeatNo, CandidateDocsDict) of
+		{ok, Docs0} -> Docs0;
+		_ -> []
+	end,
+	lists:filter(fun(Doc) ->
+		itf:val(Doc, anpstate) == "anpstate_completed"
+	end, Docs).
+
+
+
+%
+% create candidate doc
+%
+handle_create_candidate_doc_for_multiple_evaluation_rule(PTDoc, Role3) -> [
+	itf:build(?CORSUB(subject_code_fk), itf:val(PTDoc, subject_code_fk)),
+	fields:build(anpcentercode, itf:val(PTDoc, anpcentercode)),
+	fields:build(anp_paper_uid, itf:val(PTDoc, anp_paper_uid)),
+	fields:build(anpseatnumber, itf:val(PTDoc, anpseatnumber)),
+	fields:build(anpfullname, itf:val(PTDoc, anpfullname)),
+	fields:build(anpstate, Role3)
+].
+
+
+
 
 %------------------------------------------------------------------------------
 % end
