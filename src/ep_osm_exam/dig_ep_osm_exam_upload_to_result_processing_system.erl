@@ -582,7 +582,27 @@ csv_frp(ExamId, OsmEvaluatorType) ->
 
 csv_frp(ExamId, OsmEvaluatorType, undefined) ->
 	ep_osm_exam_api:csv_frp(ExamId, OsmEvaluatorType);
-csv_frp(ExamId, _OsmEvaluatorType, Ids) ->
+csv_frp(ExamId, OsmEvaluatorType, Ids) ->
+
+	%
+	% init
+	%
+	CompletedState = case OsmEvaluatorType of
+		"profiletype_" ++ Role ->
+			ep_osm_helper:completed_state_of(Role);
+		_ ->
+			"anpstate_completed"
+	end,
+
+
+	TotalMarksId = case OsmEvaluatorType of
+		"profiletype_anp" ++ Role1 ->
+			Role1 ++ "_total";
+		_ ->
+			OsmEvaluatorType
+	end,
+	Ids1 = helper:list_search_replace_elem("total", TotalMarksId, Ids),
+
 
 	%
 	% create dig for export
@@ -592,10 +612,10 @@ csv_frp(ExamId, _OsmEvaluatorType, Ids) ->
 		size=200,
 		filters=[
 			itf:build(itf:hidden(osm_exam_fk), ExamId),
-			fields:build(anpstate, "anpstate_completed")
+			fields:build(anpstate, CompletedState)
 		],
 		config=[
-			{ep_osm_result_exportids, string:join(Ids, ",")}
+			{ep_osm_result_exportids, string:join(Ids1, ",")}
 		]
 	},
 
