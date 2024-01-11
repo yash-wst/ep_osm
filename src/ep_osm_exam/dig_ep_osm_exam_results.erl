@@ -488,7 +488,9 @@ fetch(D, From, Size, [
 	%
 	% get corresponding rps student docs
 	%
-	RpsStudentDocs = get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent),
+	RpsStudentDocs = get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent, ProgramId),
+
+
 	RpsStudentDocsDict = helper:get_dict_from_docs(RpsStudentDocs, SeatNumberIdInRpsStudent),
 
 
@@ -1752,15 +1754,21 @@ get_ipaddress_from_username(Username, Comments) ->
 %
 % get rps student docs
 %
-get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent) ->
+get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent, ProgramId) ->
 	get_rps_student_docs(
-		SeatNumbers, SeatNumberIdInRpsStudent,
+		SeatNumbers, SeatNumberIdInRpsStudent, ProgramId,
 		itxconfigs_cache:get2(ep_osm_exam_results_set_studentdoc, false)
 	).
 
-get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent, true) ->
-	db:get_docs_by_ids(itxprofiles:db(), ?A2L(SeatNumberIdInRpsStudent), SeatNumbers);
-get_rps_student_docs(_SeatNumbers, _SeatNumberIdInRpsStudent, _) ->
+get_rps_student_docs(SeatNumbers, SeatNumberIdInRpsStudent, ProgramId, true) ->
+	ProfileDocs = db:get_docs_by_ids(itxprofiles:db(), ?A2L(SeatNumberIdInRpsStudent), SeatNumbers),
+
+	lists:filter(fun (ProfileDoc) ->
+		ActiveProgramIds = itf:val(ProfileDoc, ?CORSUB(programs)),
+		lists:member(ProgramId, ActiveProgramIds)
+	end, ProfileDocs);
+
+get_rps_student_docs(_SeatNumbers, _SeatNumberIdInRpsStudent, _, _) ->
 	[].
 
 
