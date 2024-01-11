@@ -29,6 +29,9 @@ f(osm_mscheme_fk = I) ->
 f(list_of_export_markers = I) ->
 	itf:list2(?F(I, "Export Markers"));
 
+f(notes = I) ->
+	itf:notes(?F(I, "Notes"));
+
 
 %------------------------------------------------------------------------------
 % fields - widget
@@ -215,12 +218,18 @@ f({widget, WUId, ?WTYPE_RULE, {AnyI, OfJ}}) ->
 %
 %..............................................................................
 
-f({widget, WUId, WType, WId, WName, WMarks, WChildren}) ->
+f({widget, WUId, WType, WId, WName0, WMarks, WChildren}) ->
 
 
 	%
 	% sub fields of this widget
 	%
+	WName = case WName0 of
+		[] ->
+			get_question_id_from_wuid(WUId);
+		_ ->
+			WName0
+	end,
 	Subfields = [
 		itf:build(?OSMMSC({wtype, nid(WUId, wtype)}), WType),
 		itf:build(?OSMMSC({wid, nid(WUId, wid)}), WId),
@@ -302,22 +311,14 @@ renderer({WUId, ?WTYPE_QUESTION, _}) ->
 		% render button
 		%
 		[FWType, FWId, FWname, FWmarks, FWLow] = Subfields,
-		FWname1 = case FWname#field.uivalue of
-			[] ->
-				FWname#field {
-					uivalue=get_question_id_from_wuid(WUId)
-				};
-			_ ->
-				FWname
-		end,
-
 
 		EsVisible = layout:grow([
 			layout:g(3, layout_wuid(WUId)),
-			layout:g(3, itl:render(Mode, FWname1)),
+			layout:g(3, itl:render(Mode, FWname)),
 			layout:g(3, itl:render(Mode, FWmarks)),
 			layout:g(3, layout_actions(WUId, F))
 		]),
+		dig_mm:wire_page_validation(Mode, edit, [FWname, FWmarks], Mode == ?EDIT),
 
 
 		%

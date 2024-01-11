@@ -46,12 +46,28 @@ save(Fields) ->
 
 save(FsToSave, FsAll, Id) ->
 	{ok, Doc} = ?MODULE:get(Id),
-	?ASSERT(
-		itf:val(Doc, state) /= "published",
-		"ERROR! Editing of published documents is not allowed!"
-	),
+
+
+	%
+	% asserts
+	%
+	assert_doc_not_published(Doc),
+
+
 	FsAll1 = itf:d2f(Doc, FsAll),
-	FsAll2 = itf:fs_merge(FsAll1, FsToSave),
+
+
+	%
+	% get changelist
+	%
+	Changelist = itf:fs_changelist(Doc, FsToSave),
+	FNotes = itf:d2f(Doc, ?OSMMSC(notes)),
+	FsToSave1 = FsToSave ++ [
+		itf:build_comment(FNotes, Changelist)
+	],
+
+
+	FsAll2 = itf:fs_merge(FsAll1, FsToSave1),
 	?MODULE:save(FsAll2).
 
 savebulk(LoLofFields) ->
@@ -89,6 +105,17 @@ delete_by_field(F = #field {}) ->
 %------------------------------------------------------------------------------
 % misc
 %------------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------------
+% 
+%------------------------------------------------------------------------------
+
+assert_doc_not_published(Doc) ->
+	?ASSERT(
+		itf:val(Doc, state) /= "published",
+		"ERROR! Editing of published documents is not allowed!"
+	).
 
 
 %------------------------------------------------------------------------------

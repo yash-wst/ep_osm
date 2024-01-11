@@ -92,13 +92,8 @@ fetch(D, From, Size, Fs) ->
 		[
 			#dcell {val=itf:val(Doc, name)},
 			#dcell {val=helper:titlecase(itf:val(Doc, state))},
-			#dcell {val=#link {
-				text="Edit",
-				url=io_lib:format("/ep_osm_mscheme?mode=edit&id=~s", [itf:idval(Doc)])
-			}},
-			#dcell {
-				val=ite:button(clone, "Clone", {clone, itf:idval(Doc)})
-			}
+			#dcell {val=ite:button(clone, "Clone", {clone, itf:idval(Doc)})},
+			#dcell {val=akit_dropdown:button_group(ep_osm_mscheme:links(itf:idval(Doc)))}
 		]
 	end, Docs),
 
@@ -109,8 +104,8 @@ fetch(D, From, Size, Fs) ->
 	Header = [
 		#dcell {type=header, val="Name"},
 		#dcell {type=header, val="State"},
-		#dcell {type=header, val="Edit"},
-		#dcell {type=header, val="Clone"}
+		#dcell {type=header, val="Clone"},
+		#dcell {type=header, val="Actions"}
 	],
 
 

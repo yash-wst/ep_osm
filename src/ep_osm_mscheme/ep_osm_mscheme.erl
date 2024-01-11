@@ -31,7 +31,8 @@ fs(basic) -> [
 	?OSMMSC(name),
 	?OSMMSC(state),
 	?OSMMSC(list_of_widgets),
-	?OSMMSC(list_of_export_markers)
+	?OSMMSC(list_of_export_markers),
+	?OSMMSC(notes)
 ];
 
 fs(index) -> [
@@ -39,8 +40,11 @@ fs(index) -> [
 	?OSMMSC(state)
 ];
 
-fs(view) ->
-	fs(basic);
+fs(view) -> [
+	?OSMMSC(name),
+	?OSMMSC(state),
+	?OSMMSC(notes)
+];
 
 fs(create) -> [
 	?OSMMSC(name)
@@ -102,7 +106,49 @@ layout(?CREATE, _) ->
 %..............................................................................
 
 layout(?VIEW, Id) when Id /= []; Id /= undefined ->
-	layout(?EDIT, Id);	
+
+	%
+	% init
+	%
+	Id = wf:q(id),
+	{ok, Doc} = ep_osm_mscheme_api:get(Id),
+
+
+	%
+	% convert doc to rules
+	%
+	Rules = handle_convert_doc_to_rules(Doc),
+	helper:state(anpcandidate_state_marking, Rules),
+
+
+
+	%
+	% layout marking scheme
+	%
+	Es = try
+		anp_marking:init_testtotalmarks(),
+		TestTotalMarks = anpcandidate:testtotalmarks(),
+		[
+			#p {class="font-weight-bold", text=itx:format("Total: ~s", [TestTotalMarks])},
+			anp_marking:layout_marking_rules(anpmarking_anpevaluator, [])
+		]
+	catch _:_ ->
+		#p {class="border border-danger p-5", text="error!"}
+	end,
+
+
+
+	%
+	% layout page
+	%
+	Page = [
+		itl:get(?VIEW, itf:d2f(Doc, fs(view)), noevent, table),
+		layout:g(7, ?AKIT({layout, card, Es}))
+	],
+	itl:page("View", Page, links(Id));
+
+
+
 layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 
 
@@ -138,7 +184,8 @@ layout(?EDIT, Id) when Id /= []; Id /= undefined ->
 		layout_actions(),
 		itl:get(?EDIT, itf:d2f(Doc, FsEdit), ite:get(edit), tableonly)
 	],
-	layout:g(7, ?AKIT({layout, card, Es}));
+	Page = layout:g(7, ?AKIT({layout, card, Es})),
+	itl:page("Edit", Page, links(Id));
 
 
 
@@ -678,6 +725,8 @@ handle_view_marking_scheme_layout() ->
 		],
 		itl:modal_fs(layout:grow(layout:g(4, 4, Es)))
 	catch
+		error:badarith ->
+			helper_ui:flash(error, "Please enter all marks correctly.", 5);
 		error:badarg ->
 			helper_ui:flash(error, "Please enter all question numbers and marks correctly.", 5)
 	end.
