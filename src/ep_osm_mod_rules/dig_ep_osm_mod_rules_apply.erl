@@ -641,7 +641,7 @@ handle_apply_yes_test_doc_batch("multi_evaluation_difference" = Type, ApplyAcc, 
 
 		lists:foldl(fun(CandidateDoc, Acc1) ->
 			Docs = get_docs_to_compare_for_multiple_evaluation_difference(
-				itf:val(CandidateDoc, anpseatnumber), CandidateDocsDict
+				itf:val(CandidateDoc, anpseatnumber), CandidateDocsDict, Rule
 			),
 
 			%
@@ -996,15 +996,41 @@ handle_apply_multi_evaluation_difference(_, _CandidateDoc, _Rule, Acc) ->
 % get candidate docs to compare
 % for multiple evaluation
 %
-get_docs_to_compare_for_multiple_evaluation_difference(SeatNo, CandidateDocsDict) ->
+get_docs_to_compare_for_multiple_evaluation_difference(SeatNo, CandidateDocsDict, {_DiffPercentage, _Role1, _Role2, Role3}) ->
 	Docs = case dict:find(SeatNo, CandidateDocsDict) of
 		{ok, Docs0} -> Docs0;
 		_ -> []
 	end,
-	lists:filter(fun(Doc) ->
-		itf:val(Doc, anpstate) == "anpstate_completed"
-	end, Docs).
 
+	Role3IdAssaign = assaign_state_of(Role3),
+	Role3IdCompleted = ep_osm_helper:completed_state_of(Role3),
+
+	{DocsToCompared, MoveToRoleDocs} = lists:foldl(fun(Doc, {AccCompleted, AccModeration}) ->
+		case itf:val(Doc, anpstate) of
+			"anpstate_completed" -> {
+				AccCompleted ++ [Doc], AccModeration
+			};
+
+			Role3IdAssaign -> {
+				AccCompleted, AccModeration ++ [Doc]
+			};
+
+			Role3IdCompleted -> {
+				AccCompleted, AccModeration ++ [Doc]
+			};
+			_ -> {
+				AccCompleted, AccModeration
+			}
+		end
+	end, {[], []}, Docs),
+
+	%
+	% return docs
+	%
+	case MoveToRoleDocs of
+		[] -> DocsToCompared;
+		_ -> []
+	end.
 
 
 %
@@ -1020,6 +1046,13 @@ handle_create_candidate_doc_for_multiple_evaluation_rule(PTDoc, Role3) -> [
 ].
 
 
+
+
+%
+% get assaign state
+%
+assaign_state_of("anpmoderator") -> "anpstate_moderation";
+assaign_state_of("anprevaluator") -> "anpstate_revaluation".
 
 
 %------------------------------------------------------------------------------
