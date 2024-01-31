@@ -261,13 +261,19 @@ layout_reason(_ImageUrl, _AName, false, _) ->
 %
 layout_upload(TFs, Fs) ->
 	AnpState = ?L2A(itf:val(Fs, anpstate)),
-	layout_upload(TFs, Fs, lists:member(AnpState, get_state_for_upload())).
+	Text = case ep_osm_config:is_qc_enabled() of
+		true ->
+			"Move to QC Completed";
+		false ->
+			"Move to Yet-to-start"
+	end,
+	layout_upload(TFs, Fs, lists:member(AnpState, get_state_for_upload()), Text).
 
 
-layout_upload(_TFs, Fs, true) -> [
+layout_upload(_TFs, Fs, true, Text) -> [
 	ite:button(
 		move_to_yet_to_start,
-		"Move to Yet-to-start",
+		Text,
 		move_to_yet_to_start,
 		"btn btn-sm btn-danger-outline pull-sm-right"
 	),
@@ -275,7 +281,7 @@ layout_upload(_TFs, Fs, true) -> [
 		?F({seatnumber_zip, itf:val(Fs, anpseatnumber)}, "Upload Zip file (SEATNUMBER.zip)"))
 	], noevent, table)
 ];
-layout_upload(_TFs, _Fs, _) ->
+layout_upload(_TFs, _Fs, _, _) ->
 	[].
 
 
@@ -312,9 +318,15 @@ event({confirmation_yes, move_to_yet_to_start}) ->
 	handle_move_to_yet_to_start(wf:q(anptestid), wf:q(anpid));
 
 event(move_to_yet_to_start) ->
+	DescText = case ep_osm_config:is_qc_enabled() of
+		true ->
+			"Do you want to change state from On Hold to QC Completed?";
+		false ->
+			"Do you want to change state from Discarded to Yet To Start?"
+	end,
 	itl:confirmation(#panel {class="mycenter", body=[
 		#p {text="Have you fixed the problem with images?"},
-		#p {text="Do you want to change state from Discarded to Yet To Start?"}
+		#p {text=DescText}
 	]}, move_to_yet_to_start);
 
 event(move_to_on_hold_confirmed) ->
@@ -502,7 +514,12 @@ handle_move_to_yet_to_start(ExamId, CandidateId) ->
 	%
 	% fs to save
 	%
-	AnpState = dig_ep_osm_exam_inward:get_anpcandidate_state_after_qc_completed(ExamId),
+	AnpState = case ep_osm_config:is_qc_enabled() of
+		true ->
+			"anpstate_quality_check";
+		false ->
+			dig_ep_osm_exam_inward:get_anpcandidate_state_after_qc_completed(ExamId)
+	end,
 	FsToSave = [
 		fields:build(anpstate, AnpState),
 		itf:build(fields:get(anpcandidate_onhold_reasons), [])
