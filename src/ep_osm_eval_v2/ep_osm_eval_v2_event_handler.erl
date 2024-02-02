@@ -21,6 +21,9 @@ event(noevent) ->
 % add comment event
 %
 event({add_remark}) ->
+	% Verify if the booklet can be evaluated
+	ep_osm_eval_asserts:evaluator_authorised([], anpcandidate:get_fs()),
+
 	Res = anpcandidate:addcomment(
 			wf:q(anptest:id()),
 			wf:q(anpcandidate:id()),
