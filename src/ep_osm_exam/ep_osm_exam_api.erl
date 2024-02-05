@@ -38,6 +38,15 @@ getdocs_by_teststatus(Status) ->
 	),
 	Docs.
 
+getdocs_by_season_fk_anptestcourseids(SeasonID, ANPTestCourseIDs)->
+	FsFind = [
+		fields:build(season_fk, SeasonID),
+		db2es_find:get_field_cond("$in", anptestcourseid, ANPTestCourseIDs)
+	],
+	#db2_find_response {docs=Docs} = db2_find:get_by_fs(
+		db(), FsFind, 0, ?INFINITY, [{use_index, ["season_fk"]}]
+	),
+	Docs.
 
 getdoc_from_cache(Id) ->
 	Fn = fun() ->

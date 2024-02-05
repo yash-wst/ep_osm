@@ -56,6 +56,7 @@ get() ->
 			{action_import, "Import - Create exams from CSV", "Import - Create exams from CSV"},
 			{action_import_student_preassign_evaluator_data, "Import - Assign Evaluators to Students", "Import - Assign Evaluators to Students"},
 			{action_import_absent_student_data, "Import - Absent Student Data", "Import: Absent Student Data"},
+			{{import, {action_import, ep_osm_candidate_import_eval}}, "Import - Student Evaluator Data", "Import: Student Evaluator Data"},
 			{action_import_student_data, "Import Student Data", "Import Student Data"},
 			{action_uploadzip, "Upload Zip - question paper, model answer PDF.", "Upload Zip - question paper, model answer PDF."},
 			{action_change_state, "Change State", "Change State"}
@@ -371,6 +372,16 @@ finish_upload_event({_, file_import_absent_student_data}, AttachmentName, LocalF
 		{file, AttachmentName, LocalFileData}
 	);
 
+finish_upload_event({_, file_import_student_evaluator_data}, AttachmentName, LocalFileData, _Node) ->
+	SeasonId = wf:q(import_season_fk),
+	?ASSERT(
+		((SeasonId /= []) and (SeasonId /= undefined)),
+		"ERROR: Please select a season under which file is to be uploaded"
+	),
+	dig_mm_import:handle_finish_upload_event(
+		?MODULE, ep_osm_candidate, ep_osm_candidate_api, ep_osm_candidate_import_eval,
+		{file, AttachmentName, LocalFileData}
+	);
 
 finish_upload_event({_, file_import_student_preassing_data}, AttachmentName, LocalFileData, _Node) ->
 	SeasonId = wf:q(import_season_fk),
