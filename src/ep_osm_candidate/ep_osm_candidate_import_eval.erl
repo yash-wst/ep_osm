@@ -99,9 +99,9 @@ handle_import_validate_exams_exist(List) ->
     SeasonID = minijobcontext:q(import_season_fk),
     Docs = ep_osm_exam_api:getdocs_by_season_fk_anptestcourseids(SeasonID, ANPTestCourseIDs),
     Key = fun(Doc) -> {
-		itf:val(Doc, anptestcourseid), itf:val(Doc, startdate)
-	} end,
-   
+        itf:val(Doc, anptestcourseid), itf:val(Doc, startdate)
+    } end,
+
     DocsDict = helper:get_dict_from_docs(Docs, Key),
 
     {_, Errors} = lists:foldl(fun([TestId, Date | _], {Accoks, AccErr}) ->
@@ -210,17 +210,6 @@ get_anptest_docs_dict(List) ->
     helper:get_dict_from_docs(Docs, Key).
 
 
-get_profile_dict(List, Position) ->
-    Usernames = lists:map(fun(Csv) ->
-        lists:nth(Position, Csv)
-    end, List),
-
-    ProfileDocs = profiles:getdocs_by_usernames(
-        helper:unique(Usernames)
-    ),
-    helper:get_dict_from_docs(ProfileDocs, username). 
-
-
 get_username_dict_by_usertype(List) ->
     Usernames = lists:foldl(fun(Csv, Acc) ->
         Acc ++
@@ -293,7 +282,7 @@ handle_merge_with_existing_docs(ExamDoc, DocsToSave, KeyToFind) ->
             {ok, DocExisting} ->
                 
                 FsDocExisting = itf:d2f(DocExisting, ep_osm_candidate_import:fs(all)),
-                FsDoc = itf:d2f(Doc, fs(merge)),
+                FsDoc = helper_api:doc2fields({ok, Doc}),
                 FsDocMerged = itf:fs_merge(FsDocExisting, FsDoc),
 
                 %
