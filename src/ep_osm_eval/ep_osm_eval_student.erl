@@ -202,7 +202,21 @@ event(Event) ->
 get_anptestid_anpid(SeasonId, SubjectId, PRN) ->
 	get_anptestid_anpid(SeasonId, SubjectId, PRN, []).
 
-get_anptestid_anpid(SeasonId, SubjectId, PRN, MType) ->
+get_anptestid_anpid(SeasonId, SubjectId, PRN0, MType) ->
+
+	%
+	% get the appropriate anpseatnumber value
+	%
+	SeatNumberIdInRpsStudent = ep_osm_id:get(anpseatnumber, in, profile_student),
+	PRN = case SeatNumberIdInRpsStudent of
+		prn ->
+			PRN0;
+		_ ->
+			{ok, ProfileDoc} = itxprofiles:get_by(username, PRN0, false),
+			itf:val(ProfileDoc, SeatNumberIdInRpsStudent)
+	end,
+
+
 	%
 	% get osm exam by season id and subject id
 	%

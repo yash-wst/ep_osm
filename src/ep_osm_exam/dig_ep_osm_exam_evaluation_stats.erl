@@ -73,6 +73,7 @@ fs(search) -> [
 	fields:get(anptestcourseid),
 	fields:get(teststatus),
 	fields:get(exam_pattern),
+	fields:get(startdate),
 	itf:build(itf:hidden(osm_exam_fk), itxcontext:q(id))
 ].
 
