@@ -87,6 +87,36 @@ validate_profile_exists(List, ProfileType, ProfileIndex, ProfileDocsDict) ->
     ).
 
 
+validate_candidate_state(List, CandidateDocsDict) ->
+    lists:foldl(fun(Csv, AccErrors) ->
+        {ok, CandidateDoc} = dict:find(lists:nth(?INDEX_ANP_PRN, Csv), CandidateDocsDict),
+        AccErrors ++ handle_validate_candidate_state(CandidateDoc, Csv)
+    end, [], List).
+
+
+handle_validate_candidate_state(CandidateDoc, Csv) ->
+
+    handle_evaluation_state(lists:nth(?INDEX_ANP_EVALUATOR, Csv), anpevaluator, CandidateDoc) ++
+    handle_evaluation_state(lists:nth(?INDEX_ANP_MODERATOR, Csv), anpmoderator, CandidateDoc) ++
+    handle_evaluation_state(lists:nth(?INDEX_ANP_REVALUATOR, Csv), anprevaluator, CandidateDoc) ++
+    handle_evaluation_state(lists:nth(?INDEX_ANP_MODERATOR_REVALUATOR, Csv), anpmoderator_reval, CandidateDoc).
+
+
+handle_evaluation_state("NA", _, _) ->
+    [];
+
+
+handle_evaluation_state(Username, EvaluatorType, CandidateDoc) ->
+
+    EvalDateId = ?L2A(itx:format("~p_eval_date", [EvaluatorType])),
+    case itf:val(CandidateDoc, EvalDateId) of
+        [] ->
+            [];
+        _ ->
+            [{Username, itf:val(CandidateDoc, anpseatnumber), EvaluatorType}]
+    end.
+
+
 % 
 % Validate exam exists
 % 
@@ -99,9 +129,9 @@ handle_import_validate_exams_exist(List) ->
     SeasonID = minijobcontext:q(import_season_fk),
     Docs = ep_osm_exam_api:getdocs_by_season_fk_anptestcourseids(SeasonID, ANPTestCourseIDs),
     Key = fun(Doc) -> {
-		itf:val(Doc, anptestcourseid), itf:val(Doc, startdate)
-	} end,
-   
+        itf:val(Doc, anptestcourseid), itf:val(Doc, startdate)
+    } end,
+
     DocsDict = helper:get_dict_from_docs(Docs, Key),
 
     {_, Errors} = lists:foldl(fun([TestId, Date | _], {Accoks, AccErr}) ->
@@ -124,6 +154,7 @@ handle_import_validate_exams_exist(List) ->
 
 handle_import_validate_batch(List) ->
     ok = handle_validate_batch_candidate_exists(List),
+    ok = handle_validate_batch_candidate_state_valid(List),
     ok.
 
 
@@ -148,6 +179,28 @@ handle_validate_batch_candidate_exists(List) ->
         import_validation,
         lists:flatten(CandidateNotFound) == [],
         itx:format("Candidate ~p not found", [CandidateNotFound])
+    ).
+
+
+handle_validate_batch_candidate_state_valid(List) ->
+
+    Dict = get_exam_wise_candidate_dict(List),
+
+    CandidateStatenotValid = lists:map(fun({TestId, DocsToValidate}) ->
+        {ok, ExamDoc} = ep_osm_exam_api:get(TestId),
+        CandidateDocs = ep_osm_candidate_import:get_existing_candidate_docs(ExamDoc, DocsToValidate),
+        CandidateDocsDict = ep_osm_candidate_import:get_existing_candidate_docs_dict(CandidateDocs, undefined),
+
+        %
+        % verify candidates' state
+        %
+        validate_candidate_state(List, CandidateDocsDict)
+    end, dict:to_list(Dict)),
+
+    ?ASSERT(
+        import_validation,
+        lists:flatten(CandidateStatenotValid) == [],
+        itx:format("Candidate ~p not in valid state", [CandidateStatenotValid])
     ).
 
 
@@ -208,17 +261,6 @@ get_anptest_docs_dict(List) ->
     } end,
 
     helper:get_dict_from_docs(Docs, Key).
-
-
-get_profile_dict(List, Position) ->
-    Usernames = lists:map(fun(Csv) ->
-        lists:nth(Position, Csv)
-    end, List),
-
-    ProfileDocs = profiles:getdocs_by_usernames(
-        helper:unique(Usernames)
-    ),
-    helper:get_dict_from_docs(ProfileDocs, username). 
 
 
 get_username_dict_by_usertype(List) ->
@@ -293,7 +335,7 @@ handle_merge_with_existing_docs(ExamDoc, DocsToSave, KeyToFind) ->
             {ok, DocExisting} ->
                 
                 FsDocExisting = itf:d2f(DocExisting, ep_osm_candidate_import:fs(all)),
-                FsDoc = itf:d2f(Doc, fs(merge)),
+                FsDoc = helper_api:doc2fields({ok, Doc}),
                 FsDocMerged = itf:fs_merge(FsDocExisting, FsDoc),
 
                 %
