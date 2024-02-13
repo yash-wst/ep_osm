@@ -132,8 +132,6 @@ handle_import_validate_exams_exist(List) ->
         itf:val(Doc, anptestcourseid), itf:val(Doc, startdate)
     } end,
 
-        itf:val(Doc, anptestcourseid), itf:val(Doc, startdate)
-    } end,
 
     DocsDict = helper:get_dict_from_docs(Docs, Key),
 
@@ -157,7 +155,6 @@ handle_import_validate_exams_exist(List) ->
 
 handle_import_validate_batch(List) ->
     ok = handle_validate_batch_candidate_exists(List),
-    ok = handle_validate_batch_candidate_state_valid(List),
     ok = handle_validate_batch_candidate_state_valid(List),
     ok.
 
@@ -339,7 +336,6 @@ handle_merge_with_existing_docs(ExamDoc, DocsToSave, KeyToFind) ->
             {ok, DocExisting} ->
                 
                 FsDocExisting = itf:d2f(DocExisting, ep_osm_candidate_import:fs(all)),
-                FsDoc = helper_api:doc2fields({ok, Doc}),
                 FsDoc = helper_api:doc2fields({ok, Doc}),
                 FsDocMerged = itf:fs_merge(FsDocExisting, FsDoc),
 
