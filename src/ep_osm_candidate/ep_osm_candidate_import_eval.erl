@@ -87,22 +87,22 @@ validate_profile_exists(List, ProfileType, ProfileIndex, ProfileDocsDict) ->
     ).
 
 
-validate_candidate_state(List, CandidateDocsDict) ->
-    lists:foldl(fun(Csv, AccErrors) ->
-        {ok, CandidateDoc} = dict:find(lists:nth(?INDEX_ANP_PRN, Csv), CandidateDocsDict),
-        AccErrors ++ handle_validate_candidate_state(CandidateDoc, Csv)
-    end, [], List).
+validate_candidate_state(DocsToValidate, CandidateDocsDict) ->
+    lists:foldl(fun(Doc, AccErrors) ->
+        {ok, CandidateDoc} = dict:find(itf:val(Doc, anpseatnumber), CandidateDocsDict),
+        AccErrors ++ handle_validate_candidate_state(CandidateDoc, Doc)
+    end, [], DocsToValidate).
 
 
-handle_validate_candidate_state(CandidateDoc, Csv) ->
+handle_validate_candidate_state(CandidateDoc, Doc) ->
 
-    handle_evaluation_state(lists:nth(?INDEX_ANP_EVALUATOR, Csv), anpevaluator, CandidateDoc) ++
-    handle_evaluation_state(lists:nth(?INDEX_ANP_MODERATOR, Csv), anpmoderator, CandidateDoc) ++
-    handle_evaluation_state(lists:nth(?INDEX_ANP_REVALUATOR, Csv), anprevaluator, CandidateDoc) ++
-    handle_evaluation_state(lists:nth(?INDEX_ANP_MODERATOR_REVALUATOR, Csv), anpmoderator_reval, CandidateDoc).
+    handle_evaluation_state(itf:val(Doc, profileidfk_anpevaluator), anpevaluator, CandidateDoc) ++
+    handle_evaluation_state(itf:val(Doc, profileidfk_anpmoderator), anpmoderator, CandidateDoc) ++
+    handle_evaluation_state(itf:val(Doc, profileidfk_anprevaluator), anprevaluator, CandidateDoc) ++
+    handle_evaluation_state(itf:val(Doc, profileidfk_anpmoderator_reval), anpmoderator_reval, CandidateDoc).
 
 
-handle_evaluation_state("NA", _, _) ->
+handle_evaluation_state([], _, _) ->
     [];
 
 
@@ -194,7 +194,7 @@ handle_validate_batch_candidate_state_valid(List) ->
         %
         % verify candidates' state
         %
-        validate_candidate_state(List, CandidateDocsDict)
+        validate_candidate_state(DocsToValidate, CandidateDocsDict)
     end, dict:to_list(Dict)),
 
     ?ASSERT(
